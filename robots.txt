@@ -1,0 +1,26 @@
+User-agent:
+ * Allow: /
+# Основные директории 
+ Disallow: /admin/ 
+ Disallow: /accounts/ 
+ Disallow: /cart/ 
+ Disallow: /favorites/ 
+ Disallow: /orders/ 
+ Disallow: /search/ 
+ 
+ # Динамические параметры 
+ Disallow: /*?sort= 
+ Disallow: /*?page= 
+ Disallow: /*?filter= 
+ Disallow: /*?q= 
+ 
+ # Файлы 
+ Disallow: /*.pdf$ 
+ Disallow: /*.doc$ 
+ Disallow: /*.xls$ 
+ 
+ # Sitemaps Sitemap:
+  https://linkavto.ru/sitemap.xml 
+  Sitemap: https://linkavto.ru/sitemap-products.xml 
+  Sitemap: https://linkavto.ru/sitemap-categories.xml 
+  Sitemap: https://linkavto.ru/sitemap-articles.xml

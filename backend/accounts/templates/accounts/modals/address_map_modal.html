@@ -1,0 +1,118 @@
+<!-- Модальное окно с Яндекс.Картами -->
+{% csrf_token %}
+{% load static %}
+
+<!-- Подключаем стили модального окна -->
+<link rel="stylesheet" href="{% static 'css/address_map_modal.css' %}">
+
+<div class="modal fade" id="addressMapModal" tabindex="-1" aria-hidden="true"
+     data-save-url="{% url 'accounts:save_address' %}"
+     data-save-session-url="{% url 'accounts:save_address_to_session' %}"
+     data-is-authenticated="{% if user.is_authenticated %}true{% else %}false{% endif %}">
+  <div class="modal-dialog modal-xl address-modal-responsive">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Выберите адрес доставки</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <!-- Переключатель доставка/самовывоз - СТАТИЧНО наверху для мобильных -->
+      <div class="mobile-delivery-toggle" style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
+          <div class="btn-group w-100" role="group" id="mobileDeliveryTypeToggle">
+              <input type="radio" class="btn-check" name="mobileDeliveryType" id="mobileDeliveryTypeDelivery" value="delivery" autocomplete="off" checked>
+              <label class="btn btn-outline-dark btn-sm" for="mobileDeliveryTypeDelivery">
+                  <i class="bi bi-truck me-1"></i>Доставка
+              </label>
+
+              <input type="radio" class="btn-check" name="mobileDeliveryType" id="mobileDeliveryTypePickup" value="pickup" autocomplete="off">
+              <label class="btn btn-outline-dark btn-sm" for="mobileDeliveryTypePickup">
+                  <i class="bi bi-shop me-1"></i>Самовывоз
+              </label>
+          </div>
+      </div>
+      
+      <div class="modal-body p-0" style="height: 600px;">
+        <div class="row g-0 h-100">
+          <!-- Левая колонка - поиск адреса -->
+          <div class="col-md-4 border-end p-4 d-flex flex-column" style="background-color: #f8fafc;">
+              <h5 class="mb-4 fw-semibold text-dark">Поиск адреса</h5>
+
+              <!-- Переключатель доставка/самовывоз -->
+              <div class="mb-4">
+                  <div class="btn-group w-100" role="group" id="deliveryTypeToggle">
+                      <input type="radio" class="btn-check" name="deliveryType" id="deliveryTypeDelivery"  value="delivery" autocomplete="off" checked>
+                      <label class="btn btn-outline" for="deliveryTypeDelivery" style="background-color: cornflowerblue; border:2px solid #89BEE8; color: white;"  >
+                          <i class="bi bi-truck me-2"></i>Доставка
+                      </label>
+
+                      <input type="radio" class="btn-check" name="deliveryType" id="deliveryTypePickup" value="pickup" autocomplete="off">
+                      <label class="btn btn-outline" for="deliveryTypePickup" style="background-color: #273541; border:2px solid #89BEE8; color: white;">
+                          <i class="bi bi-shop me-2"></i>Самовывоз
+                      </label>
+                  </div>
+              </div>
+
+              <!-- Поле ввода адреса с автоподстановкой -->
+              <div class="mb-4 position-relative">
+                  <label class="form-label small text-uppercase text-muted mb-2 fw-semibold">Адрес</label>
+                  <input type="text"
+                         class="form-control border-2 py-2 px-3"
+                         id="addressInput"
+                         placeholder="Начните вводить адрес"
+                         autocomplete="off"
+                         style="border-color: #e2e8f0; border-radius: 8px;">
+                  <div id="suggestionsDropdown" class="dropdown-menu shadow-sm" style="border: 1px solid #e2e8f0; max-height: 400px; overflow-y: auto; min-width: 100%; width: max-content; max-width: 1000px; z-index: 1050;"></div>
+              </div>
+
+              <!-- Текст согласия -->
+              <p class="text-muted small text-center mt-3 mb-0" style="line-height: 1.4; font-size: 0.75rem;">
+                  Нажимая кнопку "Добавить адрес", вы соглашаетесь с
+                  <a href="/terms/" target="_blank" class="text-decoration-none" style="color:  #89BEE8;">условиями покупки</a> LinkAvto и даёте согласие на сбор и обработку персональных данных согласно
+                  <a href="/privacy/" target="_blank" class="text-decoration-none" style="color:  #89BEE8;">Политикой конфиденциальности</a>
+              </p>
+          </div>
+
+          <!-- Правая колонка - Яндекс карта -->
+          <div class="col-md-8 h-100" style="position: relative; overflow: hidden;">
+            <!-- Яндекс карта -->
+            <div id="yandexMapContainer" style="height: 100%; width: 100%; position: relative;">
+              <div id="yandexMap" style="height: 100%; width: 100%;"></div>
+              
+              <!-- Лоадер загрузки точек -->
+              <div id="mapLoadingOverlay" class="map-loading-overlay" style="display: none;">
+                  <img src="{% static 'img/spinner.gif' %}" alt="Загрузка..." class="map-loading-spinner">
+              </div>
+              
+              <!-- Плавающие иконки служб доставки НА КАРТЕ -->
+              <div class="map-delivery-icons" id="mapDeliveryIcons" style="position: absolute; top: 12px; right: 12px; z-index: 9999;">
+                  <div class="map-delivery-icon map-icon-pochta active" data-provider="russian_post" data-tooltip="Почта России">
+                      <img src="{% static 'images/delivery/pochta_russia.png' %}" alt="Почта России">
+                  </div>
+                  <div class="map-delivery-icon map-icon-cdek" data-provider="cdek" data-tooltip="СДЕК">
+                      <img src="{% static 'images/delivery/cdek.png' %}" alt="СДЕК">
+                  </div>
+            </div>
+            
+              <div class="position-absolute top-0 end-0 m-3" id="currentLocationBtnContainer" style="z-index: 9998;">
+                <button class="btn btn-sm btn-light shadow-sm" id="currentLocationBtn">
+                  <i class="bi bi-geo-alt"></i> Моё местоположение
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button type="button" class="btn btn-dark" id="confirmAddress">
+          <i class="bi me-2"></i>Добавить адрес
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Скрипты (Яндекс.Карты, pickup_points.js, address_map_modal.js) подключаются глобально в base.html -->
+<script>//Скрытие хедера
+  const MobileHeader = document.querySelector('.mobile-header');
+  if (MobileHeader) MobileHeader.style.display = 'none'</script>

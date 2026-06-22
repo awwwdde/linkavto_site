@@ -1,0 +1,61 @@
+{% for address in addresses %}
+<div class="address-card {% if address.is_default %}default-address{% endif %} mb-3 p-3 rounded-3"
+     data-address-id="{{ address.id }}"
+     data-delivery-type="{{ address.display_delivery_type }}">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <div class="d-flex align-items-center mb-2 flex-wrap">
+                <h6 class="mb-0 fw-semibold">{{ address.title|default:"" }}</h6>
+                {% if address.is_pickup_address or address.display_delivery_type == 'pickup' %}
+                <span class="badge bg-warning text-dark ms-2 fs-7">
+                    <i class="bi bi-shop me-1"></i>Самовывоз
+                </span>
+                {% endif %}
+                {% if address.is_default %}
+                <span class="badge bg-primary-soft text-primary ms-2 fs-7">Основной</span>
+                {% endif %}
+            </div>
+            <p class="text-muted mb-1 small">{{ address.full_address }}</p>
+            {% if address.pickup_provider and address.pickup_point_name %}
+            <p class="text-muted small mb-1">
+                <i class="bi bi-building me-1"></i> {{ address.get_pickup_provider_display }}: {{ address.pickup_point_name }}
+            </p>
+            {% endif %}
+            {% if address.postal_code %}
+            <p class="text-muted small mb-0">
+                <i class="bi bi-postcard me-1"></i> {{ address.postal_code }}
+            </p>
+            {% endif %}
+        </div>
+        <div class="dropdown">
+            <button class="btn btn-link text-muted p-0"
+                    type="button"
+                    id="dropdownMenuButton{{ address.id }}"
+                    data-address-dropdown="1"
+                    aria-expanded="false">
+                <i class="bi bi-three-dots-vertical"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="dropdownMenuButton{{ address.id }}">
+                <li>
+                    <button class="dropdown-item set-default-btn {% if address.is_default %}disabled{% endif %}"
+                            data-url="{% url 'accounts:set_default_address' address.id %}"
+                            {% if address.is_default %}disabled aria-disabled="true"{% endif %}>
+                        <i class="bi bi-check-circle me-2"></i>Сделать основным
+                    </button>
+                </li>
+                <li>
+                    <button class="dropdown-item text-danger delete-address-btn"
+                            data-url="{% url 'accounts:delete_address' address.id %}">
+                        <i class="bi bi-trash me-2"></i>Удалить
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="empty-state text-center py-5">
+    <i class="bi bi-map text-muted fs-1 mb-3"></i>
+    <p class="text-muted">Нет сохранённых адресов</p>
+</div>
+{% endfor %}

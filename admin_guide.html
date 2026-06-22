@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инструкция по управлению каталогом товаров - LinkAvto</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+            padding: 40px 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 60px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #007bff;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            border-bottom: 4px solid #007bff;
+            padding-bottom: 15px;
+        }
+        
+        h2 {
+            color: #0056b3;
+            font-size: 1.8em;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-left: 15px;
+            border-left: 5px solid #007bff;
+        }
+        
+        h3 {
+            color: #333;
+            font-size: 1.3em;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .intro {
+            background: #e7f3ff;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 30px 0;
+            border-left: 4px solid #007bff;
+        }
+        
+        .intro p {
+            margin: 10px 0;
+            font-size: 1.05em;
+        }
+        
+        .section {
+            margin: 30px 0;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .step {
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        .step-number {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            width: 35px;
+            height: 35px;
+            line-height: 35px;
+            text-align: center;
+            border-radius: 50%;
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 1.1em;
+        }
+        
+        .step-title {
+            font-size: 1.15em;
+            font-weight: 600;
+            color: #0056b3;
+            margin-bottom: 15px;
+        }
+        
+        .step-content {
+            margin-left: 50px;
+            color: #555;
+        }
+        
+        .field-info {
+            background: #fff3cd;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .field-name {
+            font-weight: bold;
+            color: #856404;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .warning {
+            background: #f8d7da;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+        
+        .tip {
+            background: #d4edda;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+        
+        .code {
+            background: #f4f4f4;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            color: #d63384;
+        }
+        
+        ul, ol {
+            margin: 15px 0 15px 30px;
+        }
+        
+        li {
+            margin: 10px 0;
+            color: #555;
+        }
+        
+        .path {
+            background: #e9ecef;
+            padding: 12px 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            border-left: 3px solid #6c757d;
+            font-size: 0.95em;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #dee2e6;
+        }
+        
+        th {
+            background: #007bff;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .example {
+            background: #e7f3ff;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .example-title {
+            font-weight: bold;
+            color: #0c5460;
+            margin-bottom: 10px;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .container {
+                box-shadow: none;
+                padding: 20px;
+            }
+            
+            .section, .step {
+                page-break-inside: avoid;
+            }
+            
+            h2 {
+                page-break-before: always;
+            }
+            
+            h2:first-of-type {
+                page-break-before: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Инструкция по управлению каталогом товаров</h1>
+        <p style="color: #6c757d; font-size: 1.1em; margin-top: 10px;">Маркетплейс автозапчастей LinkAvto</p>
+        
+        <div class="intro">
+            <h3 style="margin-top: 0;">О структуре каталога</h3>
+            <p>Каталог товаров имеет <strong>3-уровневую иерархию</strong>:</p>
+            <ul style="margin-left: 20px;">
+                <li><strong>Уровень 1:</strong> Корневые категории (Легковые автомобили, Грузовики и т.д.)</li>
+                <li><strong>Уровень 2:</strong> Подкатегории (Двигатель, Трансмиссия и т.д.)</li>
+                <li><strong>Уровень 3:</strong> Под-подкатегории (ГРМ, Поршневая группа и т.д.)</li>
+            </ul>
+            <p>Все категории управляются через Django админ-панель в модели <span class="code">Category</span>.</p>
+        </div>
+
+        <h2>🎯 Часть 1: Работа с категориями</h2>
+
+        <div class="section">
+            <h3>1.1. Доступ к админ-панели</h3>
+            
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">1</span>
+                    Откройте админ-панель
+                </div>
+                <div class="step-content">
+                    <div class="path">https://ваш-домен.ru/admin/</div>
+                    <p>Введите логин и пароль суперпользователя.</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">2</span>
+                    Перейдите в раздел категорий
+                </div>
+                <div class="step-content">
+                    <p>В левой панели найдите секцию <strong>"SHOP"</strong> → кликните на <strong>"Категории (Categories)"</strong></p>
+                    <div class="path">Shop → Categories</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>1.2. Создание корневой категории (Уровень 1)</h3>
+            
+            <div class="tip">
+                <strong>📌 Важно:</strong> Корневых категорий должно быть ровно 10, они определены в коде и отображаются в меню.
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">1</span>
+                    Нажмите кнопку "Добавить категорию" (Add Category)
+                </div>
+                <div class="step-content">
+                    <p>В правом верхнем углу списка категорий.</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">2</span>
+                    Заполните обязательные поля
+                </div>
+                <div class="step-content">
+                    <div class="field-info">
+                        <span class="field-name">Название (Name):</span><br>
+                        Введите название категории, например: <span class="code">Легковые автомобили</span>
+                    </div>
+
+                    <div class="field-info">
+                        <span class="field-name">Slug:</span><br>
+                        Автоматически генерируется из названия. Используется в URL.<br>
+                        Например: <span class="code">legkovye-avtomobili</span>
+                    </div>
+
+                    <div class="field-info">
+                        <span class="field-name">Родительская категория (Parent):</span><br>
+                        <strong>Оставьте пустым!</strong> Это корневая категория.
+                    </div>
+
+                    <div class="field-info">
+                        <span class="field-name">Показывать в (Show in):</span><br>
+                        <strong>Самое важное поле!</strong> Выберите соответствующее значение из списка:
+                        <table style="margin-top: 10px;">
+                            <tr>
+                                <th>Значение</th>
+                                <th>Описание</th>
+                            </tr>
+                            <tr>
+                                <td><span class="code">cars</span></td>
+                                <td>Легковые автомобили</td>
+                            </tr>
+                            <tr>
+                                <td><span class="code">trucks</span></td>
+                                <td>Грузовики</td>
+                            </tr>
+                            <tr>
+                                <td><span class="code">moto</span></td>
+                                <td>Мототехника</td>
+                            </tr>
+                            <tr>
+                                <td><span class="code">special</span></td>
+                                <td>Спецтехника</td>
+                            </tr>
+                            <tr>
+                                <td><span class="code">accessories</span></td>
+                                <td>Аксессуары</td>
+                            </tr>
+                            <tr>
+                                <td><span class="code">chemistry</span></td>
+                                <td>Автохимия и масла</td>
+                            </tr>
+                            <tr>
+                                <td><span class="code">tools</span></td>
+                                <td>Инструменты</td>
+                            </tr>
+                            <tr>
+                                <td><span class="code">tires</span></td>
+                                <td>Шины и диски</td>
+                            </tr>
+                            <tr>
+                                <td><span class="code">electrics</span></td>
+                                <td>Автоэлектрика</td>
+                            </tr>
+                            <tr>
+                                <td><span class="code">dlya-to</span></td>
+                                <td>Для ТО</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="field-info">
+                        <span class="field-name">Активность (Is active):</span><br>
+                        Поставьте галочку ✓ — категория будет видна на сайте
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">3</span>
+                    Загрузите изображение (опционально)
+                </div>
+                <div class="step-content">
+                    <p>Раскройте секцию <strong>"Дополнительно"</strong></p>
+                    <div class="field-info">
+                        <span class="field-name">Изображение (Image):</span><br>
+                        Нажмите "Выбрать файл" и загрузите изображение категории.<br>
+                        <strong>Рекомендации:</strong>
+                        <ul>
+                            <li>Размер: минимум 300x300px</li>
+                            <li>Формат: PNG, JPG</li>
+                            <li>Вес: до 1 МБ</li>
+                        </ul>
+                    </div>
+                    <div class="tip">
+                        <strong>💡 Совет:</strong> Если не загрузить изображение, на сайте отобразится градиентный фон синего цвета с названием категории.
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">4</span>
+                    Сохраните категорию
+                </div>
+                <div class="step-content">
+                    <p>Внизу страницы нажмите <strong>"Сохранить"</strong> или <strong>"Сохранить и добавить другой объект"</strong></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>1.3. Создание подкатегории (Уровень 2)</h3>
+            
+            <div class="example">
+                <div class="example-title">Пример:</div>
+                Создадим подкатегорию "Двигатель" для категории "Легковые автомобили"
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">1</span>
+                    Нажмите "Добавить категорию"
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">2</span>
+                    Заполните поля
+                </div>
+                <div class="step-content">
+                    <div class="field-info">
+                        <span class="field-name">Название (Name):</span><br>
+                        <span class="code">Двигатель</span>
+                    </div>
+
+                    <div class="field-info">
+                        <span class="field-name">Slug:</span><br>
+                        <span class="code">dvigatel</span> (генерируется автоматически)
+                    </div>
+
+                    <div class="field-info">
+                        <span class="field-name">Родительская категория (Parent):</span><br>
+                        <strong>ВЫБЕРИТЕ корневую категорию!</strong><br>
+                        В выпадающем списке найдите и выберите: <span class="code">Легковые автомобили</span>
+                    </div>
+
+                    <div class="field-info">
+                        <span class="field-name">Показывать в (Show in):</span><br>
+                        <strong>Оставьте пустым!</strong> Это поле нужно только для корневых категорий.
+                    </div>
+
+                    <div class="field-info">
+                        <span class="field-name">Активность (Is active):</span><br>
+                        Поставьте галочку ✓
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">3</span>
+                    Сохраните
+                </div>
+            </div>
+
+            <div class="warning">
+                <strong>⚠️ Внимание:</strong> Убедитесь, что вы выбрали правильную родительскую категорию! От этого зависит, где будет отображаться подкатегория в меню.
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>1.4. Создание под-подкатегории (Уровень 3)</h3>
+            
+            <div class="example">
+                <div class="example-title">Пример:</div>
+                Создадим под-подкатегорию "ГРМ" для подкатегории "Двигатель"
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">1</span>
+                    Нажмите "Добавить категорию"
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">2</span>
+                    Заполните поля
+                </div>
+                <div class="step-content">
+                    <div class="field-info">
+                        <span class="field-name">Название (Name):</span><br>
+                        <span class="code">ГРМ</span>
+                    </div>
+
+                    <div class="field-info">
+                        <span class="field-name">Slug:</span><br>
+                        <span class="code">grm</span>
+                    </div>
+
+                    <div class="field-info">
+                        <span class="field-name">Родительская категория (Parent):</span><br>
+                        <strong>ВЫБЕРИТЕ подкатегорию!</strong><br>
+                        В выпадающем списке найдите и выберите: <span class="code">Двигатель</span><br>
+                        (Будет отображаться как <span class="code">Легковые автомобили → Двигатель</span>)
+                    </div>
+
+                    <div class="field-info">
+                        <span class="field-name">Показывать в (Show in):</span><br>
+                        <strong>Оставьте пустым!</strong>
+                    </div>
+
+                    <div class="field-info">
+                        <span class="field-name">Активность (Is active):</span><br>
+                        Поставьте галочку ✓
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">3</span>
+                    Сохраните
+                </div>
+            </div>
+        </div>
+
+        <h2>📦 Часть 2: Работа с товарами</h2>
+
+        <div class="section">
+            <h3>2.1. Создание товара</h3>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">1</span>
+                    Перейдите в раздел товаров
+                </div>
+                <div class="step-content">
+                    <div class="path">Shop → Товары (Products)</div>
+                    <p>Нажмите <strong>"Добавить товар"</strong> (Add Product)</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">2</span>
+                    Заполните основную информацию
+                </div>
+                <div class="step-content">
+                    <div class="field-info">
+                        <span class="field-name">Название (Name):</span><br>
+                        Например: <span class="code">Ремень ГРМ Gates 5521XS</span>
+                    </div>
+
+                    <div class="field-info">
+                        <span class="field-name">Артикул (SKU):</span><br>
+                        Уникальный артикул товара: <span class="code">5521XS</span>
+                    </div>
+
+                    <div class="field-info">
+                        <span class="field-name">Описание (Description):</span><br>
+                        Подробное описание товара, характеристики, применимость
+                    </div>
+
+                    <div class="field-info">
+                        <span class="field-name">Цена (Price):</span><br>
+                        Например: <span class="code">2500.00</span>
+                    </div>
+
+                    <div class="field-info">
+                        <span class="field-name">Количество на складе (Stock):</span><br>
+                        Например: <span class="code">15</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">3</span>
+                    Привяжите товар к категории
+                </div>
+                <div class="step-content">
+                    <div class="field-info">
+                        <span class="field-name">Категория (Category):</span><br>
+                        <strong>ВЫБЕРИТЕ САМУЮ НИЖНЮЮ (3-ю) КАТЕГОРИЮ!</strong><br><br>
+                        В выпадающем списке найдите нужную под-подкатегорию:<br>
+                        <span class="code">ГРМ</span><br>
+                        (Отображается как <span class="code">Легковые автомобили → Двигатель → ГРМ</span>)
+                    </div>
+
+                    <div class="warning">
+                        <strong>⚠️ Важно:</strong><br>
+                        • Товар нужно привязывать именно к <strong>под-подкатегории</strong> (3-й уровень)<br>
+                        • Не привязывайте товары к корневым категориям или подкатегориям<br>
+                        • Один товар может быть в нескольких под-подкатегориях
+                    </div>
+
+                    <div class="tip">
+                        <strong>💡 Как понять, что выбрана правильная категория?</strong><br>
+                        В названии категории должно быть 3 части через стрелку (→):<br>
+                        <span class="code">Корневая → Подкатегория → Под-подкатегория</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">4</span>
+                    Привяжите товар к бренду
+                </div>
+                <div class="step-content">
+                    <div class="field-info">
+                        <span class="field-name">Бренд автомобиля (Car Brand):</span><br>
+                        Выберите бренд из списка: <span class="code">Volkswagen</span>, <span class="code">Toyota</span> и т.д.<br>
+                        Это для легковых автомобилей.
+                    </div>
+
+                    <div class="field-info">
+                        <span class="field-name">Производитель (Manufacturer):</span><br>
+                        Производитель запчасти: <span class="code">Gates</span>, <span class="code">Bosch</span> и т.д.
+                    </div>
+
+                    <div class="tip">
+                        <strong>💡 Для разных типов техники:</strong><br>
+                        • Легковые автомобили → <span class="code">Car Brand</span><br>
+                        • Грузовики → <span class="code">Truck Brand</span><br>
+                        • Мототехника → <span class="code">Moto Brand</span><br>
+                        • Спецтехника → <span class="code">Special Brand</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">5</span>
+                    Добавьте изображение товара
+                </div>
+                <div class="step-content">
+                    <div class="field-info">
+                        <span class="field-name">Изображение (Image):</span><br>
+                        Загрузите основное фото товара<br>
+                        <strong>Рекомендации:</strong>
+                        <ul>
+                            <li>Размер: минимум 600x600px</li>
+                            <li>Формат: PNG, JPG</li>
+                            <li>Белый фон предпочтительнее</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">6</span>
+                    Укажите VIN-номер (если есть)
+                </div>
+                <div class="step-content">
+                    <div class="field-info">
+                        <span class="field-name">VIN-номер (VIN Number):</span><br>
+                        Для оригинальных запчастей: <span class="code">WVWZZZ1KZAW123456</span><br>
+                        Для некоторых аналогов VIN также может быть указан
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">7</span>
+                    Установите флаги товара (опционально)
+                </div>
+                <div class="step-content">
+                    <div class="field-info">
+                        <span class="field-name">Доступен (Is Available):</span> ✓ — товар в наличии<br>
+                        <span class="field-name">Новинка (Is New):</span> ✓ — отобразится бейдж "Новинка"<br>
+                        <span class="field-name">Рекомендуемый (Is Featured):</span> ✓ — попадет в раздел рекомендуемых<br>
+                        <span class="field-name">Оригинал (Is Original):</span> ✓ — оригинальная запчасть
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">8</span>
+                    Сохраните товар
+                </div>
+                <div class="step-content">
+                    <p>Нажмите <strong>"Сохранить"</strong> внизу страницы</p>
+                </div>
+            </div>
+        </div>
+
+        <h2>🔍 Часть 3: Проверка и управление</h2>
+
+        <div class="section">
+            <h3>3.1. Как проверить иерархию категорий</h3>
+            
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">1</span>
+                    В списке категорий
+                </div>
+                <div class="step-content">
+                    <p>В админ-панели в списке категорий обратите внимание на колонку <strong>"Родительская категория"</strong></p>
+                    <ul>
+                        <li>Корневые категории: Parent = <span class="code">(пусто)</span></li>
+                        <li>Подкатегории: Parent = <span class="code">Легковые автомобили</span></li>
+                        <li>Под-подкатегории: Parent = <span class="code">Двигатель</span></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">2</span>
+                    На фронтенде сайта
+                </div>
+                <div class="step-content">
+                    <p>Откройте сайт и нажмите кнопку <strong>"Каталог"</strong> в шапке</p>
+                    <ul>
+                        <li><strong>Десктоп:</strong> Слева корневые категории, справа сетка подкатегорий с под-подкатегориями</li>
+                        <li><strong>Мобильная версия:</strong> Карточки корневых категорий (3 в ряд)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>3.2. Редактирование категорий и товаров</h3>
+            
+            <div class="step">
+                <div class="step-content">
+                    <p>В списке категорий/товаров просто кликните на нужную запись для редактирования</p>
+                    <p>Измените нужные поля и нажмите <strong>"Сохранить"</strong></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>3.3. Удаление категорий</h3>
+            
+            <div class="warning">
+                <strong>⚠️ Осторожно!</strong> При удалении родительской категории удаляются все её дочерние категории и товары!
+            </div>
+
+            <div class="step">
+                <div class="step-content">
+                    <p>Выделите нужные категории галочками слева</p>
+                    <p>В выпадающем списке "Действие" выберите <strong>"Удалить выбранные объекты"</strong></p>
+                    <p>Нажмите <strong>"Выполнить"</strong></p>
+                    <p>Подтвердите удаление</p>
+                </div>
+            </div>
+        </div>
+
+        <h2>📊 Часть 4: Полезные команды Django</h2>
+
+        <div class="section">
+            <h3>4.1. Создание тестовых данных через консоль</h3>
+            
+            <div class="step">
+                <div class="step-title">Создание корневых категорий
+                </div>
+                <div class="step-content">
+                    <div class="path">python manage.py create_root_categories</div>
+                    <p>Создает все 10 корневых категорий автоматически</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">Создание подкатегорий
+                </div>
+                <div class="step-content">
+                    <div class="path">python manage.py create_car_truck_subcategories</div>
+                    <p>Создает подкатегории для легковых автомобилей и грузовиков</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">Создание под-подкатегорий
+                </div>
+                <div class="step-content">
+                    <div class="path">python manage.py create_subsubcategories</div>
+                    <p>Создает под-подкатегории для существующих подкатегорий</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">Создание тестовых товаров
+                </div>
+                <div class="step-content">
+                    <div class="path">python manage.py create_test_products</div>
+                    <p>Создает ~300 тестовых товаров с правильной привязкой к категориям</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">Добавление VIN-номеров
+                </div>
+                <div class="step-content">
+                    <div class="path">python manage.py add_vin_to_products</div>
+                    <p>Добавляет VIN-номера к существующим товарам</p>
+                </div>
+            </div>
+        </div>
+
+        <h2>❓ Часть 5: Частые вопросы</h2>
+
+        <div class="section">
+            <h3>Q: Почему категория не отображается в меню?</h3>
+            <div class="step-content">
+                <p><strong>A:</strong> Проверьте:</p>
+                <ul>
+                    <li>Стоит ли галочка <span class="code">Is Active</span></li>
+                    <li>Правильно ли заполнено поле <span class="code">Show in</span> (для корневых категорий)</li>
+                    <li>Правильно ли выбрана <span class="code">Parent</span> категория (для подкатегорий)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Q: Товар не отображается в категории</h3>
+            <div class="step-content">
+                <p><strong>A:</strong> Убедитесь:</p>
+                <ul>
+                    <li>Товар привязан именно к <strong>под-подкатегории</strong> (3-й уровень)</li>
+                    <li>У товара стоит галочка <span class="code">Is Available</span></li>
+                    <li>Категория товара активна (<span class="code">Is Active</span>)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Q: Как добавить новую корневую категорию?</h3>
+            <div class="step-content">
+                <p><strong>A:</strong> Корневые категории жестко заданы в коде (10 штук). Чтобы добавить новую:</p>
+                <ol>
+                    <li>Откройте файл <span class="code">shop/models.py</span></li>
+                    <li>Найдите <span class="code">SHOW_IN_CHOICES</span> в модели <span class="code">Category</span></li>
+                    <li>Добавьте новую пару <span class="code">('код', 'Название')</span></li>
+                    <li>Сделайте миграции: <span class="code">python manage.py makemigrations</span></li>
+                    <li>Примените: <span class="code">python manage.py migrate</span></li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Q: Как массово добавить товары?</h3>
+            <div class="step-content">
+                <p><strong>A:</strong> Есть несколько способов:</p>
+                <ul>
+                    <li>Использовать Django админку с функцией импорта (если установлен django-import-export)</li>
+                    <li>Написать свою management команду по аналогии с <span class="code">create_test_products</span></li>
+                    <li>Использовать API (если реализовано)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div style="margin-top: 60px; padding-top: 30px; border-top: 2px solid #dee2e6; text-align: center; color: #6c757d;">
+            <p>© 2025 LinkAvto — Маркетплейс автозапчастей</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">Документация актуальна на: {{ current_date }}</p>
+        </div>
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,793 @@
+
+{% extends 'shop/base.html' %}
+{% load static %}
+
+{% block content %}
+{% include 'accounts/modals/auth_modals.html' %}
+
+<div class="container py-5">
+    <h2 class="mb-4">
+        Избранное
+    </h2>
+
+    <div class="d-flex justify-content-between align-items-center p-3  rounded-3 mb-4">
+        <div class="d-flex align-items-center">
+            <span class="badge bg-dark rounded-pill me-2" style="background-color: black;">{{ favorites|length }}</span>
+            <span class="text-muted small">товаров</span>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+            <!-- Фильтр "В наличии" -->
+            <!--<div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="inStockFilter"
+                       onchange="filterInStock(this.checked)">
+                <label class="form-check-label " for="inStockFilter">В наличии</label>
+            </div>-->
+
+            <!-- Сортировка -->
+            <div class="dropdown">
+                <button class="btn btn-outline-dark btn-sm dropdown-toggle"
+                        type="button"
+                        id="sortDropdown"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                    {% if request.GET.sort == "price_asc" %}По возрастанию цены
+                    {% elif request.GET.sort == "price_desc" %}По убыванию цены
+                    {% elif request.GET.sort == "newest" %}Сначала новые
+                    {% elif request.GET.sort == "popular" %}По популярности
+                    {% else %}Сортировка{% endif %}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="sortDropdown">
+                    <li><a class="dropdown-item main-sort-option" href="#" data-sort="popular">По популярности</a></li>
+                    <li><a class="dropdown-item main-sort-option" href="#" data-sort="price_asc">По возрастанию цены</a></li>
+                    <li><a class="dropdown-item main-sort-option" href="#" data-sort="price_desc">По убыванию цены</a></li>
+                    <li><a class="dropdown-item main-sort-option" href="#" data-sort="newest">Сначала новые</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    {% if favorites %}
+    <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-4" id="favoritesGrid">
+        {% for product in favorites %}
+        <div class="col product-item " data-stock="{{ product.stock }}">
+            <!-- Используем такую же карточку товара, как в product_card.html -->
+           <div class="card h-100 product-card border-0 position-relative product-card-container " style="height: 120px; width: 220px;">
+                <!-- Изображение товара -->
+                <a href="{{ product.get_absolute_url }}" class="text-decoration-none">
+                    <div class="image-container bg-light rounded-top-4 d-flex align-items-center justify-content-center"
+                         style="height: 150px; overflow: hidden;">
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}"
+                             class="img-fluid transition" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                    </div>
+                </a>
+
+                <!-- Кнопка избранного - всегда красная в этом шаблоне -->
+                <button class="btn-favorite position-absolute top-0 end-0 m-2"
+                        data-product-id="{{ product.id }}"
+                        onclick="handleFavoriteClick(this, {{ product.id }})"
+                        aria-label="Удалить из избранного"
+                        style="background: none; border: none; box-shadow: none;">
+                    <i class="fas fa-heart text-danger"></i>
+                </button>
+               {% if product.is_original %}
+                <div class="position-absolute top-0 start-0 m-2">
+                    <span class="badge bg-warning text-dark px-2 py-1" style="font-size: 0.7rem; font-weight: 600;">
+                        <i class="fas fa-certificate me-1"></i>ОРИГИНАЛ
+                    </span>
+                </div>
+                {% endif %}
+
+
+                <!-- Тело карточки -->
+                <div class="card-body p-2 d-flex flex-column" style="height: 200px; overflow: hidden;">
+                    <!-- Цена - фиксированная высота -->
+                    <div class="fs-6 fw-bold text-dark mb-2" style="height: 32px;">
+                        {% if product.old_price %}
+                            <span class="text-decoration-line-through text-muted me-2">
+                                {{ product.old_price|floatformat:"0" }} ₽
+                            </span>
+                        {% endif %}
+                        {{ product.price|floatformat:"0" }} ₽
+                        {% if product.old_price %}
+                            <span class="badge  text-danger fs-7 fw-bold px-2 py-1 ms-2">
+                                -{{ product.get_discount }}%
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Название - увеличенная высота для длинных названий -->
+                    <div class="mb-1" style="min-height: 48px; max-height: 52px; overflow: hidden;">
+                        <h5 class="card-title fs-6 m-0" style="line-height: 1.3;">
+                            <a href="{{ product.get_absolute_url }}" class="text-decoration-none text-dark line-clamp-2">
+                                {{ product.name }}
+                            </a>
+                        </h5>
+                    </div>
+
+
+
+                    <!-- Рейтинг - фиксированная высота -->
+                    <div class="mb-1" style="height: 24px;">
+                        {% if product.review_count > 0 %}
+                        <div class="d-flex align-items-center">
+                            <div class="star-rating me-1">
+                                {{ product.get_rating_stars }}
+                            </div>
+                            <small class="text-muted">({{ product.review_count }})</small>
+                        </div>
+                        {% else %}
+                        <div class="text-muted small">Нет отзывов</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Наличие - фиксированная высота -->
+                    <div class="mb-2 small" style="height: 24px;">
+                        {% if product.stock > 10 %}
+                          <span class="badge bg-success-soft text-success">В наличии</span>
+                        {% elif product.stock > 0 %}
+                          <span class="badge bg-warning-soft text-warning">Осталось {{ product.stock }} шт.</span>
+                        {% else %}
+                          <span class="badge bg-secondary-soft text-muted">Нет в наличии</span>
+                        {% endif %}
+                    </div>
+
+
+
+                    <!-- ТАЙМЕР АКЦИИ - фиксированная высота -->
+                    {% if product.has_active_sale and product.time_until_sale_end %}
+                    <div class="sale-timer mt-auto" style="height: 40px;">
+                        <div class="progress" style="height: 4px;">
+                            <div class="progress-bar bg-danger" role="progressbar"
+                                 style="width: {{ product.sale_progress }}%"
+                                 aria-valuenow="{{ product.sale_progress }}"
+                                 aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                        <small class="text-danger d-block mt-1">
+                            <i class="fas fa-clock me-1"></i>
+                            <span class="sale-countdown" data-end-time="{{ product.time_until_sale_end }}">
+                                Акция заканчивается
+                            </span>
+                        </small>
+                    </div>
+                    {% else %}
+                    <!-- Пустое место если таймера нет -->
+                    <div style="height: 40px;"></div>
+                    {% endif %}
+                </div>
+
+                <!-- Футер карточки -->
+                <div class="card-footer bg-white border-top-0 p-0 w-100" style="position: absolute; bottom: 0;">
+                    <button class="btn btn-dark btn-sm w-100 add-to-cart"
+                            data-product-id="{{ product.id }}"
+                            {% if product.stock == 0 %}disabled{% endif %}
+                            id="cart-button-{{ product.id }}"
+                            style="border-radius: 12px !important;
+                                   font-size: 0.8rem;
+                                   padding: 0.5rem 0;
+                                   margin: 0 8px 8px 8px;
+                                   max-width: calc(100% - 16px);
+                                   font-weight: 600;
+                                   transition: all 0.2s ease;
+                                   min-height: 38px;">
+                        <i class="bi bi-cart3 me-1"></i>
+                        <span class="button-text">
+                            {% if product.stock > 0 %}В корзину{% else %}Нет в наличии{% endif %}
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+    <img src="{% static 'img/empty-favorites.png' %}" alt="Пустое избранное" class="img-fluid mb-3" style="max-width: 300px;">
+        <h4 class="mb-3">Список избранного пуст</h4>
+        <p class="text-muted mb-4">Добавляйте товары в избранное, чтобы не потерять</p>
+        <a href="{% url 'shop:index' %}" class="btn btn-dark mt-3">
+            Перейти в каталог
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Секции похожих и рекомендуемых товаров -->
+<div class="container mt-5">
+    <!-- Похожие товары -->
+    {% if similar_products %}
+    <section class="similar-products mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold mb-0">Похожие товары</h3>
+            {% if similar_products|length > 5 %}
+            <a href="#" class="btn btn-outline-dark btn-sm" >
+                Смотреть все
+            </a>
+            {% endif %}
+        </div>
+
+        <div class="row g-4">
+            {% for similar_product in similar_products|slice:":5" %}
+            <div class="col-xl col-lg col-md-4 col-sm-6 col-6">
+                {% include 'shop/product_card.html' with product=similar_product %}
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if recommended_products %}
+    <section class="recommended-products">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold mb-0">Рекомендуем</h3>
+        </div>
+
+        <div class="row g-4">
+            {% for recommended_product in recommended_products|slice:":5" %}
+            <div class="col-xl col-lg col-md-4 col-sm-6 col-6">
+                {% include 'shop/product_card.html' with product=recommended_product %}
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% include 'shop/back_to_top.html' %}
+
+<style>
+/* Стили для секций товаров в избранном */
+.similar-products,
+.recommended-products {
+    background: #fff;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    margin-bottom: 2rem;
+}
+
+.similar-products h3,
+.recommended-products h3 {
+    color: #1a1a1a;
+    font-size: 1.5rem;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .similar-products,
+    .recommended-products {
+        padding: 1rem;
+        margin-left: -1rem;
+        margin-right: -1rem;
+        border-radius: 0;
+    }
+
+    .similar-products h3,
+    .recommended-products h3 {
+        font-size: 1.3rem;
+    }
+}
+</style>
+<style>
+/* Стили для секций товаров в избранном */
+.similar-products,
+.recommended-products {
+    background: #fff;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    margin-bottom: 2rem;
+}
+
+.similar-products h3,
+.recommended-products h3 {
+    color: #1a1a1a;
+    font-size: 1.5rem;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .similar-products,
+    .recommended-products {
+        padding: 1rem;
+        margin-left: -1rem;
+        margin-right: -1rem;
+        border-radius: 0;
+    }
+
+    .similar-products h3,
+    .recommended-products h3 {
+        font-size: 1.3rem;
+    }
+}
+</style>
+<style>
+    /* Исправляем только z-index для dropdown сортировки */
+    .dropdown-menu {
+        z-index: 1020 !important; /* ниже шапки (1030), но выше контента */
+    }
+    
+    .dropdown-menu.show {
+        z-index: 1020 !important; /* ниже шапки (1030), но выше контента */
+    }
+    
+    /* Убираем возможные конфликтующие стили */
+    .dropdown-toggle {
+        pointer-events: auto !important;
+    }
+    
+    .dropdown {
+        position: relative !important;
+    }
+    
+    
+    /* Только z-index для dropdown в избранном */
+    #sortDropdown + .dropdown-menu {
+        z-index: 1020 !important; /* ниже шапки (1030), но выше контента */
+    }
+    
+    #sortDropdown + .dropdown-menu.show {
+        z-index: 1020 !important; /* ниже шапки (1030), но выше контента */
+    }
+    
+    /* Стили для звезд рейтинга */
+    .star-rating {
+        font-size: 0.8rem;
+        line-height: 1;
+    }
+
+    /* Стиль для старой цены */
+    .text-decoration-line-through {
+        text-decoration: line-through;
+    }
+
+    /* Остальные существующие стили */
+    .btn-cart-success {
+        background-color: #c1e7ff;
+        border-color: #c1e7ff;
+        color: #000;
+    }
+
+    /* Добавляем салатовый цвет для кнопки */
+    .btn-cart-success {
+        background-color: #c1e7ff;
+        border-color: #c1e7ff;
+        color: #000;
+    }
+
+    .btn-cart-success:hover {
+        background-color: #c1e7ff !important;
+        border-color: #c1e7ff !important;
+        color: #000 !important;
+    }
+
+    /* Адаптация стилей для маленькой карточки */
+    .product-card {
+        position: relative;
+        padding-bottom: 28px;
+    }
+    .add-to-cart:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Hover для кнопки корзины - остается синей */
+    .add-to-cart.btn-primary:hover {
+        background-color: #c1e7ff !important;
+        border-color: #c1e7ff !important;
+        color: white !important;
+    }
+    
+    /* Hover для кнопки "В корзине" - остается светло-голубой */
+    .add-to-cart.btn-cart-success:hover {
+        background-color: #c1e7ff !important;
+        border-color: #c1e7ff !important;
+        color: #000 !important;
+    }
+
+    /* Анимация для сердца */
+    @keyframes heartBeat {
+        0% { transform: scale(1); }
+        25% { transform: scale(1.2); }
+        50% { transform: scale(0.9); }
+        75% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+
+    .heart-beat {
+        animation: heartBeat 0.6s ease;
+    }
+
+    .btn-favorite {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .btn-favorite:hover {
+        transform: scale(1.1);
+        background-color: rgba(255, 255, 255, 1);
+    }
+
+    .btn-favorite i {
+        transition: all 0.2s ease;
+    }
+
+    /* Стили для панели управления */
+    .bg-light {
+        background-color: #f8f9fa !important;
+    }
+
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        word-break: break-word;
+        line-height: 1.3 !important;
+        max-height: 2.6em; /* 2 строки * line-height */
+    }
+    
+    .card-title {
+        font-size: 0.9rem !important;
+    }
+
+    .text-truncate {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    /* Базовые стили для карточки - веб версия */
+    .product-card-container {
+        height: 120px;
+        width: 220px;
+    }
+
+    /* Мобильная версия */
+    @media (max-width: 767.98px) {
+        .product-card-container {
+            width: 170px !important;
+        }
+
+        /* Оптимизация для мобильных */
+        .card-body {
+            padding: 0.5rem !important;
+        }
+
+        .fs-6 {
+            font-size: 0.8rem !important;
+        }
+    }
+
+    /* Очень маленькие экраны */
+    @media (max-width: 375px) {
+        .product-card-container {
+            width: 170px !important;
+        }
+    }
+</style>
+
+<script>
+// Функция фильтрации по наличию
+function filterInStock(showOnlyInStock) {
+    const productItems = document.querySelectorAll('.product-item');
+
+    productItems.forEach(item => {
+        const stock = parseInt(item.getAttribute('data-stock'));
+        if (showOnlyInStock && stock === 0) {
+            item.style.display = 'none';
+        } else {
+            item.style.display = 'block';
+        }
+    });
+}
+
+// Функция сортировки
+function sortFavorites(sortType) {
+    console.log('sortFavorites called with:', sortType);
+    const favoritesGrid = document.getElementById('favoritesGrid');
+    const productItems = Array.from(document.querySelectorAll('.product-item'));
+    
+    console.log('Found favoritesGrid:', !!favoritesGrid);
+    console.log('Found product items:', productItems.length);
+
+    productItems.sort((a, b) => {
+        // Получаем текущую цену (только цифры из основного элемента цены)
+        const getCurrentPrice = (element) => {
+            const priceElement = element.querySelector('.text-primary');
+            if (!priceElement) {
+                console.log('No price element found in:', element);
+                return 0;
+            }
+
+            // Берем только текст основного элемента цены (игнорируем старые цены и скидки)
+            const priceText = priceElement.childNodes[0]?.nodeValue || priceElement.textContent;
+            const price = parseFloat(priceText.replace(/[^\d]/g, '')) || 0;
+            console.log('Price extracted:', priceText, '->', price);
+            return price;
+        };
+
+        const priceA = getCurrentPrice(a);
+        const priceB = getCurrentPrice(b);
+
+        console.log('Comparing items for sort type:', sortType);
+        switch(sortType) {
+            case 'price_asc':
+                console.log('Price asc comparison:', priceA, 'vs', priceB);
+                return priceA - priceB;
+            case 'price_desc':
+                console.log('Price desc comparison:', priceB, 'vs', priceA);
+                return priceB - priceA;
+            case 'newest':
+                // Сортировка по ID (предполагаем, что новые товары имеют больший ID)
+                const idA = parseInt(a.querySelector('.btn-favorite')?.dataset.productId) || 0;
+                const idB = parseInt(b.querySelector('.btn-favorite')?.dataset.productId) || 0;
+                console.log('Newest comparison:', idB, 'vs', idA);
+                return idB - idA; // Новые первыми (больший ID)
+            case 'popular':
+                // Сортировка по количеству отзывов
+                const getReviewCount = (element) => {
+                    const reviewText = element.querySelector('.text-muted')?.textContent || '';
+                    const match = reviewText.match(/\((\d+)\)/);
+                    return match ? parseInt(match[1]) : 0;
+                };
+                const reviewA = getReviewCount(a);
+                const reviewB = getReviewCount(b);
+                console.log('Popular comparison:', reviewB, 'vs', reviewA);
+                return reviewB - reviewA; // Популярные первыми
+            default:
+                console.log('Default sort (no change)');
+                return 0; // По умолчанию - порядок как в HTML
+        }
+    });
+
+    // Очищаем и переставляем элементы
+    console.log('Reordering items...');
+    favoritesGrid.innerHTML = '';
+    productItems.forEach((item, index) => {
+        favoritesGrid.appendChild(item);
+        console.log(`Item ${index + 1} added to grid`);
+    });
+    console.log('Sort completed');
+}
+
+// Обработчики для сортировки
+console.log('Script loaded, waiting for DOM...');
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Favorites page loaded, using global dropdown initialization...');
+    
+    const sortOptions = document.querySelectorAll('.main-sort-option');
+
+    sortOptions.forEach((option, index) => {
+        option.addEventListener('click', function(e) {
+            e.preventDefault();
+            const sortType = this.getAttribute('data-sort');
+            
+            sortFavorites(sortType);
+
+            // Обновляем текст кнопки сортировки
+            const sortButton = document.getElementById('sortDropdown');
+            sortButton.textContent = this.textContent;
+
+            // Сохраняем выбранную сортировку в URL
+            const url = new URL(window.location);
+            if (sortType) {
+                url.searchParams.set('sort', sortType);
+            } else {
+                url.searchParams.delete('sort');
+            }
+            window.history.replaceState({}, '', url);
+            
+            // Закрываем dropdown после выбора
+            const dropdown = bootstrap.Dropdown.getInstance(document.getElementById('sortDropdown'));
+            if (dropdown) {
+                dropdown.hide();
+            }
+        });
+    });
+
+    // Применяем сортировку из URL при загрузке
+    const urlParams = new URLSearchParams(window.location.search);
+    const sortParam = urlParams.get('sort');
+    if (sortParam) {
+        // Находим соответствующий option и применяем сортировку
+        const option = document.querySelector(`.main-sort-option[data-sort="${sortParam}"]`);
+        if (option) {
+            sortFavorites(sortParam);
+            document.getElementById('sortDropdown').textContent = option.textContent;
+        }
+    }
+
+    // Инициализация состояний корзины
+    initializeCartStates();
+    setupCartButtons();
+});
+
+// Функции для работы с корзиной (перенесены из product_card.html)
+function updateCartButton(button, isInCart) {
+    if (isInCart) {
+        button.classList.remove('btn-primary');
+        button.classList.add('btn-cart-success');
+        const buttonText = button.querySelector('.button-text');
+        if (buttonText) buttonText.textContent = 'В корзине';
+        const icon = button.querySelector('i');
+        if (icon) icon.className = 'bi bi-cart-check me-1';
+        button.removeAttribute('disabled');
+    } else {
+        button.classList.remove('btn-cart-success');
+        button.classList.add('btn-primary');
+        const buttonText = button.querySelector('.button-text');
+        if (buttonText) buttonText.textContent = 'В корзину';
+        const icon = button.querySelector('i');
+        if (icon) icon.className = 'bi bi-cart3 me-1';
+        button.removeAttribute('disabled');
+    }
+
+    // Добавляем легкую анимацию для визуальной обратной связи
+    button.classList.add('cart-pulse');
+    setTimeout(() => button.classList.remove('cart-pulse'), 200);
+}
+
+function initializeCartStates() {
+    // Проверка корзины с сервера
+    fetch('/cart/get_cart_items/', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.items) {
+            data.items.forEach(item => {
+                const button = document.querySelector(`.add-to-cart[data-product-id="${item.product_id}"]`);
+                if (button) updateCartButton(button, true);
+            });
+        }
+    })
+    .catch(console.error);
+}
+
+function setupCartButtons() {
+    document.querySelectorAll('.add-to-cart').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const productId = this.getAttribute('data-product-id');
+            const isInCart = this.classList.contains('btn-cart-success');
+
+            if (isInCart) {
+                window.location.href = "{% url 'cart:cart_detail' %}";
+                return;
+            }
+
+            fetch(`/cart/add/${productId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({quantity: 1})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateCartButton(this, true);
+
+                    // ОБНОВЛЯЕМ СЧЕТЧИК КОРЗИНЫ В ШАПКЕ
+                    if (typeof refreshCartCounter === 'function') {
+                        refreshCartCounter();
+                    }
+                } else {
+                    showToast('Ошибка при добавлении в корзину');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Ошибка при добавлении в корзину');
+            });
+        });
+    });
+}
+
+// Функция для работы с избранным (с анимацией удаления карточки)
+function handleFavoriteClick(button, productId) {
+    {% if not user.is_authenticated %}
+        const authModal = new bootstrap.Modal(document.getElementById('authModal'));
+        authModal.show();
+        return;
+    {% endif %}
+
+    const icon = button.querySelector('i');
+
+    // Визуальное изменение - мгновенное
+    icon.classList.add('heart-beat');
+
+    // Отправляем запрос на сервер
+    fetch(`/favorites/toggle/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.action === 'removed') {
+                // Анимация удаления карточки
+                const card = button.closest('.col');
+                card.style.opacity = '0';
+                card.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => {
+                    card.remove();
+                    // Если не осталось карточек, перезагружаем страницу
+                    if(document.querySelectorAll('.col').length === 0) {
+                        location.reload();
+                    }
+                }, 300);
+            }
+        } else {
+            showToast('Ошибка при удалении из избранного');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Ошибка при удалении из избранного');
+    })
+    .finally(() => {
+        setTimeout(() => {
+            icon.classList.remove('heart-beat');
+        }, 400);
+    });
+}
+
+function showToast(message) {
+    // Реализуйте вашу систему уведомлений
+    console.log(message);
+    // Можно добавить красивый toast здесь
+    const toast = document.createElement('div');
+    toast.className = 'position-fixed bottom-0 end-0 p-3 bg-success text-white';
+    toast.style.zIndex = '9999';
+    toast.style.borderRadius = '8px';
+    toast.style.margin = '10px';
+    toast.innerHTML = `
+        <div class="toast show" role="alert">
+            <div class="toast-body">
+                ${message}
+            </div>
+        </div>
+    `;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 3000);
+}
+</script>
+
+<!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+    (function(m,e,t,r,i,k,a){
+        m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+        m[i].l=1*new Date();
+        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+    })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=105970773', 'ym');
+
+    ym(105970773, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/105970773" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
+
+
+
+
+{% endblock %}

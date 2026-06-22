@@ -1,0 +1,904 @@
+{% load custom_tags %}
+<head>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
+<script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+</head>
+
+<div class="share-mobile-menu" id="mobileShareMenu">
+    <div class="share-mobile-header">
+        <h6 class="mb-0">Поделиться товаром</h6>
+        <button type="button" class="share-close-btn" onclick="toggleMobileShareMenu()">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <div class="share-mobile-content">
+        <a href="https://vk.com/share.php?url={{ request.build_absolute_uri|urlencode }}"
+           class="share-mobile-option" target="_blank" onclick="toggleMobileShareMenu()">
+            <div class="share-icon vk">
+                <i class="bi bi-vimeo"></i>
+            </div>
+            <span>ВКонтакте</span>
+        </a>
+        <a href="https://t.me/share/url?url={{ request.build_absolute_uri|urlencode }}&text={{ product.name|urlencode }}"
+           class="share-mobile-option" target="_blank" onclick="toggleMobileShareMenu()">
+            <div class="share-icon telegram">
+                <i class="bi bi-telegram"></i>
+            </div>
+            <span>Telegram</span>
+        </a>
+        <a href="https://max./?text={{ product.name|urlencode }}%20{{ request.build_absolute_uri|urlencode }}"
+           class="share-mobile-option" target="_blank" onclick="toggleMobileShareMenu()">
+            <div class="share-icon MAX">
+                <img src="https://logo-teka.com/wp-content/uploads/2025/07/max-messenger-sign-logo.svg" alt="SVG logo Max" style="width: 100%; height: 100%; min-width: 17px; min-height: 20px;" />
+            </div>
+            <span>MAX</span>
+        </a>
+        <button class="share-mobile-option" onclick="copyMobileLink()">
+            <div class="share-icon link">
+                <i class="bi bi-link-45deg"></i>
+            </div>
+            <span>Копировать ссылку</span>
+        </button>
+    </div>
+</div>
+
+<div class="mobile-product-gallery">
+    <div class="mobile-gallery-actions">
+        <div class="d-flex">
+            <button class="btn-back-mobile" onclick="history.back()" aria-label="Назад">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn-favorite-mobile {% if is_favorite %}active{% endif %}"
+                    data-product-id="{{ product.id }}"
+                    onclick="handleFavoriteClick(this, {{ product.id }})"
+                    aria-label="{% if is_favorite %}Удалить из избранного{% else %}Добавить в избранное{% endif %}">
+                <i class="{% if is_favorite %}fas text-danger{% else %}far{% endif %} fa-heart"></i>
+            </button>
+            <button class="btn-share-mobile" onclick="toggleMobileShareMenu()" aria-label="Поделиться">
+                <i class="bi bi-share"></i>
+            </button>
+        </div>
+    </div>
+
+    {% with all_images=product.get_all_images %}
+    <div class="swiper-container mobileProductSwiper">
+        <div class="swiper-wrapper">
+            {% if all_images|length > 0 %}
+                {% for img_data in all_images %}
+                    {% if img_data.url and img_data.url|length > 0 %}
+                    <div class="swiper-slide">
+                        <div class="gallery-image-container">
+                            <img src="{{ img_data.url }}" class="gallery-image" alt="{{ img_data.alt }}">
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </div>
+        {% if all_images|length > 1 %}
+        
+        {% endif %}
+    </div>
+    {% endwith %}
+</div>
+
+<div class="mobile-product-info">
+    <h1 class="mobile-product-title fw-bold mb-2">{{ product.name }}</h1>
+    {% if product.is_original %}
+    <div class="mb-2">
+        <span class="badge bg-warning text-dark px-2 py-1" style="font-size: 0.8rem; font-weight: 600;">
+            <i class="fas fa-certificate me-1"></i>ОРИГИНАЛ
+        </span>
+    </div>
+    {% endif %}
+
+    <div class="mobile-product-meta mb-3" style="display: flex; flex-direction: column;">
+       <div> 
+        <span class="text-muted small me-2">Артикул:</span><span class="fw-medium me-2">{{ product.part_number }}</span>
+        <i class="bi bi-files text-muted cursor-pointer copy-icon" data-text="{{ product.part_number }}" title="Скопировать артикул"></i>
+       </div>
+        {% if product.vin %}
+        <div><span class="text-muted small ms-2 me-2">VIN: </span><span class="fw-medium me-2">{{ product.vin }}</span>
+        <i class="bi bi-files text-muted cursor-pointer copy-icon" data-text="{{ product.vin }}" title="Скопировать VIN"></i>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="mobile-fixed-bottom-bar d-md-none">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-between py-3">
+            <div class="mobile-price-fixed">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="fw-bold fs-5">{{ product.price|floatformat:"0" }} ₽</div>
+                    {% if product.old_price %}
+                    <span class="badge bg-danger fs-7">-{{ product.get_discount }}%</span>
+                    {% endif %}
+                </div>
+                {% if product.old_price %}
+                <div class="text-decoration-line-through text-muted small">{{ product.old_price|floatformat:"0" }} ₽</div>
+                {% endif %}
+            </div>
+            <button class="btn btn-lg mobile-add-to-cart {% if is_in_cart %}btn-cart-success{% else %}btn-dark{% endif %}"
+                    data-product-id="{{ product.id }}"
+                    id="mobile-cart-button"
+                    onclick="handleCartClick(this, {{ product.id }})">
+                <i class="bi {% if is_in_cart %}bi-cart-check{% else %}bi-cart3{% endif %} me-2"></i>
+                {% if is_in_cart %}В корзине{% else %}В корзину{% endif %}
+            </button>
+        </div>
+    </div>
+</div>
+
+{% include 'accounts/modals/auth_modals.html' %}
+
+<div class="modal fade" id="mobileReviewsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen">
+        <div class="modal-content">
+            <div class="modal-header position-relative">
+                <h5 class="modal-title fw-bold text-center w-100">Отзывы о товаре</h5>
+                <button type="button" class="share-close-btn position-absolute" data-bs-dismiss="modal" aria-label="Close" style="top: 1rem; right: 1rem;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="mobile-rating-detail mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-5">
+                            <div class="display-4 fw-bold text-center text-primary">{{ product.get_average_rating|floatformat:1 }}/5</div>
+                            <div class="star-rating justify-content-center mb-2">{{ product.get_rating_stars }}</div>
+                            <div class="text-muted text-center small">{{ product.review_count }} отзывов</div>
+                        </div>
+                        <div class="col-7">
+                            {% for i in "54321" %}
+                            <div class="rating-row d-flex align-items-center mb-2">
+                                <span class="small me-2" style="min-width: 20px;">{{ i }}★</span>
+                                <div class="progress flex-grow-1" style="height: 6px; background: #f0f0f0;">
+                                    <div class="progress-bar bg-warning" style="width: {{ product.get_rating_percentage|get_item:i }}%;"></div>
+                                </div>
+                                <span class="small text-muted ms-2" style="min-width: 30px;">{{ product.get_rating_distribution|get_item:i }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                {% if product.review_count > 0 %}
+                <div class="mobile-reviews-list">
+                    {% for review in product.get_published_reviews|slice:":5" %}
+                    <div class="mobile-review-item mb-3 p-3 rounded-3 border-0 bg-light">
+                        <div class="d-flex justify-content-between mb-2">
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 36px; height: 36px;">
+                                    <i class="bi bi-person text-muted"></i>
+                                </div>
+                                <div class="ms-2">
+                                    <div class="fw-medium small">{% if review.user %}{{ review.user.get_full_name|default:review.user.username }}{% else %}Анонимный пользователь{% endif %}</div>
+                                    <small class="text-muted">{{ review.created_at|date:"d.m.Y" }}</small>
+                                </div>
+                            </div>
+                            <div class="star-rating">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= review.rating %}
+                                        <i class="fas fa-star text-warning small"></i>
+                                    {% else %}
+                                        <i class="far fa-star text-warning small"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% if review.comment %}
+                        <p class="mb-2 small">{{ review.comment|truncatewords:30 }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="text-center mt-4">
+                    <button class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#mobileAddReviewModal" data-bs-dismiss="modal">
+                        Оставить отзыв
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if user.is_authenticated %}
+<div class="modal fade" id="mobileAddReviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header position-relative">
+                <h5 class="modal-title fw-bold">Ваш отзыв</h5>
+                <button type="button" class="share-close-btn position-absolute" data-bs-dismiss="modal" aria-label="Close" style="top: 1rem; right: 1rem;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'shop:add_review' product.slug %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Оценка</label>
+                        <div class="star-rating-input">
+                            {% for i in "54321" %}
+                            <input type="radio" id="mobile-star{{ i }}" name="rating" value="{{ i }}" {% if forloop.first %}checked{% endif %} required>
+                            <label for="mobile-star{{ i }}" title="{{ i }} звезды">
+                                <i class="far fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Комментарий</label>
+                        <textarea class="form-control" name="comment" rows="4" placeholder="Поделитесь вашим мнением..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Отправить отзыв</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<style>
+@media (max-width: 759px){
+    .product-card-container{
+        width: 40vw !important;
+    }
+}
+
+.btn-back-mobile {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: white;
+    border: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    transition: all 0.2s ease;
+    color: #212529;
+    z-index: 10;
+}
+
+.btn-back-mobile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    background: #f8f9fa;
+}
+
+.mobile-fixed-bottom-bar {
+    position: fixed;
+    bottom: 70px;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #e9ecef;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+    z-index: 1600;
+    display: block !important;
+}
+
+.modal-backdrop {
+    z-index: 1050 !important;
+}
+
+.modal {
+    z-index: 9999 !important;
+}
+
+.mobile-fixed-bottom-bar {
+    z-index: 1040 !important;
+}
+
+.mobile-add-to-cart {
+    border-radius: 14px;
+    padding: 14px 20px;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.mobile-price-fixed {
+    line-height: 1.2;
+}
+
+.mobile-product-gallery {
+    margin: 0;
+    position: relative;
+    width: 100%;
+    overflow-x: hidden !important;
+}
+
+.mobile-gallery-actions {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+}
+
+.mobile-gallery-actions .btn-back-mobile,
+.mobile-gallery-actions .btn-favorite-mobile,
+.mobile-gallery-actions .btn-share-mobile {
+    pointer-events: auto;
+}
+
+.mobile-gallery-actions .btn-favorite-mobile,
+.mobile-gallery-actions .btn-share-mobile {
+    background: rgba(255,255,255,0.95);
+    border: 1px solid #e9ecef;
+}
+
+.btn-favorite-mobile,
+.btn-share-mobile {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: white;
+    border: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    transition: all 0.2s ease;
+    color: #212529;
+}
+
+.btn-favorite-mobile:hover,
+.btn-share-mobile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+.btn-favorite-mobile.active {
+    color: #dc3545 !important;
+}
+
+.swiper-container {
+    width: 100%;
+    height: 320px;
+    overflow: hidden !important;
+    position: relative;
+}
+
+.swiper-wrapper {
+    display: flex !important;
+    flex-direction: row !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.swiper-slide {
+    flex-shrink: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    position: relative !important;
+}
+
+.gallery-image-container {
+    width: 100%;
+    height: 320px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+}
+
+.gallery-image {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
+
+.swiper-slide-counter {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.mobile-product-info {
+    padding: 0 calc(var(--bs-gutter-x) * .5);
+}
+
+.mobile-product-title {
+    font-size: 1.4rem;
+    line-height: 1.3;
+    color: #212529;
+}
+
+.share-mobile-menu {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 20px 20px 0 0;
+    padding: 0;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    z-index: 2000;
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.15);
+}
+
+.share-mobile-menu.show {
+    transform: translateY(0);
+}
+
+.share-mobile-header {
+    padding: 20px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.share-mobile-content {
+    padding: 16px;
+}
+
+.share-mobile-option {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: #212529;
+    font-weight: 500;
+    margin-bottom: 8px;
+    background: #f8f9fa;
+    border: none;
+    width: 100%;
+    text-align: left;
+}
+
+.share-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    font-size: 1.2rem;
+}
+
+.share-icon.vk { background: #2787F5; color: white; }
+.share-icon.telegram { background: #2AABEE; color: white; }
+.share-icon.whatsapp { background: #25D366; color: white; }
+.share-icon.link { background: #6c757d; color: white; }
+
+.share-close-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f8f9fa;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 16px;
+    color: #6c757d;
+}
+
+.share-close-btn:hover {
+    background: #e9ecef;
+    color: #495057;
+    transform: scale(1.1);
+}
+
+.modal-header {
+    min-height: 70px;
+    align-items: center;
+}
+
+.modal-header .modal-title {
+    margin: 0;
+    padding: 0 60px;
+}
+
+.star-rating-input {
+    display: flex;
+    gap: 8px;
+    direction: rtl;
+    justify-content: center;
+}
+
+.star-rating-input input {
+    display: none;
+}
+
+.star-rating-input label {
+    color: #ddd;
+    cursor: pointer;
+    font-size: 2rem;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.star-rating-input label i.fas {
+    position: absolute;
+    left: 0;
+    opacity: 0;
+    color: #ffc107;
+    transition: all 0.2s;
+}
+
+.star-rating-input input:checked ~ label i.fas,
+.star-rating-input label:hover i.fas,
+.star-rating-input label:hover ~ label i.fas {
+    opacity: 1;
+}
+
+@keyframes heartBeat {
+    0% { transform: scale(1); }
+    25% { transform: scale(1.2); }
+    50% { transform: scale(0.9); }
+    75% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.heart-beat {
+    animation: heartBeat 0.6s ease;
+}
+
+.mobile-add-to-cart.btn-cart-success {
+    background-color: #c1e7ff;
+    border-color: #c1e7ff;
+    color: #000;
+}
+
+.mobile-add-to-cart.btn-cart-success:hover {
+    background-color: #c1e7ff !important;
+    border-color: #c1e7ff !important;
+    color: #000 !important;
+}
+
+.mobile-add-to-cart.btn-primary:hover {
+    background-color: #0b5ed7 !important;
+    border-color: #0a58ca !important;
+    color: white !important;
+}
+
+.copy-notification {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    z-index: 9999;
+    transition: transform 0.3s ease;
+}
+
+.copy-notification.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+.header-wrapper{
+    padding-bottom: 0;
+}
+main.container{
+    margin-top: 80px !important;
+}
+</style>
+
+<script>
+function toggleMobileShareMenu() {
+    const shareMenu = document.getElementById('mobileShareMenu');
+    if (shareMenu) {
+        shareMenu.classList.toggle('show');
+    }
+}
+
+function copyMobileLink() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+        alert('Ссылка скопирована в буфер обмена!');
+        toggleMobileShareMenu();
+    }).catch(() => {
+        alert('Не удалось скопировать ссылку');
+    });
+}
+
+function updateCartButtonState(button, isInCart) {
+    if (isInCart) {
+        button.classList.remove('btn-primary');
+        button.classList.add('btn-cart-success');
+        button.innerHTML = '<i class="bi bi-cart-check me-2"></i> В корзине';
+    } else {
+        button.classList.remove('btn-cart-success');
+        button.classList.add('btn-primary');
+        button.innerHTML = '<i class="bi bi-cart3 me-2"></i> В корзину';
+    }
+}
+
+function updateFavoriteButton(button, isFavorite) {
+    const icon = button.querySelector('i');
+    if (icon) {
+        icon.classList.toggle('far', !isFavorite);
+        icon.classList.toggle('fas', isFavorite);
+        button.classList.toggle('active', isFavorite);
+    }
+}
+
+function saveCartState(productId, isInCart) {
+    const cartState = getCartState();
+    if (isInCart) {
+        cartState[productId] = true;
+    } else {
+        delete cartState[productId];
+    }
+    localStorage.setItem('cartState', JSON.stringify(cartState));
+}
+
+function getCartState() {
+    try {
+        return JSON.parse(localStorage.getItem('cartState')) || {};
+    } catch {
+        return {};
+    }
+}
+
+function saveFavoriteState(productId, isFavorite) {
+    const favoriteState = getFavoriteState();
+    if (isFavorite) {
+        favoriteState[productId] = true;
+    } else {
+        delete favoriteState[productId];
+    }
+    localStorage.setItem('favoriteState', JSON.stringify(favoriteState));
+}
+
+function getFavoriteState() {
+    try {
+        return JSON.parse(localStorage.getItem('favoriteState')) || {};
+    } catch {
+        return {};
+    }
+}
+
+function showToast(message) {
+    console.log(message);
+}
+
+function handleFavoriteClick(button, productId) {
+    {% if user.is_authenticated %}
+        toggleFavorite(button, productId);
+    {% else %}
+        const authModalElement = document.getElementById('authModal');
+        if (authModalElement) {
+            const authModal = bootstrap.Modal.getOrCreateInstance(authModalElement, {
+                backdrop: true,
+                keyboard: true
+            });
+            authModal.show();
+        }
+        const nextUrl = window.location.pathname;
+        const loginForm = document.querySelector('#authModal form[action*="login"]');
+        if (loginForm) {
+            let nextInput = loginForm.querySelector('input[name="next"]');
+            if (!nextInput) {
+                nextInput = document.createElement('input');
+                nextInput.type = 'hidden';
+                nextInput.name = 'next';
+                loginForm.appendChild(nextInput);
+            }
+            nextInput.value = nextUrl;
+        }
+    {% endif %}
+}
+
+function toggleFavorite(button, productId) {
+    const icon = button.querySelector('i');
+    const wasFavorite = icon.classList.contains('fas');
+    updateFavoriteButton(button, !wasFavorite);
+    icon.classList.add('heart-beat');
+    saveFavoriteState(productId, !wasFavorite);
+    fetch(`/favorites/toggle/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (typeof refreshFavoriteCounter === 'function') {
+                refreshFavoriteCounter();
+            }
+        } else {
+            updateFavoriteButton(button, wasFavorite);
+            saveFavoriteState(productId, wasFavorite);
+            showToast('Ошибка при обновлении избранного');
+        }
+    })
+    .catch(() => {
+        updateFavoriteButton(button, wasFavorite);
+        saveFavoriteState(productId, wasFavorite);
+        showToast('Ошибка при обновлении избранного');
+    })
+    .finally(() => {
+        setTimeout(() => icon.classList.remove('heart-beat'), 400);
+    });
+}
+
+function handleCartClick(button, productId) {
+    const isInCart = button.classList.contains('btn-cart-success');
+    if (isInCart) {
+        window.location.href = "{% url 'cart:cart_detail' %}";
+        return;
+    }
+    updateCartButtonState(button, true);
+    saveCartState(productId, true);
+    fetch(`/cart/add/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({quantity: 1})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            updateCartButtonState(button, false);
+            saveCartState(productId, false);
+            showToast('Ошибка при добавлении в корзину');
+        } else {
+            showToast('Товар добавлен в корзину');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        updateCartButtonState(button, false);
+        saveCartState(productId, false);
+        showToast('Ошибка при добавлении в корзину');
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const swiperContainer = document.querySelector('.mobileProductSwiper');
+    if (swiperContainer) {
+        const totalSlides = swiperContainer.querySelectorAll('.swiper-slide').length;
+        const currentSlideEl = document.getElementById('currentSlide');
+        const totalSlidesEl = document.getElementById('totalSlides');
+        
+        if (totalSlidesEl) {
+            totalSlidesEl.textContent = totalSlides.toString();
+        }
+        
+        if (totalSlides > 0) {
+            const mobileSwiper = new Swiper(swiperContainer, {
+                slidesPerView: 1,
+                spaceBetween: 0,
+                loop: false,
+                on: {
+                    init: function() {
+                        if (currentSlideEl) {
+                            currentSlideEl.textContent = '1';
+                        }
+                        this.update();
+                    },
+                    slideChange: function() {
+                        if (currentSlideEl) {
+                            currentSlideEl.textContent = (this.activeIndex + 1).toString();
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    document.addEventListener('click', function(e) {
+        const shareMenu = document.getElementById('mobileShareMenu');
+        if (shareMenu && !e.target.closest('.btn-share-mobile') &&
+            !e.target.closest('.share-mobile-menu') &&
+            shareMenu.classList.contains('show')) {
+            toggleMobileShareMenu();
+        }
+    });
+
+    try {
+        const favoriteIdsRaw = '{{ favorite_ids|safe }}';
+        const initialFavoriteIds = JSON.parse(favoriteIdsRaw || '[]');
+        document.querySelectorAll('.btn-favorite-mobile').forEach(button => {
+            const productId = parseInt(button.getAttribute('data-product-id'));
+            const isFavorite = initialFavoriteIds.includes(productId);
+            updateFavoriteButton(button, isFavorite);
+            saveFavoriteState(productId, isFavorite);
+        });
+    } catch (e) {
+        console.error('Error parsing favorite_ids:', e);
+    }
+
+    try {
+        const cartIdsRaw = '{{ cart_product_ids|safe }}';
+        const cartProductIds = JSON.parse(cartIdsRaw || '[]');
+        document.querySelectorAll('.mobile-add-to-cart').forEach(button => {
+            const productId = parseInt(button.getAttribute('data-product-id'));
+            const isInCart = cartProductIds.includes(productId);
+            updateCartButtonState(button, isInCart);
+            saveCartState(productId, isInCart);
+        });
+    } catch (e) {
+        console.error('Error parsing cart_product_ids:', e);
+    }
+
+    const notification = document.createElement('div');
+    notification.className = 'copy-notification';
+    document.body.appendChild(notification);
+    
+    document.querySelectorAll('.copy-icon').forEach(icon => {
+        icon.addEventListener('click', function() {
+            const textToCopy = this.getAttribute('data-text');
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                notification.textContent = 'Скопировано!';
+                notification.classList.add('show');
+                const originalClass = this.className;
+                this.className = 'bi bi-check text-success cursor-pointer';
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    this.className = originalClass;
+                }, 2000);
+            }).catch(err => {
+                console.error('Ошибка копирования: ', err);
+                notification.textContent = 'Ошибка копирования';
+                notification.classList.add('show');
+                setTimeout(() => notification.classList.remove('show'), 2000);
+            });
+        });
+    });
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const reviewsModal = document.getElementById('mobileReviewsModal');
+    const addReviewModal = document.getElementById('mobileAddReviewModal');
+
+    if (reviewsModal) {
+        reviewsModal.addEventListener('hidden.bs.modal', function () {
+            document.body.classList.remove('modal-open');
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(backdrop => backdrop.remove());
+        });
+    }
+
+    if (addReviewModal) {
+        addReviewModal.addEventListener('hidden.bs.modal', function () {
+            document.body.classList.remove('modal-open');
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(backdrop => backdrop.remove());
+        });
+    }
+});
+</script>

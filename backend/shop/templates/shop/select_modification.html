@@ -1,0 +1,944 @@
+{% extends 'shop/base.html' %}
+
+{% block content %}
+<style>
+    .modification-selection {
+        padding: 1rem 0;
+    }
+
+    .modification-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+        margin: 2rem 0;
+    }
+
+    .modification-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: #333;
+        border: 2px solid transparent;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modification-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        border-color: #89BEE8;
+        text-decoration: none;
+        color: #333;
+    }
+
+    .modification-name {
+        font-weight: 600;
+        font-size: 1.2rem;
+        margin-bottom: 0.8rem;
+        color: #1f2937;
+    }
+
+    .modification-details {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .modification-badge {
+        background: #f3f4f6;
+        color: #4b5563;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .modification-badge.engine {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .modification-badge.transmission {
+        background: #fef3c7;
+        color: #d97706;
+    }
+
+    .modification-badge.drive {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .modification-specs {
+        margin-top: auto;
+        padding-top: 1rem;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .spec-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+        font-size: 0.9rem;
+    }
+
+    .spec-label {
+        color: #6b7280;
+    }
+
+    .spec-value {
+        color: #1f2937;
+        font-weight: 500;
+    }
+
+    /* Все модификации карточка */
+    .all-modifications-card {
+        background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+        border: 2px dashed #cbd5e1;
+    }
+
+    .all-modifications-card:hover {
+        background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+        border-color: #94a3b8;
+        border-style: solid;
+    }
+
+    .all-modifications-icon {
+        font-size: 3rem;
+        color: #64748b;
+        margin-bottom: 1rem;
+    }
+
+    /* Поиск и фильтры */
+    .filter-container {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        margin-bottom: 2rem;
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .filter-btn {
+        background: white;
+        border: 2px solid #e5e7eb;
+        padding: 0.6rem 1.2rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .filter-btn.active {
+        background: #89BEE8;
+        color: white;
+        border-color: #89BEE8;
+    }
+
+    .filter-btn:hover:not(.active) {
+        border-color: #9ca3af;
+    }
+
+    /* Мобильная адаптация */
+    @media (max-width: 768px) {
+        .modification-grid {
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .modification-card {
+            padding: 1.2rem;
+        }
+
+        .filter-group {
+            gap: 10px;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .modification-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .filter-group {
+            justify-content: center;
+        }
+    }
+    
+    .search-container {
+        position: relative;
+        max-width: 400px;
+        min-width: 250px;
+        margin-bottom: 1.5rem;
+    }
+
+    .search-container .input-group {
+        border-radius: 12px;
+      
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+    }
+
+    
+
+    .search-container .input-group-text {
+      
+        border: none;
+        padding: 0.75rem 1rem;
+        color: #2980b9;
+    }
+
+    .search-icon-wrapper {
+        border-right: none !important;
+    }
+
+    .btn-clear-wrapper {
+        border-left: none !important;
+        cursor: pointer !important;
+        display: none;
+        padding: 0.75rem 1rem;
+        pointer-events: auto !important;
+        user-select: none;
+    }
+#clearModificationSearchBtn{
+    position: absolute !important;
+    right: 15px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    background: transparent !important;
+    border: none !important;
+    color: #95a5a6 !important;
+    font-size: 1.1rem !important;
+    padding: 5px 10px !important;
+    cursor: pointer !important;
+    z-index: 10 !important;
+    transition: all 0.3s ease !important;
+    border-radius: 50% !important;
+    width: 36px !important;
+    height: 36px !important;
+    display: none; /* по умолчанию скрыта, показывать через JS при вводе текста */
+    align-items: center !important;
+    justify-content: center !important;
+}
+    .btn-clear-wrapper * {
+        pointer-events: none;
+    }
+
+    .btn-clear-wrapper:hover {
+        background-color: rgba(231, 76, 60, 0.1);
+    }
+
+    .btn-clear-wrapper:hover .fas.fa-times {
+        color: #e74c3c;
+    }
+
+    #modification-search {
+        height: 50px;
+        border: none;
+        border-radius: 0;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background-color: white;
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    
+
+    
+
+    .search-container .input-group:focus-within .search-icon {
+        opacity: 1;
+        color: #2980b9;
+    }
+
+    #clear-modification-search {
+         position: absolute !important;
+    right: 15px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    background: transparent !important;
+    border: none !important;
+    color: #95a5a6 !important;
+    font-size: 1.1rem !important;
+    padding: 5px 10px !important;
+    cursor: pointer !important;
+    z-index: 10 !important;
+    transition: all 0.3s ease !important;
+    border-radius: 50% !important;
+    width: 36px !important;
+    height: 36px !important;
+    display: none; /* по умолчанию скрыта, показывать через JS при вводе текста */
+    align-items: center !important;
+    justify-content: center !important;
+    }
+
+    .btn-clear-wrapper {
+        pointer-events: auto !important;
+        cursor: pointer !important;
+    }
+
+    #clear-modification-search .fas.fa-times {
+        color: #95a5a6;
+        transition: all 0.3s ease;
+    }
+
+   
+
+    #modification-search:not(:placeholder-shown) ~ .btn-clear-wrapper,
+    .search-container .input-group:focus-within .btn-clear-wrapper {
+        display: flex;
+    }
+
+    .search-hint {
+        position: absolute;
+        bottom: -25px;
+        left: 0;
+        font-size: 0.75rem;
+        color: #27ae60;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        opacity: 0;
+        transform: translateY(5px);
+        transition: all 0.3s ease;
+        white-space: nowrap;
+    }
+
+    #modification-search:focus ~ .search-hint {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .search-counter {
+        position: absolute;
+        right: 0;
+        font-size: 0.75rem;
+        background: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        border: 1px solid #e0e0e0;
+        display: none;
+        color: #2980b9;
+        font-weight: 500;
+    }
+
+    .modification-highlight {
+        background-color: rgba(39, 174, 96, 0.2);
+        padding: 0 3px;
+        border-radius: 4px;
+        color: #1f2937;
+        font-weight: 600;
+    }
+
+    .engine-highlight {
+        background-color: rgba(29, 78, 216, 0.15);
+        padding: 0 3px;
+        border-radius: 4px;
+    }
+
+    .transmission-highlight {
+        background-color: rgba(217, 119, 6, 0.15);
+        padding: 0 3px;
+        border-radius: 4px;
+    }
+
+    .no-results {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 3rem;
+        background: white;
+        border-radius: 12px;
+        border: 2px dashed #e5e7eb;
+    }
+
+    .no-results-icon {
+        font-size: 3rem;
+        color: #9ca3af;
+        margin-bottom: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .search-container {
+            max-width: 100% !important;
+            min-width: 100% !important;
+            margin-bottom: 1rem;
+        }
+
+        #modification-search {
+            height: 48px;
+            font-size: 0.95rem;
+        }
+
+        .search-container .input-group-text {
+            padding: 0.6rem 0.8rem;
+        }
+
+        .search-icon,
+        #clear-modification-search .fas.fa-times {
+            font-size: 1rem;
+        }
+    }
+</style>
+
+<div class="container modification-selection">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'shop:index' %}"style="color: #89BEE8;">Главная</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'shop:category_list' %}"style="color: #89BEE8;">Категории</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'shop:maintenance_selection' %}"style="color: #89BEE8;">Для ТО</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'shop:maintenance_select_brand' vehicle_type %}"style="color: #89BEE8;">
+                {{ vehicle_type_name|title }}
+            </a></li>
+            <li class="breadcrumb-item"><a href="{% url 'shop:maintenance_select_model' vehicle_type brand.slug %}"style="color: #89BEE8;">
+                {{ brand.name }}
+            </a></li>
+            <li class="breadcrumb-item"><a href="{% url 'shop:select_generation' vehicle_type brand.slug model.slug %}"style="color: #89BEE8;">
+                {{ model.name }}
+            </a></li>
+            <li class="breadcrumb-item active">{{ generation.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+        <h1 class="page-title mb-3 mb-md-0">
+            Выберите модификацию {{ brand.name }} {{ model.name }} {{ generation.name }}
+        </h1>
+
+        {% if modifications %}
+        <div class="search-container mt-4" style="max-width: 400px; min-width: 250px;">
+            <div class="input-group position-relative">
+               
+                    <i class="fas fa-search search-icon"></i>
+                
+                <input type="text"
+                       id="modification-search"
+                       class="form-control search-input"
+                       placeholder="Поиск модификации..."
+                       autocomplete="off">
+                <button class="input-group-text btn-clear-wrapper clear-search" type="button" id="clear-modification-search">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+           
+        </div>
+        {% endif %}
+    </div>
+
+
+
+
+    {% if modifications %}
+    <!-- Фильтры по типу двигателя, трансмиссии и т.д. -->
+    <div class="filter-container">
+        <h5 class="mb-3">Фильтровать по:</h5>
+        <div class="filter-group">
+            <button class="filter-btn active" data-filter="all">
+                <i class="fas fa-layer-group"></i> Все модификации
+            </button>
+
+            {% if vehicle_type == 'car' %}
+            <button class="filter-btn" data-filter="engine_gasoline">
+                <i class="fas fa-gas-pump"></i> Бензин
+            </button>
+            <button class="filter-btn" data-filter="engine_diesel">
+                <i class="fas fa-oil-can"></i> Дизель
+            </button>
+            <button class="filter-btn" data-filter="transmission_automatic">
+                <i class="fas fa-cogs"></i> Автомат
+            </button>
+            <button class="filter-btn" data-filter="transmission_manual">
+                <i class="fas fa-exchange-alt"></i> Механика
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="modification-grid" id="modifications-container">
+         <!-- Карточки модификаций -->
+        {% for mod in modifications %}
+        <a href="{% url 'shop:for_vehicle_with_modification' vehicle_type brand.slug model.slug generation.slug mod.slug %}"
+           class="modification-card"
+           data-engine="{{ mod.engine_type }}"
+           data-transmission="{{ mod.transmission }}"
+           data-drive="{{ mod.drive_type|default:'all' }}">
+
+            <div class="modification-name">{{ mod.name }}</div>
+
+            <div class="modification-details">
+                {% if mod.engine_type != 'unknown' %}
+                <span class="modification-badge engine">{{ mod.get_engine_type_display }}</span>
+                {% endif %}
+
+                {% if mod.engine_volume %}
+                <span class="modification-badge">{{ mod.engine_volume }}</span>
+                {% endif %}
+
+                {% if mod.transmission != 'unknown' %}
+                <span class="modification-badge transmission">{{ mod.get_transmission_display }}</span>
+                {% endif %}
+
+                {% if mod.drive_type != 'unknown' %}
+                <span class="modification-badge drive">{{ mod.get_drive_type_display }}</span>
+                {% endif %}
+            </div>
+
+            {% if vehicle_type == 'car' and mod.power %}
+            <div class="modification-specs">
+                {% if mod.power %}
+                <div class="spec-item">
+                    <span class="spec-label">Мощность:</span>
+                    <span class="spec-value">{{ mod.power }} л.с.</span>
+                </div>
+                {% endif %}
+
+                {% if mod.body_type %}
+                <div class="spec-item">
+                    <span class="spec-label">Кузов:</span>
+                    <span class="spec-value">{{ mod.body_type }}</span>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Шаблон для одной карточки (скрыт изначально) -->
+    <template id="modification-card-template">
+        <a href="#"
+           class="modification-card"
+           data-engine=""
+           data-transmission=""
+           data-drive="">
+            <div class="modification-name"></div>
+            <div class="modification-details"></div>
+            <div class="modification-specs"></div>
+        </a>
+    </template>
+
+    <!-- Сообщение "нет результатов" -->
+    <div id="no-results-message" class="no-results" style="display: none;">
+        <div class="no-results-icon">
+            <i class="fas fa-search"></i>
+        </div>
+        <h5 class="mb-2">Модификации не найдены</h5>
+        <p class="text-muted mb-3">Попробуйте изменить поисковый запрос</p>
+        <button id="reset-search" class="btn btn-outline-primary btn-sm">
+            <i class="fas fa-undo me-1"></i>Сбросить поиск
+        </button>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <h5 class="alert-heading">Нет специфичных модификаций</h5>
+        <p>Для этого поколения нет отдельных модификаций. Используются универсальные товары.</p>
+        <a href="{% url 'shop:for_vehicle' vehicle_type brand.slug model.slug 'all' %}"
+           class="btn btn-dark mt-2">
+            Перейти к товарам
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    //Скрипт на очистку поиска и показ кнопки
+    const searchInput = document.getElementById('search-input');
+    const clearButton = document.querySelector('.clear-search');
+
+   
+    function toggleClearButton() {
+        if (searchInput.value.length > 0) {
+            clearButton.style.display = 'inline-block'; 
+        } else {
+            clearButton.style.display = 'none'; 
+        }
+    }
+
+    // Слушаем ввод текста в поле поиска
+    searchInput.addEventListener('input', toggleClearButton);
+
+    // Слушаем клик по кнопке очистки
+    clearButton.addEventListener('click', function() {
+        searchInput.value = '';       
+        toggleClearButton();          
+        searchInput.focus();         
+        
+    });
+    document.addEventListener('click', function(e){
+        if(e.target.id === 'clear-modification-search' || clearButton.contains(e.target)){
+            searchInput.value = ''
+
+        }
+    })
+
+   
+    toggleClearButton();
+    // Функция для транслитерации (русский ↔ английский)
+    function transliterate(text) {
+        const ru = {
+            'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd',
+            'е': 'e', 'ё': 'e', 'ж': 'zh', 'з': 'z', 'и': 'i',
+            'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n',
+            'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't',
+            'у': 'u', 'ф': 'f', 'х': 'h', 'ц': 'c', 'ч': 'ch',
+            'ш': 'sh', 'щ': 'sch', 'ь': '', 'ы': 'y', 'ъ': '',
+            'э': 'e', 'ю': 'yu', 'я': 'ya',
+            'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D',
+            'Е': 'E', 'Ё': 'E', 'Ж': 'Zh', 'З': 'Z', 'И': 'I',
+            'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M', 'Н': 'N',
+            'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T',
+            'У': 'U', 'Ф': 'F', 'Х': 'H', 'Ц': 'C', 'Ч': 'Ch',
+            'Ш': 'Sh', 'Щ': 'Sch', 'Ь': '', 'Ы': 'Y', 'Ъ': '',
+            'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya'
+        };
+
+        const en = {
+            'a': 'а', 'b': 'б', 'c': 'ц', 'd': 'д', 'e': 'е',
+            'f': 'ф', 'g': 'г', 'h': 'х', 'i': 'и', 'j': 'дж',
+            'k': 'к', 'l': 'л', 'm': 'м', 'n': 'н', 'o': 'о',
+            'p': 'п', 'q': 'к', 'r': 'р', 's': 'с', 't': 'т',
+            'u': 'у', 'v': 'в', 'w': 'в', 'x': 'кс', 'y': 'й',
+            'z': 'з',
+            'A': 'А', 'B': 'Б', 'C': 'Ц', 'D': 'Д', 'E': 'Е',
+            'F': 'Ф', 'G': 'Г', 'H': 'Х', 'I': 'И', 'J': 'Дж',
+            'K': 'К', 'L': 'Л', 'M': 'М', 'N': 'Н', 'O': 'О',
+            'P': 'П', 'Q': 'К', 'R': 'Р', 'S': 'С', 'T': 'Т',
+            'U': 'У', 'V': 'В', 'W': 'В', 'X': 'Кс', 'Y': 'Й',
+            'Z': 'З'
+        };
+
+        // Определяем язык ввода
+        const hasCyrillic = /[а-яё]/i.test(text);
+        const hasLatin = /[a-z]/i.test(text);
+
+        // Если есть и кириллица и латиница, считаем что это кириллица с опечатками
+        if (hasCyrillic || (hasCyrillic && hasLatin)) {
+            // Транслитерация с русского на английский
+            return text.split('').map(char => ru[char] || char).join('');
+        } else if (hasLatin) {
+            // Транслитерация с английского на русский
+            return text.split('').map(char => en[char] || char).join('');
+        }
+
+        return text;
+    }
+
+    // Функция для подсветки найденного текста
+    function highlightText(text, searchQuery) {
+        if (!searchQuery.trim()) return text;
+
+        const escapedQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const ruQuery = escapedQuery;
+        const enQuery = transliterate(escapedQuery);
+
+        const regex = new RegExp(`(${ruQuery}|${enQuery})`, 'gi');
+        return text.replace(regex, '<span class="modification-highlight">$1</span>');
+    }
+
+    // Получаем все модификации из HTML (изначальные данные)
+    const allModifications = [
+        {% for mod in modifications %}
+        {
+            id: {{ forloop.counter }},
+            name: "{{ mod.name|escapejs }}",
+            slug: "{{ mod.slug|escapejs }}",
+            engine_type: "{{ mod.engine_type|default:'unknown'|escapejs }}",
+            engine_volume: "{{ mod.engine_volume|default:''|escapejs }}",
+            power: {% if mod.power %}"{{ mod.power }}"{% else %}null{% endif %},
+            transmission: "{{ mod.transmission|default:'unknown'|escapejs }}",
+            drive_type: "{{ mod.drive_type|default:'unknown'|escapejs }}",
+            body_type: "{{ mod.body_type|default:''|escapejs }}",
+            engine_display: "{{ mod.get_engine_type_display|escapejs }}",
+            transmission_display: "{{ mod.get_transmission_display|escapejs }}",
+            drive_display: "{{ mod.get_drive_type_display|escapejs }}",
+            url: "{% url 'shop:for_vehicle_with_modification' vehicle_type brand.slug model.slug generation.slug mod.slug %}"
+        },
+        {% endfor %}
+    ];
+
+    const allModificationsData = allModifications;
+    const container = document.getElementById('modifications-container');
+    const template = document.getElementById('modification-card-template');
+    const noResults = document.getElementById('no-results-message');
+    const searchInput = document.getElementById('modification-search');
+    const clearButton = document.getElementById('clear-modification-search');
+    const clearButtonWrapper = clearButton ? clearButton.closest('.btn-clear-wrapper') : null;
+    const searchCounter = document.getElementById('search-counter');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const resetButton = document.getElementById('reset-search');
+
+    let activeFilters = {
+        type: 'all',
+        engine: 'all',
+        transmission: 'all'
+    };
+
+    // Функция для создания карточки
+    function createModificationCard(mod) {
+        const clone = template.content.cloneNode(true);
+        const card = clone.querySelector('.modification-card');
+
+        card.href = mod.url;
+        card.dataset.engine = mod.engine_type;
+        card.dataset.transmission = mod.transmission;
+        card.dataset.drive = mod.drive_type || 'all';
+
+        // Имя модификации
+        const nameElement = card.querySelector('.modification-name');
+        nameElement.innerHTML = highlightText(mod.name, searchInput.value);
+
+        // Детали (бейджики)
+        const detailsElement = card.querySelector('.modification-details');
+
+        if (mod.engine_display && mod.engine_type !== 'unknown' && mod.engine_type !== 'all') {
+            const engineBadge = document.createElement('span');
+            engineBadge.className = 'modification-badge engine';
+            engineBadge.innerHTML = highlightText(mod.engine_display, searchInput.value);
+            detailsElement.appendChild(engineBadge);
+        }
+
+        if (mod.engine_volume) {
+            const volumeBadge = document.createElement('span');
+            volumeBadge.className = 'modification-badge';
+            volumeBadge.innerHTML = highlightText(mod.engine_volume, searchInput.value);
+            detailsElement.appendChild(volumeBadge);
+        }
+
+        if (mod.transmission_display && mod.transmission !== 'unknown' && mod.transmission !== 'all') {
+            const transBadge = document.createElement('span');
+            transBadge.className = 'modification-badge transmission';
+            transBadge.innerHTML = highlightText(mod.transmission_display, searchInput.value);
+            detailsElement.appendChild(transBadge);
+        }
+
+        if (mod.drive_display && mod.drive_type !== 'unknown' && mod.drive_type !== 'all') {
+            const driveBadge = document.createElement('span');
+            driveBadge.className = 'modification-badge drive';
+            driveBadge.innerHTML = highlightText(mod.drive_display, searchInput.value);
+            detailsElement.appendChild(driveBadge);
+        }
+
+        // Спецификации (для автомобилей)
+        if ("{{ vehicle_type }}" === 'car' && (mod.power || mod.body_type)) {
+            const specsElement = card.querySelector('.modification-specs');
+
+            if (mod.power) {
+                const powerSpec = document.createElement('div');
+                powerSpec.className = 'spec-item';
+                powerSpec.innerHTML = `
+                    <span class="spec-label">Мощность:</span>
+                    <span class="spec-value">${mod.power} л.с.</span>
+                `;
+                specsElement.appendChild(powerSpec);
+            }
+
+            if (mod.body_type) {
+                const bodySpec = document.createElement('div');
+                bodySpec.className = 'spec-item';
+                bodySpec.innerHTML = `
+                    <span class="spec-label">Кузов:</span>
+                    <span class="spec-value">${mod.body_type}</span>
+                `;
+                specsElement.appendChild(bodySpec);
+            }
+        }
+
+        return card;
+    }
+
+    // Функция для фильтрации модификаций
+    function filterModifications() {
+        const searchQuery = searchInput.value.toLowerCase().trim();
+        const transliteratedQuery = transliterate(searchQuery);
+
+        let filtered = allModificationsData.filter(mod => {
+            // Поиск по имени и характеристикам
+            const searchText = (
+                mod.name.toLowerCase() + ' ' +
+                mod.engine_display.toLowerCase() + ' ' +
+                mod.transmission_display.toLowerCase() + ' ' +
+                mod.drive_display.toLowerCase() + ' ' +
+                mod.engine_volume.toLowerCase() + ' ' +
+                mod.body_type.toLowerCase()
+            );
+
+            const matchesSearch = searchQuery ? (
+                searchText.includes(searchQuery) ||
+                searchText.includes(transliteratedQuery) ||
+                transliterate(searchText).includes(searchQuery)
+            ) : true;
+
+            // Фильтры по типам
+            const matchesEngine = activeFilters.engine === 'all' || mod.engine_type === activeFilters.engine;
+            const matchesTransmission = activeFilters.transmission === 'all' || mod.transmission === activeFilters.transmission;
+
+            return matchesSearch && matchesEngine && matchesTransmission;
+        });
+
+        // Обновляем контейнер
+        container.innerHTML = '';
+
+        if (filtered.length === 0) {
+            container.style.display = 'none';
+            noResults.style.display = 'block';
+            searchCounter.textContent = '0 найдено';
+            searchCounter.style.display = 'block';
+        } else {
+            container.style.display = 'grid';
+            noResults.style.display = 'none';
+
+            // Отображаем все отфильтрованные карточки
+            filtered.forEach(mod => {
+                container.appendChild(createModificationCard(mod));
+            });
+
+            searchCounter.textContent = `${filtered.length} найдено`;
+            searchCounter.style.display = 'block';
+        }
+    }
+
+    // Обработчики событий
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            filterModifications();
+
+            // Показываем/скрываем кнопку очистки
+            if (this.value.trim()) {
+                if (clearButtonWrapper) clearButtonWrapper.style.display = 'flex';
+            } else {
+                if (clearButtonWrapper) clearButtonWrapper.style.display = 'none';
+            }
+        });
+    }
+
+    // Функция очистки поиска
+    function clearSearchInput() {
+        if (searchInput) {
+            searchInput.value = '';
+            if (clearButtonWrapper) {
+                clearButtonWrapper.style.display = 'none';
+            }
+            filterModifications();
+            searchInput.focus();
+        }
+    }
+
+    // Используем делегирование событий на контейнере для надежности
+    const searchContainer = document.querySelector('.search-container');
+    if (searchContainer) {
+        searchContainer.addEventListener('click', function(e) {
+            // Проверяем, был ли клик по кнопке очистки или её дочерним элементам
+            if (e.target.closest('#clear-modification-search') ||
+                e.target.closest('.btn-clear-wrapper') ||
+                e.target.id === 'clear-modification-search' ||
+                e.target.classList.contains('btn-clear-wrapper')) {
+                e.preventDefault();
+                e.stopPropagation();
+                clearSearchInput();
+                return false;
+            }
+        });
+    }
+
+    // Дополнительные обработчики для надежности
+    if (clearButton) {
+        clearButton.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            clearSearchInput();
+            return false;
+        };
+
+        clearButton.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            clearSearchInput();
+        });
+    }
+
+    if (clearButtonWrapper) {
+        clearButtonWrapper.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            clearSearchInput();
+            return false;
+        };
+    }
+
+    resetButton?.addEventListener('click', function() {
+        if (searchInput) {
+            searchInput.value = '';
+            searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        if (clearButtonWrapper) clearButtonWrapper.style.display = 'none';
+        filterModifications();
+
+        // Сброс активных фильтров
+        filterButtons.forEach(btn => btn.classList.remove('active'));
+        filterButtons[0].classList.add('active');
+        activeFilters = { type: 'all', engine: 'all', transmission: 'all' };
+    });
+
+    // Фильтрация по типам
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+
+            const filterValue = this.dataset.filter;
+
+            if (filterValue === 'all') {
+                activeFilters = { type: 'all', engine: 'all', transmission: 'all' };
+            } else {
+                const [type, value] = filterValue.split('_');
+                if (type === 'engine') {
+                    activeFilters.engine = value;
+                    activeFilters.transmission = 'all';
+                } else if (type === 'transmission') {
+                    activeFilters.transmission = value;
+                    activeFilters.engine = 'all';
+                }
+                activeFilters.type = filterValue;
+            }
+
+            filterModifications();
+        });
+    });
+
+    // Инициализация
+    filterModifications();
+
+    // Анимация при наведении
+    container.addEventListener('mouseover', function(e) {
+        if (e.target.closest('.modification-card')) {
+            e.target.closest('.modification-card').style.transform = 'translateY(-5px)';
+        }
+    });
+
+    container.addEventListener('mouseout', function(e) {
+        if (e.target.closest('.modification-card')) {
+            e.target.closest('.modification-card').style.transform = 'translateY(0)';
+        }
+    });
+});
+</script>
+
+{% endblock %}

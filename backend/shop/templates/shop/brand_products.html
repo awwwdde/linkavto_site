@@ -1,0 +1,412 @@
+{% extends 'shop/base.html' %}
+
+{% block head %}
+<title>{{ brand.name }} - модели и товары | LinkAvto</title>
+<meta name="description" content="Все модели {{ brand.name }} и товары для них. Оригинальные запчасти и аксессуары.">
+<link rel="canonical" href="{{ request.build_absolute_uri }}">
+
+<!-- Open Graph / Social Media мета-теги -->
+<meta property="og:title" content="{{ brand.name }} | LinkAvto">
+<meta property="og:description" content="Все модели {{ brand.name }} и товары для них">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
+{% if brand.logo %}
+<meta property="og:image" content="{{ brand.logo.url }}">
+{% endif %}
+
+<!-- Schema.org разметка -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Brand",
+  "name": "{{ brand.name }}",
+  "description": "Официальные товары и запчасти для {{ brand.name }}",
+  "url": "{{ request.build_absolute_uri }}",
+  "logo": "{% if brand.logo %}{{ brand.logo.url }}{% endif %}"
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Хлебные крошки -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb" itemscope itemtype="https://schema.org/BreadcrumbList">
+            <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                <a href="{% url 'shop:index' %}" itemprop="item"style="color: #89BEE8;">
+                    <span itemprop="name"style="color: #89BEE8;">Главная</span>
+                </a>
+                <meta itemprop="position" content="1" />
+            </li>
+            <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                <a href="{{ brand.category.get_absolute_url }}" itemprop="item"style="color: #89BEE8;">
+                    <span itemprop="name"style="color: #89BEE8;">{{ brand.category.name }}</span>
+                </a>
+                <meta itemprop="position" content="2" />
+            </li>
+            <li class="breadcrumb-item active" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem" aria-current="page">
+                <span itemprop="name">{{ brand.name }}</span>
+                <meta itemprop="position" content="3" />
+            </li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Блок фильтров -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button class="btn btn-sm btn-link text-decoration-none d-md-none" id="toggleFilters">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+
+                    <form id="filter-form" method="get">
+                        <!-- Фильтр по оригинальности -->
+                        <div class="filter-section">
+                            <h6 class="filter-title d-flex justify-content-between align-items-center"
+                                data-bs-toggle="collapse" href="#originalFilter" role="button">
+                            </h6>
+                            <div class="collapse show" id="originalFilter">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="is_original"
+                                           id="is_original" {% if request.GET.is_original %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_original">Оригинал</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Фильтр по цене -->
+                        <div class="filter-section">
+                            <h6 class="filter-title d-flex justify-content-between align-items-center"
+                                data-bs-toggle="collapse" href="#priceFilter" role="button">
+                                <span>Цена</span>
+                            </h6>
+                            <div class="collapse show" id="priceFilter">
+                                <div class="price-range d-flex ">
+                                    <input type="number" class="form-control form-control-sm me-2"
+                                           name="price_min" placeholder="от" value="{{ request.GET.price_min }}">
+                                    <input type="number" class="form-control form-control-sm"
+                                           name="price_max" placeholder="до" value="{{ request.GET.price_max }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Фильтр по моделям -->
+                        <div class="filter-section">
+                            <h6 class="filter-title d-flex justify-content-between align-items-center"
+                                data-bs-toggle="collapse" href="#modelFilter" role="button">
+                                <span>Модели</span>
+                            </h6>
+                            <div class="collapse show" id="modelFilter">
+                                <select name="model" class="form-select form-select-sm" onchange="this.form.submit()">
+                                    <option value="">Все</option>
+                                    {% for model in brand.car_models.all %}
+                                        <option value="{{ model.slug }}"
+                                                {% if model.slug == request.GET.model %}selected{% endif %}>
+                                            {{ model.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Фильтр по поколениям -->
+                        <div class="filter-section">
+                            <h6 class="filter-title d-flex justify-content-between align-items-center"
+                                data-bs-toggle="collapse" href="#generationFilter" role="button">
+                                <span>Поколения</span>
+                            </h6>
+                            <div class="collapse show" id="generationFilter">
+                                <select name="generation" class="form-select form-select-sm" onchange="this.form.submit()">
+                                    <option value="">Все</option>
+                                    {% for generation in generations %}
+                                        <option value="{{ generation.slug }}"
+                                                {% if generation.slug == request.GET.generation %}selected{% endif %}>
+                                            {{ generation.name }} ({{ generation.year_from }}-{% if generation.year_to %}{{ generation.year_to }}{% else %}н.в.{% endif %})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Фильтр по типам запчастей -->
+                        <div class="filter-section">
+                            <h6 class="filter-title d-flex justify-content-between align-items-center"
+                                data-bs-toggle="collapse" href="#partCategoryFilter" role="button">
+                                <span>Тип запчасти</span>
+                            </h6>
+                            <div class="collapse show" id="partCategoryFilter">
+                                <select name="part_category" class="form-select form-select-sm" onchange="this.form.submit()">
+                                    <option value="">Все</option>
+                                    {% for pc in part_categories %}
+                                        <option value="{{ pc.slug }}" {% if pc.slug == request.GET.part_category %}selected{% endif %}>
+                                            {{ pc.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Фильтр по производителям -->
+                        <div class="filter-section">
+                            <h6 class="filter-title d-flex justify-content-between align-items-center"
+                                data-bs-toggle="collapse" href="#manufacturerFilter" role="button">
+                                <span>Производитель</span>
+                            </h6>
+                            <div class="collapse show" id="manufacturerFilter">
+                                <select name="manufacturer" class="form-select form-select-sm" onchange="this.form.submit()">
+                                    <option value="">Все</option>
+                                    {% for manufacturer in manufacturers %}
+                                        <option value="{{ manufacturer.slug }}" {% if manufacturer.slug == request.GET.manufacturer %}selected{% endif %}>
+                                            {{ manufacturer.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Фильтр по наличию -->
+                        <div class="filter-section">
+                            <h6 class="filter-title d-flex justify-content-between align-items-center"
+                                data-bs-toggle="collapse" href="#availabilityFilter" role="button">
+                                <span>Наличие</span>
+                            </h6>
+                            <div class="collapse show" id="availabilityFilter">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="in_stock"
+                                           id="in_stock" {% if request.GET.in_stock %}checked{% endif %}>
+                                    <label class="form-check-label" for="in_stock">В наличии</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="on_order"
+                                           id="on_order" {% if request.GET.on_order %}checked{% endif %}>
+                                    <label class="form-check-label" for="on_order">Под заказ</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Кнопки фильтров -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-sm">Применить</button>
+                            <a href="?{% if sort %}sort={{ sort }}{% endif %}" class="btn btn-outline-secondary btn-sm">Сбросить</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Основной контент -->
+        <div class="col-md-9">
+            <!-- Заголовок и логотип бренда -->
+            <div class="d-flex align-items-center mb-4" itemscope itemtype="https://schema.org/Brand">
+                {% if brand.logo %}
+                <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" class="me-3" style="height: 60px; width: auto;" itemprop="logo">
+                {% endif %}
+                <h1 itemprop="name">{{ brand.name }}</h1>
+            </div>
+
+            <!-- Сортировка и количество -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="text-muted small">
+                    Найдено товаров: <span id="productCount">{{ products.count }}</span>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown">
+                        Сортировка: {% if sort == 'popular' %}По популярности{% elif sort == 'price_asc' %}По возрастанию цены{% elif sort == 'price_desc' %}По убыванию цены{% elif sort == 'newest' %}Сначала новые{% else %}По умолчанию{% endif %}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item sort-option" href="#" data-sort="">По умолчанию</a></li>
+                        <li><a class="dropdown-item sort-option" href="#" data-sort="popular">По популярности</a></li>
+                        <li><a class="dropdown-item sort-option" href="#" data-sort="price_asc">По возрастанию цены</a></li>
+                        <li><a class="dropdown-item sort-option" href="#" data-sort="price_desc">По убыванию цены</a></li>
+                        <li><a class="dropdown-item sort-option" href="#" data-sort="newest">Сначала новые</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Блок моделей (упрощенный вариант) -->
+            <div class="mb-5">  <!-- Уменьшил отступ снизу блока -->
+                <h2 class="mb-4">Модели</h2>  <!-- Уменьшил отступ снизу заголовка -->
+                <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-0">  <!-- g-0 убирает все промежутки -->
+                    {% for model in brand.car_models.all %}
+                    <div class="col">
+                        <a href="?model={{ model.slug }}"
+                           class="d-block px-1 py-0 text-dark text-decoration-none hover-bg-light text-start  <!-- px-1 оставляет небольшой горизонтальный отступ, py-0 убирает вертикальный -->
+                                  {% if request.GET.model == model.slug %}bg-light fw-bold{% endif %}"
+                           aria-label="Модель {{ model.name }}">
+                            <span class="fw-medium">{{ model.name }}</span>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Список товаров -->
+            {% if request.GET.model %}
+            <div class="alert alert-light mb-3">
+                Показаны товары для модели: <strong>{{ request.GET.model }}</strong>
+                <a href="?" class="ms-2 text-decoration-none">× Сбросить фильтр</a>
+            </div>
+            {% endif %}
+
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+                {% for product in products %}
+                    {% include "shop/product_card.html" %}
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info">Товары не найдены</div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Пагинация -->
+            {% if is_paginated %}
+            <nav class="mt-4" aria-label="Навигация по страницам">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Предыдущая">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if num == page_obj.number %}
+                        <li class="page-item active" aria-current="page">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Следующая">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Стили для фильтров (как в category.html) */
+    .filter-section {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .filter-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+
+    .filter-title {
+        cursor: pointer;
+        font-weight: 500;
+        color: #333;
+        padding: 0.25rem 0;
+        margin-bottom: 0.5rem;
+    }
+
+    .filter-title:hover {
+        color: #0d6efd;
+    }
+
+    .filter-arrow {
+        transition: transform 0.2s ease;
+    }
+
+    .filter-title[aria-expanded="true"] .filter-arrow {
+        transform: rotate(180deg);
+    }
+
+    .price-range input {
+        max-width: 100px;
+    }
+
+    /* Адаптивность */
+    @media (max-width: 767.98px) {
+        #filtersColumn {
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 80%;
+            height: 100vh;
+            z-index: 1050;
+            background: white;
+            padding: 1rem;
+            overflow-y: auto;
+            transition: left 0.3s ease;
+        }
+
+        #filtersColumn.show {
+            left: 0;
+        }
+    }
+
+    /* Стиль для блока моделей */
+    .hover-bg-light:hover {
+        background-color: #f8f9fa;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Переключение видимости фильтров на мобильных
+    const toggleFilters = document.getElementById('toggleFilters');
+    const filtersColumn = document.getElementById('filtersColumn');
+
+    if (toggleFilters && filtersColumn) {
+        toggleFilters.addEventListener('click', function() {
+            filtersColumn.classList.toggle('show');
+        });
+    }
+
+    // Обработка сортировки
+    document.querySelectorAll('.sort-option').forEach(option => {
+        option.addEventListener('click', function(e) {
+            e.preventDefault();
+            const sort = this.dataset.sort;
+            const url = new URL(window.location.href);
+
+            // Удаляем старый параметр сортировки
+            url.searchParams.delete('sort');
+
+            // Добавляем новый, если он есть
+            if (sort) {
+                url.searchParams.set('sort', sort);
+            }
+
+            // Сохраняем все GET-параметры фильтрации
+            const params = new URLSearchParams(window.location.search);
+            params.forEach((value, key) => {
+                if (key !== 'sort' && key !== 'page') {
+                    url.searchParams.set(key, value);
+                }
+            });
+
+            window.location.href = url.toString();
+        });
+    });
+
+    // Автоотправка формы при изменении фильтров
+    document.querySelectorAll('[name="model"], [name="part_category"], [name="manufacturer"], [name="generation"]').forEach(select => {
+        select.addEventListener('change', function() {
+            this.form.submit()
+        });
+    });
+});
+</script>
+{% endblock %}

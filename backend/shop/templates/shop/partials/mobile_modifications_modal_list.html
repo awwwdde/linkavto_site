@@ -1,0 +1,24 @@
+{% for modification in modifications %}
+<div class="list-group-item list-group-item-action d-flex align-items-center modification-item"
+     data-name="{{ modification.name|lower }}"
+     data-name-translit="{{ modification.name|lower }}"
+     data-generation="{{ modification.generation.slug }}">
+    <div class="form-check mb-0 w-100 d-flex align-items-center">
+        <input class="form-check-input me-3 mobile-modification-checkbox" type="checkbox"
+               id="mobileModification{{ modification.id }}"
+               value="{{ modification.slug }}"
+               data-name="{{ modification.name }}"
+               data-generation="{{ modification.generation.slug }}"
+               onchange="updateModificationSelection()">
+        <label class="form-check-label w-100" for="mobileModification{{ modification.id }}">
+            <span class="modification-name">{{ modification.name }}</span>
+        </label>
+    </div>
+</div>
+{% empty %}
+<div class="text-muted text-center py-3">
+    Нет доступных модификаций
+</div>
+{% endfor %}
+
+

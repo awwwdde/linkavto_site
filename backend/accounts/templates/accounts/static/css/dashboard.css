@@ -1,0 +1,33 @@
+/* Аватар пользователя */
+.dashboard-avatar {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+}
+
+/* Боковое меню */
+.dashboard-sidebar {
+    position: sticky;
+    top: 20px;
+}
+
+.dashboard-sidebar .list-group-item {
+    transition: all 0.2s ease;
+}
+
+/* Карточки информации */
+.dashboard-info-card {
+    transition: transform 0.2s ease;
+}
+
+.dashboard-info-card:hover {
+    transform: translateY(-2px);
+}
+
+/* Адаптивность */
+@media (max-width: 992px) {
+    .dashboard-sidebar {
+        position: static;
+        margin-bottom: 20px;
+    }
+}

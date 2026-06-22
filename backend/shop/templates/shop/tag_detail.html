@@ -1,0 +1,44 @@
+{% extends 'shop/base.html' %}
+{% load static %}
+
+{% block title %}Товары с тегом #{{ tag.name }} | LinkAvto{% endblock %}
+
+{% block meta_description %}Товары с тегом #{{ tag.name }} в интернет-магазине LinkAvto. Запчасти, аксессуары, автохимия с доставкой по России.{% endblock %}
+
+{% block content %}
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<style>
+    body { font-family: Montserrat, sans-serif; }
+    .tag-detail-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        color: #1a1a1a;
+    }
+    .pruductgrid_setka_mobile {
+        display: grid !important;
+        grid-template-columns: repeat(7, 14%) !important;
+        gap: 0.2% !important;
+    }
+    @media (max-width: 767px) {
+        .pruductgrid_setka_mobile {
+            width: 88vw !important;
+            grid-template-columns: repeat(2, 50%) !important;
+        }
+    }
+    .product-card-container {
+        width: 100% !important;
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <div class="row gx-4">
+        <div class="col-12">
+            <h1 class="tag-detail-title">Товары с тегом #{{ tag.name }}</h1>
+            {% include "shop/partials/products_grid.html" %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,734 @@
+<!-- Фильтры для выбора моделей -->
+<div class="modal fade" id="modelsModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="false">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="btn btn-back" onclick="closeModelsModal()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h5 class="modal-title flex-grow-1 text-center">Выберите модели</h5>
+                <button type="button" class="btn btn-close sb" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn btn-outline-secondary sbros" onclick="resetModelFilter()">
+                    Сбросить
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Поиск по моделям -->
+                <div class="search-container mb-3">
+                    <div class="input-group">
+                       
+                            <i class="fas fa-search text-muted search-icon"></i>
+                        
+                        <input
+                            type="text"
+                            class="form-control border-start-0 border-end-0 search-input"
+                            id="modelSearchInput"
+                            placeholder="Поиск модели..."
+                            oninput="filterModels()"
+                            autocomplete="off"
+                            style="height: 56px; border-radius: 24px !important;"
+                        >
+                        <button
+                            class="btn btn-outline-secondary border-start-0 clear-search"
+                            type="button"
+                            id="clearModelSearchBtn"
+                            onclick="clearModelSearch()"
+                            style="visibility: hidden; pointer-events: none;"
+                        >
+                            <i class="fas fa-times" style="padding-left: 20px;"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Счетчик найденных результатов -->
+                <div class="search-results-info mb-2 px-2" id="modelSearchResultsInfo" style="display: none;">
+                    <small class="text-muted">Найдено: <span id="foundModelsCount">0</span></small>
+                </div>
+
+                <div class="list-group mb-3" id="modelsModalList">
+                    {% include "shop/partials/mobile_models_modal_list.html" %}
+                </div>
+            </div>
+            <div class="modal-footer sticky-bottom bg-white border-top py-3">
+                <div class="d-grid gap-2 w-100">
+                    <button type="button" class="btn btn-dark" onclick="applyModelFilter()">
+                        Применить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Стили для группировки по брендам */
+    .brand-section {
+        margin-bottom: 0.5rem;
+    }
+
+    .brand-section .bg-light {
+        background-color: #f8f9fa !important;
+        border-left: 3px solid #0d6efd;
+        font-size: 0.9rem;
+        padding: 0.5rem 1.25rem;
+    }
+
+    .brand-section .list-group-item:not(.bg-light) {
+        padding-left: 2rem;
+    }
+
+    /* z-index модалок/подложки задается глобально в `base.html` (modal=9999, backdrop=9998).
+       Локальные z-index здесь не задаём, чтобы backdrop не перекрывал модалку. */
+
+    /* Стили для модального окна выбора моделей */
+    #modelsModal .list-group-item {
+        border: none;
+        border-bottom: 1px solid #eee;
+        padding: 0.75rem 1.25rem;
+        font-size: 1rem;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    #modelsModal .list-group-item:last-child {
+        border-bottom: none;
+    }
+
+    #modelsModal .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    /* Стили для чекбоксов */
+    #modelsModal .form-check-input {
+        width: 1.2em;
+        height: 1.2em;
+        margin-top: 0;
+    }
+
+    
+
+    #modelsModal .form-check-input:focus {
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+
+    #modelsModal .form-check-label {
+        cursor: pointer;
+        margin-bottom: 0;
+    }
+
+    #modelsModal .modal-header {
+        border-bottom: 1px solid #dee2e6;
+        background-color: #f8f9fa;
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+    }
+
+    #modelsModal .btn-back {
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        color: #6c757d;
+        padding: 0.5rem;
+        margin-right: 0.5rem;
+    }
+
+    #modelsModal .btn-back:hover {
+        color: #0d6efd;
+        background-color: rgba(0, 0, 0, 0.05);
+        border-radius: 50%;
+    }
+
+    #modelsModal .modal-title {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    #modelsModal .modal-footer {
+        padding: 1rem;
+    }
+
+    #modelsModal .modal-footer .btn {
+        padding: 0.75rem;
+        font-weight: 500;
+    }
+
+    /* Стили для поиска */
+    .search-container {
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 1;
+        padding-top: 1px;
+        margin-left: -1rem;
+        margin-right: -1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    #modelsModal .modal-body {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .search-container .input-group {
+        border-radius: 0.375rem; /* скругление углов для всей группы */
+        overflow: hidden; /* чтобы скругление работало */
+    }
+    
+    .search-container .input-group-text {
+        border-top-left-radius: 0.375rem;
+        border-bottom-left-radius: 0.375rem;
+    }
+    
+    #modelSearchInput {
+        border-radius: 0 !important;
+        font-size: 1rem;
+        border-color: #dee2e6 !important;
+    }
+    
+    /* Когда кнопка скрыта, инпут должен иметь скругленные углы справа */
+    #modelSearchInput.no-clear-btn {
+        border-top-right-radius: 0.375rem !important;
+        border-bottom-right-radius: 0.375rem !important;
+        border-right: 1px solid #dee2e6 !important;
+    }
+
+    
+    
+   
+
+    #modelSearchInput::placeholder {
+        color: #6c757d;
+        opacity: 0.7;
+    }
+
+    .input-group-text {
+        border-color: #dee2e6 !important;
+        background-color: #fff !important;
+    }
+
+    #clearModelSearchBtn {
+        position: absolute !important;
+    right: 15px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    background: transparent !important;
+    border: none !important;
+    color: #95a5a6 !important;
+    font-size: 1.1rem !important;
+    padding: 5px 10px !important;
+    cursor: pointer !important;
+    z-index: 10 !important;
+    transition: all 0.3s ease !important;
+    border-radius: 50% !important;
+    width: 36px !important;
+    height: 36px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    }
+
+    #clearModelSearchBtn:hover {
+        background-color: #f8f9fa;
+    }
+
+    /* Стили для скрытых элементов */
+    .model-item.hidden {
+        display: none !important;
+    }
+
+    .brand-section.hidden {
+        display: none !important;
+    }
+
+    .brand-header.hidden-within {
+        opacity: 0.5;
+    }
+
+    /* Адаптивность для маленьких экранов */
+    @media (max-width: 375px) {
+        #modelsModal .list-group-item {
+            padding: 0.6rem 1rem;
+        }
+
+        #modelsModal .form-check-input {
+            width: 1.1em;
+            height: 1.1em;
+        }
+
+        #modelSearchInput {
+            height: 48px !important;
+            font-size: 0.95rem;
+        }
+
+        .input-group-lg > .form-control {
+            font-size: 0.95rem;
+        }
+
+        .brand-section .list-group-item:not(.bg-light) {
+            padding-left: 1.5rem;
+        }
+        
+        .search-container {
+            margin-left: -0.75rem;
+            margin-right: -0.75rem;
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+        }
+        
+        #modelsModal .modal-body {
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+        }
+    }
+    
+    /* Дополнительные стили для всех мобильных устройств */
+    @media (max-width: 576px) {
+        .search-container {
+            margin-left: -1rem;
+            margin-right: -1rem;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        
+        .search-container .input-group {
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        .search-container .input-group .form-control {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+        
+        #modelsModal .modal-body {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+    }
+</style>
+
+<script>
+// Функция для транслитерации (русский ↔ английский)
+function transliterate(text) {
+    const ru = {
+        'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd',
+        'е': 'e', 'ё': 'e', 'ж': 'zh', 'з': 'z', 'и': 'i',
+        'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n',
+        'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't',
+        'у': 'u', 'ф': 'f', 'х': 'h', 'ц': 'c', 'ч': 'ch',
+        'ш': 'sh', 'щ': 'sch', 'ь': '', 'ы': 'y', 'ъ': '',
+        'э': 'e', 'ю': 'yu', 'я': 'ya',
+        'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D',
+        'Е': 'E', 'Ё': 'E', 'Ж': 'Zh', 'З': 'Z', 'И': 'I',
+        'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M', 'Н': 'N',
+        'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T',
+        'У': 'U', 'Ф': 'F', 'Х': 'H', 'Ц': 'C', 'Ч': 'Ch',
+        'Ш': 'Sh', 'Щ': 'Sch', 'Ь': '', 'Ы': 'Y', 'Ъ': '',
+        'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya'
+    };
+
+    const en = {
+        'a': 'а', 'b': 'б', 'c': 'ц', 'd': 'д', 'e': 'е',
+        'f': 'ф', 'g': 'г', 'h': 'х', 'i': 'и', 'j': 'дж',
+        'k': 'к', 'l': 'л', 'm': 'м', 'n': 'н', 'o': 'о',
+        'p': 'п', 'q': 'к', 'r': 'р', 's': 'с', 't': 'т',
+        'u': 'у', 'v': 'в', 'w': 'в', 'x': 'кс', 'y': 'й',
+        'z': 'з',
+        'A': 'А', 'B': 'Б', 'C': 'Ц', 'D': 'Д', 'E': 'Е',
+        'F': 'Ф', 'G': 'Г', 'H': 'Х', 'I': 'И', 'J': 'Дж',
+        'K': 'К', 'L': 'Л', 'M': 'М', 'N': 'Н', 'O': 'О',
+        'P': 'П', 'Q': 'К', 'R': 'Р', 'S': 'С', 'T': 'Т',
+        'U': 'У', 'V': 'В', 'W': 'В', 'X': 'Кс', 'Y': 'Й',
+        'Z': 'З'
+    };
+
+    let result = '';
+    const textLower = text.toLowerCase();
+
+    // Проверяем, содержит ли текст русские буквы
+    const hasCyrillic = /[а-яё]/i.test(text);
+
+    if (hasCyrillic) {
+        // Русский → Английский
+        for (let char of textLower) {
+            result += ru[char] || char;
+        }
+    } else {
+        // Английский → Русский (только для латинских букв)
+        for (let char of textLower) {
+            result += en[char] || char;
+        }
+    }
+
+    return result.toLowerCase();
+}
+
+// Функции для работы с модальным окном моделей
+let selectedModels = [];
+
+function openModelsModal(event) {
+    // КРИТИЧЕСКИ ВАЖНО: предотвращаем закрытие offcanvas
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+    }
+
+    // Получаем текущие выбранные модели из скрытого поля
+    const modelInput = document.querySelector('#mobile-filter-form input[name="model"]');
+    const currentModels = modelInput ? modelInput.value.split(',') : [];
+
+    // Сбрасываем все чекбоксы
+    document.querySelectorAll('#modelsModal .form-check-input').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+
+    // Устанавливаем "Все модели" если ничего не выбрано
+    if (currentModels.length === 0 || (currentModels.length === 1 && currentModels[0] === '')) {
+        document.getElementById('modelAll').checked = true;
+        selectedModels = [];
+    } else {
+        // Устанавливаем выбранные модели
+        currentModels.forEach(modelSlug => {
+            if (modelSlug) {
+                const checkbox = document.querySelector(`.model-checkbox[value="${modelSlug}"]`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                }
+            }
+        });
+        document.getElementById('modelAll').checked = false;
+        selectedModels = currentModels.filter(slug => slug !== '');
+    }
+
+    updateSelectedModelsCount();
+
+    // Фильтруем модели по выбранным маркам
+    filterModelsBySelectedBrands();
+
+    // Сбрасываем поиск
+    clearModelSearch();
+    
+    // Убеждаемся, что инпут имеет скругленные углы справа при открытии
+    const searchInput = document.getElementById('modelSearchInput');
+    if (searchInput) {
+        searchInput.classList.add('no-clear-btn');
+    }
+
+    // Открываем модальное окно
+    const modelsModal = new bootstrap.Modal(document.getElementById('modelsModal'));
+    modelsModal.show();
+
+    // Фокусируемся на поле поиска после открытия
+    setTimeout(() => {
+        document.getElementById('modelSearchInput').focus();
+    }, 300);
+
+    // Дополнительная защита: предотвращаем закрытие offcanvas
+    setTimeout(() => {
+        const offcanvas = document.getElementById('filtersOffcanvas');
+        if (offcanvas) {
+            const bsOffcanvas = bootstrap.Offcanvas.getInstance(offcanvas);
+            if (bsOffcanvas) {
+                // Принудительно показываем offcanvas если он закрылся
+                bsOffcanvas.show();
+            }
+        }
+    }, 50);
+}
+
+function closeModelsModal() {
+    const modelsModal = bootstrap.Modal.getInstance(document.getElementById('modelsModal'));
+    if (modelsModal) {
+        modelsModal.hide();
+    }
+    // Offcanvas фильтров остается открытым
+}
+
+function toggleAllModels(checkbox) {
+    const modelCheckboxes = document.querySelectorAll('.model-checkbox');
+    if (checkbox.checked) {
+        // Если выбрано "Все модели", снимаем выбор с остальных
+        modelCheckboxes.forEach(cb => cb.checked = false);
+        selectedModels = [];
+    }
+    updateSelectedModelsCount();
+}
+
+function updateSelectedModels() {
+    const modelAll = document.getElementById('modelAll');
+    const selectedCheckboxes = document.querySelectorAll('.model-checkbox:checked');
+
+    // Если выбраны конкретные модели, снимаем "Все модели"
+    if (selectedCheckboxes.length > 0) {
+        modelAll.checked = false;
+    }
+
+    // Обновляем массив выбранных моделей
+    selectedModels = Array.from(selectedCheckboxes).map(checkbox => checkbox.value);
+    updateSelectedModelsCount();
+}
+
+function updateSelectedModelsCount() {
+    const count = selectedModels.length;
+    const countElement = document.getElementById('selectedModelsCount');
+    if (countElement) {
+        countElement.textContent = `Выбрано: ${count} ${getModelWord(count)}`;
+    }
+}
+
+function getModelWord(count) {
+    if (count === 1) return 'модель';
+    if (count >= 2 && count <= 4) return 'модели';
+    return 'моделей';
+}
+
+function clearAllModels() {
+    document.querySelectorAll('#modelsModal .form-check-input').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    document.getElementById('modelAll').checked = true;
+    selectedModels = [];
+    updateSelectedModelsCount();
+}
+
+// Функция фильтрации моделей по поиску
+function filterModels() {
+    const searchInput = document.getElementById('modelSearchInput');
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    const clearBtn = document.getElementById('clearModelSearchBtn');
+    const resultsInfo = document.getElementById('modelSearchResultsInfo');
+    const foundCountElement = document.getElementById('foundModelsCount');
+
+    // Показываем/скрываем кнопку очистки
+    if (searchTerm.length > 0) {
+        clearBtn.style.visibility = 'visible';
+        clearBtn.style.pointerEvents = 'auto';
+        searchInput.classList.remove('no-clear-btn');
+    } else {
+        clearBtn.style.visibility = 'hidden';
+        clearBtn.style.pointerEvents = 'none';
+        searchInput.classList.add('no-clear-btn');
+        resultsInfo.style.display = 'none';
+        // Показываем все элементы если поиск пустой
+        document.querySelectorAll('.model-item').forEach(item => {
+            item.classList.remove('hidden');
+        });
+        document.querySelectorAll('.brand-section').forEach(section => {
+            section.classList.remove('hidden');
+            const header = section.querySelector('.brand-header');
+            if (header) header.classList.remove('hidden-within');
+        });
+        return;
+    }
+
+    // Получаем транслитерированную версию поискового запроса
+    const transliteratedTerm = transliterate(searchTerm);
+
+    let foundModelsCount = 0;
+    let foundBrandsWithModels = new Set();
+
+    // Фильтруем модели
+    document.querySelectorAll('.model-item').forEach(item => {
+        const modelName = item.getAttribute('data-name');
+        const modelNameTranslit = item.getAttribute('data-name-translit');
+        const brandSlug = item.getAttribute('data-brand');
+
+        // Проверяем совпадения по оригинальному названию и транслитерированной версии
+        const matchesOriginal = modelName.includes(searchTerm);
+        const matchesTranslit = modelNameTranslit.includes(transliteratedTerm);
+        const matchesSearchTerm = modelName.includes(transliteratedTerm);
+
+        if (matchesOriginal || matchesTranslit || matchesSearchTerm) {
+            item.classList.remove('hidden');
+            foundModelsCount++;
+            foundBrandsWithModels.add(brandSlug);
+        } else {
+            item.classList.add('hidden');
+        }
+    });
+
+    // Обновляем видимость секций брендов
+    document.querySelectorAll('.brand-section').forEach(section => {
+        const header = section.querySelector('.brand-header');
+        if (!header) return;
+
+        const brandSlug = header.getAttribute('data-brand-slug');
+        const brandName = header.getAttribute('data-brand-name');
+        const brandNameTranslit = header.getAttribute('data-brand-name-translit');
+
+        // Проверяем, совпадает ли бренд с поиском
+        const brandMatchesOriginal = brandName.includes(searchTerm);
+        const brandMatchesTranslit = brandNameTranslit.includes(transliteratedTerm);
+
+        // Проверяем, есть ли видимые модели в этой секции
+        const visibleModels = section.querySelectorAll('.model-item:not(.hidden)');
+
+        if (brandMatchesOriginal || brandMatchesTranslit || visibleModels.length > 0 || foundBrandsWithModels.has(brandSlug)) {
+            section.classList.remove('hidden');
+            if (visibleModels.length === 0 && !brandMatchesOriginal && !brandMatchesTranslit) {
+                header.classList.add('hidden-within');
+            } else {
+                header.classList.remove('hidden-within');
+            }
+        } else {
+            section.classList.add('hidden');
+        }
+    });
+
+    // Обновляем информацию о результатах
+    if (foundModelsCount > 0 || searchTerm.length > 0) {
+        resultsInfo.style.display = 'block';
+        foundCountElement.textContent = foundModelsCount;
+    } else {
+        resultsInfo.style.display = 'none';
+    }
+}
+
+// Функция очистки поиска
+function clearModelSearch() {
+    const searchInput = document.getElementById('modelSearchInput');
+    const clearBtn = document.getElementById('clearModelSearchBtn');
+    searchInput.value = '';
+    searchInput.focus();
+    // Убеждаемся, что класс добавлен при очистке
+    searchInput.classList.add('no-clear-btn');
+    clearBtn.style.visibility = 'hidden';
+    clearBtn.style.pointerEvents = 'none';
+    filterModels();
+}
+
+// Обработка нажатия клавиши Escape в поле поиска
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('modelSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                clearModelSearch();
+            }
+        });
+    }
+});
+
+function applyModelFilter() {
+    const modelAll = document.getElementById('modelAll');
+    const modelInput = document.querySelector('#mobile-filter-form input[name="model"]');
+    const selectedModelText = document.getElementById('selectedModelText');
+
+    if (modelAll.checked) {
+        // Если выбрано "Все модели"
+        if (modelInput) modelInput.value = '';
+        if (selectedModelText) selectedModelText.textContent = 'Все модели';
+    } else {
+        // Если выбраны конкретные модели
+        const modelSlugs = selectedModels.join(',');
+        if (modelInput) modelInput.value = modelSlugs;
+
+        // Обновляем текст на кнопке
+        if (selectedModelText) {
+            if (selectedModels.length === 0) {
+                selectedModelText.textContent = 'Все модели';
+            } else if (selectedModels.length === 1) {
+                const selectedCheckbox = document.querySelector(`.model-checkbox[value="${selectedModels[0]}"]`);
+                const modelName = selectedCheckbox ? selectedCheckbox.getAttribute('data-name') : 'Модель';
+                selectedModelText.textContent = modelName;
+            } else {
+                // ПОЛУЧАЕМ НАЗВАНИЯ ВСЕХ ВЫБРАННЫХ МОДЕЛЕЙ
+                const selectedModelNames = [];
+                selectedModels.forEach(modelSlug => {
+                    const checkbox = document.querySelector(`.model-checkbox[value="${modelSlug}"]`);
+                    if (checkbox) {
+                        selectedModelNames.push(checkbox.getAttribute('data-name'));
+                    }
+                });
+                // ОТОБРАЖАЕМ НАЗВАНИЯ ЧЕРЕЗ ЗАПЯТУЮ
+                selectedModelText.textContent = selectedModelNames.join(', ');
+            }
+        }
+    }
+
+    // Обновляем иконку
+    if (typeof updateMobileModelIcon === 'function') {
+        updateMobileModelIcon();
+    }
+
+    // При смене модели сбрасываем зависимые фильтры (поколение/модификация)
+    const clearMobileHiddenAndText = (name, textId, defaultText) => {
+        const input = document.querySelector(`#mobile-filter-form input[name="${name}"]`);
+        if (input) input.value = '';
+        const textEl = document.getElementById(textId);
+        if (textEl) textEl.textContent = defaultText;
+    };
+    clearMobileHiddenAndText('generation', 'selectedGenerationText', 'Все поколения');
+    clearMobileHiddenAndText('modification', 'selectedModificationText', 'Все модификации');
+
+    if (typeof updateMobileGenerationIcon === 'function') updateMobileGenerationIcon();
+
+    // Обновляем видимость поколений при изменении фильтра моделей
+    if (typeof filterGenerationsBySelectedModels === 'function') {
+        filterGenerationsBySelectedModels();
+    }
+
+    // Закрываем только модальное окно моделей, оставляя offcanvas открытым
+    closeModelsModal();
+}
+
+function resetModelFilter() {
+    clearAllModels();
+    applyModelFilter();
+}
+
+// Функция фильтрации моделей по выбранным маркам
+function filterModelsBySelectedBrands() {
+    // Получаем выбранные марки из скрытого поля
+    const brandInput = document.querySelector('#mobile-filter-form input[name="brand"]') ||
+                       document.querySelector('#filter-form input[name="brand"]');
+    const selectedBrands = brandInput ? brandInput.value.split(',').map(s => s.trim()).filter(s => s) : [];
+
+    // Получаем все модели и секции брендов
+    const allModels = document.querySelectorAll('#modelsModal .model-checkbox');
+    const allBrandSections = document.querySelectorAll('#modelsModal .brand-section');
+
+    if (selectedBrands.length > 0) {
+        // Показываем только модели выбранных марок
+        allModels.forEach(checkbox => {
+            const modelBrand = checkbox.getAttribute('data-brand');
+            const modelItem = checkbox.closest('.model-item');
+            if (selectedBrands.includes(modelBrand)) {
+                if (modelItem) modelItem.style.display = 'flex';
+            } else {
+                if (modelItem) modelItem.style.display = 'none';
+            }
+        });
+
+        // Показываем/скрываем секции брендов
+        allBrandSections.forEach(section => {
+            const brandHeader = section.querySelector('.brand-header');
+            if (!brandHeader) return;
+
+            const brandSlug = brandHeader.getAttribute('data-brand-slug');
+            const hasVisibleModels = Array.from(section.querySelectorAll('.model-checkbox')).some(cb => {
+                const modelBrand = cb.getAttribute('data-brand');
+                return selectedBrands.includes(modelBrand);
+            });
+
+            if (hasVisibleModels) {
+                section.style.display = 'block';
+            } else {
+                section.style.display = 'none';
+            }
+        });
+    } else {
+        // Показываем все модели, если марки не выбраны
+        allModels.forEach(checkbox => {
+            const modelItem = checkbox.closest('.model-item');
+            if (modelItem) modelItem.style.display = 'flex';
+        });
+        
+        allBrandSections.forEach(section => {
+            section.style.display = 'block';
+        });
+    }
+}
+</script>

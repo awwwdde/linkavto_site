@@ -1,0 +1,3001 @@
+{% extends 'shop/base.html' %}
+{% load custom_tags %}
+
+{% block meta_description %}{{ product.name }} – {{ product.short_description|default:product.description|truncatewords:20 }}. Артикул: {{ product.part_number }}{% if product.vin %}, VIN: {{ product.vin }}{% endif %}. Цена: {{ product.price }} ₽. Доставка по России.{% endblock %}
+
+<meta property="og:title" content="{{ product.name }} – LinkAvto">
+<meta property="og:description" content="{{ product.description|truncatewords:30 }}">
+{% if product.image and product.image.name %}<meta property="og:image" content="{{ product.image.url }}">{% endif %}
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
+<meta property="og:type" content="product">
+<meta property="og:site_name" content="LinkAvto">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+
+<meta name="keywords" content="{{ product.name }}, {{ product.part_number }}{% if product.vin %}, {{ product.vin }}{% endif %}, автозапчасти, запчасти для автомобиля">
+<meta name="author" content="LinkAvto">
+{% block meta_robots %}index, follow{% endblock %}
+
+{% block content %}
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  "name": "{{ product.name }}",
+  "description": "{{ product.description|striptags|truncatewords:50 }}",
+  {% if product.image and product.image.name %}"image": "{{ product.image.url }}",{% endif %}
+  "sku": "{{ product.part_number }}",
+  "mpn": "{{ product.part_number }}",
+  {% if product.vin %}"vehicleIdentificationNumber": "{{ product.vin }}",{% endif %}
+  "brand": {
+    "@type": "Brand",
+    "name": "{{ product.manufacturer|default:'Производитель' }}"
+  },
+  "offers": {
+    "@type": "Offer",
+    "url": "{{ request.build_absolute_uri }}",
+    "priceCurrency": "RUB",
+    "price": "{{ product.price }}",
+    "priceValidUntil": "{% now 'Y-m-d' %}",
+    "availability": "https://schema.org/{% if product.in_stock %}InStock{% else %}OutOfStock{% endif %}",
+    "itemCondition": "https://schema.org/NewCondition"
+  }{% if product.review_count > 0 %},
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "{{ product.get_average_rating }}",
+    "reviewCount": "{{ product.review_count }}",
+    "bestRating": "5",
+    "worstRating": "1"
+  }{% endif %}{% if product.get_published_reviews %},
+  "review": [
+    {% for review in product.get_published_reviews|slice:":3" %}
+    {
+      "@type": "Review",
+      "author": {
+        "@type": "Person",
+        "name": "{% if review.user %}{{ review.user.get_full_name|default:review.user.username }}{% else %}Анонимный покупатель{% endif %}"
+      },
+      "datePublished": "{{ review.created_at|date:'Y-m-d' }}",
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": "{{ review.rating }}",
+        "bestRating": "5",
+        "worstRating": "1"
+      }{% if review.comment %},
+      "reviewBody": "{{ review.comment|striptags|truncatewords:30 }}"{% endif %}
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ]{% endif %}
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Главная",
+      "item": "https://linkavto.ru"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "{{ product.category.name }}",
+      "item": "https://linkavto.ru{% url 'shop:category' product.category.slug %}"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "{{ product.name }}",
+      "item": "{{ request.build_absolute_uri }}"
+    }
+  ]
+}
+</script>
+
+<div class="d-md-none" style="margin-top: -5rem;">
+    {% include 'shop/mobile_product.html' %}
+</div>
+
+<div class="container d-none d-md-flex" style="margin: 0 !important;  max-width: none !important; flex-direction: column; justify-content: space-between; width: 100%;">
+    <div class="d-flex  mb-2" style="justify-content: space-between;">
+       <nav aria-label="breadcrumb" class="mb-3 crumb-nav-mobile">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'shop:index' %}" style="color: #89BEE8;">Главная</a></li>
+            {% if product.category.name %}
+                <li class="breadcrumb-item"><a href="{% url 'shop:category' product.category.slug %}" style="color: #89BEE8;">{{ product.category.name }}</a></li>{% endif %}
+                {% if product.subcategory.name %}
+                    <li class="breadcrumb-item {% if product.subcategory.name %}active{% endif %}">{{ product.subcategory.name }}<a href="{% url 'shop:category' category.slug %}?{{ breadcrumb_l2.1 }}" style="color: #89BEE8;">{{product.subcategory.name}}</a></li>
+                    {% endif %}
+                
+                {% if breadcrumb_l3 %}
+                    <li class="breadcrumb-item active">{{ breadcrumb_l3.0 }}</li>
+                {% endif %}
+          
+                <li class="breadcrumb-item active">{{ product.name }}</li>
+            
+        </ol>
+    </nav>
+        <div class="share-container position-relative" style="display: flex; align-items: center; gap: 20px;">
+             <span class="fw-medium text-muted"><span style="color: rgb(71, 71, 71);">Код: </span><span id="product-code-value">{{ product.internal_code }}</span></span>
+            <button class="btn btn-share" id="shareButton" aria-label="Поделиться товаром">
+                <i class="bi bi-share me-2"></i> Поделиться
+            </button>
+            <div class="share-dropdown" id="shareDropdown">
+                <a href="https://vk.com/share.php?url=current_url" class="share-option" data-social="vk" title="Поделиться ВКонтакте" target="_blank">
+                    <i class="bi bi-vimeo"></i> ВКонтакте
+                </a>
+                <a href="https://t.me/share/url?url=current_url" class="share-option" data-social="telegram" title="Поделиться в Telegram" target="_blank">
+                    <i class="bi bi-telegram"></i> Telegram
+                </a>
+                <a href="https://max.ru/?text=product_name" class="share-option" data-social="MAX" title="Поделиться в Max" target="_blank">
+            <img src="https://logo-teka.com/wp-content/uploads/2025/07/max-messenger-sign-logo.svg" alt="SVG logo Max" style="width: 100%; height: 100%; max-width: 17px; max-height: 20px;" />
+                       <span style="margin-left: 1rem;">MAX</span>
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="#" class="share-option" data-social="copy" title="Скопировать ссылку">
+                    <i class="bi bi-link-45deg"></i> Копировать ссылку
+                </a>
+            </div>
+        </div>
+    </div>
+    <div style="width: 41%; display: flex;">
+        <div style="width: 100%; display: flex; margin-bottom: 2vh;">
+                        <h1 class="fw-bold  " style="word-break: break-all;;">{{ product.name }}</h1>
+                </div>
+            </div>
+    <div class="row g-3">
+        <!-- Левая часть: галерея изображений -->
+       <div class="col-md-5 d-flex flex-row " style=" height: fit-content; max-height: 500px;">
+            
+        <!-- Галерея миниатюр с прокруткой -->
+            {% with all_images=product.get_all_images %}
+            {% if all_images|length > 0 %}
+            <div class="thumbnails-gallery-container position-relative">
+                <!-- Кнопка прокрутки влево -->
+                <button class="thumb-scroll-btn thumb-scroll-left" id="thumbScrollLeft" style="display: none;">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                
+                <!-- Контейнер с миниатюрами -->
+                <div class="thumbnails-wrapper" id="thumbnailsWrapper">
+                    {% for img_data in all_images %}
+                        {% if img_data.url and img_data.url|length > 0 %}
+                        <div class="thumb-item-wrapper">
+                            <img src="{{ img_data.url }}" 
+                                 class="img-thumbnail thumb-img {% if forloop.first %}active{% endif %}"
+                                 style="width: 60px; height: 60px; cursor: pointer; object-fit: cover; flex-shrink: 0;"
+                                 onclick="changeMainImage(this, '{{ img_data.url }}')"
+                                 alt="{{ img_data.alt }}">
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                
+                <!-- Кнопка прокрутки вправо -->
+                <button class="thumb-scroll-btn thumb-scroll-right" id="thumbScrollRight" style="display: none;">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
+            {% endif %}
+            {% endwith %}
+
+        <!-- Главное изображение -->
+                
+                {% if product.image and product.image.name %}
+               
+                <img id="main-product-image" src="{{ product.image.url }}" class="img-fluid rounded image-view"
+                     alt="{{ product.name }}" style="min-height: 200px; height: 100%; width: 90%; object-fit: contain; cursor: pointer; max-height: 500px;"
+                     onerror="this.outerHTML='<div class=\'d-flex flex-column align-items-center justify-content-center text-muted\' style=\'height: 100%;\'><i class=\'bi bi-image\' style=\'font-size: 4rem; opacity: 0.3;\'></i><span class=\'mt-2\' style=\'font-size: 0.9rem;\'>Нет изображения</span></div>';">
+                {% else %}
+                <div class="d-flex flex-column align-items-center justify-content-center text-muted" style="height: 100%; min-height: 360px;">
+                    <i class="bi bi-image" style="font-size: 4rem; opacity: 0.3;"></i>
+                    <span class="mt-2" style="font-size: 0.9rem;">Нет изображения</span>
+                </div>
+                
+                {% endif %}
+            
+
+            
+        </div>
+
+        <!-- Правая часть: описание и кнопки -->
+        <div class="col-md-7 ps-4" style="padding-left: 2.2rem !important;">
+            <div class="sticky-top" style="top: 20px; z-index: auto; position: relative !important;">
+                <div class="row align-items-start">
+                    <!-- Левая колонка: название, артикул, описание -->
+                    <div class="col-md-6 ps-0">
+                        
+                        {% if product.is_original %}
+                        <div class="mb-2">
+                            <span class="badge bg-warning text-dark px-2 py-1" style="font-size: 0.8rem; font-weight: 600;">
+                                <i class="fas fa-certificate me-1"></i>ОРИГИНАЛ
+                            </span>
+                        </div>
+                        {% endif %}
+
+                        <!-- Артикул с кнопкой копирования -->
+                        <div class="d-flex align-items-center mb-1">
+                            <span class="text-muted me-2">Артикул:</span>
+                            <span class="fw-medium me-2">{{ product.part_number }}</span>
+                            <i class="bi bi-files text-muted cursor-pointer copy-icon"
+                               data-text="{{ product.part_number }}"
+                               title="Скопировать артикул"></i>
+                        </div>
+                        <!-- VIN с кнопкой копирования -->
+                        {% if product.vin %}
+                        <div class="d-flex align-items-center mb-1">
+                            <span class="text-muted me-2">VIN:</span>
+                            <span class="fw-medium me-2">{{ product.vin }}</span>
+                            <i class="bi bi-files text-muted cursor-pointer copy-icon"
+                               data-text="{{ product.vin }}"
+                               title="Скопировать VIN"></i>
+                        </div>
+                        {% endif %}
+
+                        <!-- БЛОК ХАРАКТЕРИСТИК  -->
+                        <div class="mt-2">
+                            <h5 class="fw-semibold mb-2">О товаре</h5>
+                            <div class="characteristics-list">
+                                {% if product.internal_code %}
+                                <div class="d-flex justify-content-between border-bottom py-2">
+                                    <span class="text-muted">Внутренний код:</span>
+                                    <span class="fw-medium">{{ product.internal_code }}</span>
+                                </div>
+                                {% endif %}
+                                <div class="d-flex justify-content-between border-bottom py-2">
+                                    <span class="text-muted">Тип товара:</span>
+                                    <span class="fw-medium">{{ product.get_product_type_display }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between border-bottom py-2">
+                                    <span class="text-muted">Производитель:</span>
+                                    <span class="fw-medium">
+                                        {% if product.manufacturer %}{{ product.manufacturer.name }}{% else %}Не указан{% endif %}
+                                    </span>
+                                </div>
+                                <div class="d-flex justify-content-between border-bottom py-2">
+                                    <span class="text-muted">Тип транспорта:</span>
+                                    <span class="fw-medium">{{ product.get_vehicle_type_display }}</span>
+                                </div>
+                                {% if product.weight %}
+                                <div class="d-flex justify-content-between border-bottom py-2">
+                                    <span class="text-muted">Вес:</span>
+                                    <span class="fw-medium">{{ product.weight }} кг</span>
+                                </div>
+                                {% endif %}
+                                {% if product.dimensions %}
+                                <div class="d-flex justify-content-between border-bottom py-2">
+                                    <span class="text-muted">Габариты:</span>
+                                    <span class="fw-medium">{{ product.dimensions }}</span>
+                                </div>
+                                {% endif %}
+                                {% if product.warranty %}
+                                <div class="d-flex justify-content-between border-bottom py-2">
+                                    <span class="text-muted">Гарантия:</span>
+                                    <span class="fw-medium">{{ product.warranty }} мес.</span>
+                                </div>
+                                {% endif %}
+                                {% if product.product_type == 'oil_chem' and product.viscosity %}
+                                <div class="d-flex justify-content-between border-bottom py-2">
+                                    <span class="text-muted">Вязкость:</span>
+                                    <span class="fw-medium">{{ product.viscosity }}</span>
+                                </div>
+                                {% endif %}
+
+                                {% if product.product_type == 'oil_chem' and product.volume %}
+                                <div class="d-flex justify-content-between border-bottom py-2">
+                                    <span class="text-muted">Объем:</span>
+                                    <span class="fw-medium">{{ product.volume }} л</span>
+                                </div>
+                                {% endif %}
+                                <!-- Добавьте другие характеристики по необходимости -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Правая колонка: блок цены и кнопок -->
+                    <div class="col-md-6">
+                        <div class="price-actions-card  rounded-3 p-4 bg-light" style="box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important;">
+                            <div class="price-block mb-2">
+                                {% if product.old_price %}
+                                    <div class="d-flex align-items-center mb-1">
+                                        <span class="text-decoration-line-through text-muted me-2 fs-6">
+                                            {{ product.old_price|floatformat:"0" }} ₽
+                                        </span>
+                                        <span class="badge bg-danger fs-7 ms-2">
+                                            -{{ product.get_discount }}%
+                                        </span>
+                                    </div>
+                                {% endif %}
+                                <h3 class="text-dark fw-bold mb-2">{{ product.price|floatformat:"0" }} ₽</h3>
+                            </div>
+
+                            <div class="rating-block mb-3">
+                                {% if product.review_count > 0 %}
+                                <div class="d-flex align-items-center">
+                                    <!-- Числовой рейтинг -->
+                                    <span class="fw-bold text-dark me-1">{{ product.average_rating|floatformat:1 }}</span>
+
+                                    <!-- Одна звезда с цветом, зависящим от рейтинга -->
+                                    <div class="single-star-colored me-2">
+                                        {% with rating=product.average_rating %}
+                                            {% if rating >= 4 %}
+                                                <i class="fas fa-star text-warning" style="font-size: 1rem;"></i>
+                                            {% elif rating >= 3 %}
+                                                <i class="fas fa-star text-warning" style="font-size: 1rem; opacity: 0.8;"></i>
+                                            {% elif rating >= 2 %}
+                                                <i class="fas fa-star text-warning" style="font-size: 1rem; opacity: 0.6;"></i>
+                                            {% elif rating >= 1 %}
+                                                <i class="fas fa-star text-warning" style="font-size: 1rem; opacity: 0.4;"></i>
+                                            {% else %}
+                                                <i class="far fa-star text-warning" style="font-size: 1rem;"></i>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </div>
+
+                                    <a href="#reviews-section" class="text-decoration-none">
+                                        <small class="text-muted">{{ product.review_count }} отзывов</small>
+                                    </a>
+                                </div>
+                                {% else %}
+                                <div class="text-muted small">Нет отзывов</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="d-flex align-items-center gap-3 mt-3">
+                                <!-- Улучшенная кнопка избранного -->
+                                <button class="btn-favorite-detail {% if is_favorite %}active{% endif %}"
+                                        data-product-id="{{ product.id }}"
+                                        onclick="handleFavoriteClicks(this, {{ product.id }})"
+                                        aria-label="{% if is_favorite %}Удалить из избранного{% else %}Добавить в избранное{% endif %}">
+                                    <i class="{% if is_favorite %}fas text-danger{% else %}far{% endif %} fa-heart"></i>
+                                </button>
+
+                                <!-- Кнопка корзины -->
+                                <button class="btn btn-lg d-flex align-items-center justify-content-center gap-2 add-to-cart px-5 py-2 {% if is_in_cart %}btn-cart-success{% else %}btn-dark{% endif %}"
+                                        data-product-id="{{ product.id }}" id="product-detail-cart-button">
+                                    <i class="bi {% if is_in_cart %}bi-cart-check{% else %}bi-cart3{% endif %}"></i>
+                                    <span class="button-text">{% if is_in_cart %}В корзине{% else %}В корзину{% endif %}</span>
+                                </button>
+                            </div>
+                        </div>
+
+
+                        
+                    {% if product.seller and product.seller.id %}
+    <!-- Блок продавца -->
+    <div class="rounded  mt-3" style="padding: 4%; min-width: fit-content;  width: 100%; display: flex; justify-content: left; align-items: start; flex-direction: row; gap: 4px; box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important;"> 
+        <div style="display: flex; align-items: center; justify-content: center;  width: auto;  height: 100%;  border: none;">
+            <div style="display: flex; min-width: 50px; min-height: 50px; max-width: 100%; max-height: 100%; background-color: #D9D9D9; border-radius: 10px;"></div>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; justify-content: left; width: 100%; height: 100%; font-family: Montserrat; gap: 4px;">
+            <div style="display: flex; justify-content: left; align-items: center; gap: 2%; font-family: Montserrat; width: 100%;">
+                <strong style="font-family: Montserrat; white-space: nowrap;">
+                  {% if product.seller.store_name %}
+                    {{ product.seller.store_name }}
+                  {% else %}
+                    ПРОДАВЕЦ
+                  {% endif %}
+
+                </strong>
+            </div>
+            <div style="display: flex; align-items: center; font-family: Montserrat; justify-content: space-between;">
+                {% with review_summary=product.seller.review_summary %}
+                    <div style="flex-wrap: nowrap; display: flex; justify-content: left; align-items: center; gap: 6%; width: 100%;">
+                        <div style="font-family: Montserrat; display: flex; font-size: 12px; white-space: nowrap; align-items: center; padding: 4px; justify-content: left; gap: 10px;"> 
+                            {% if review_summary %}
+                                <i data-lucide="star" style="color: #ffd930; fill:#ffd930;"></i>
+                                {{ review_summary|floatformat:1 }}
+                            {% else %}
+                                Нет отзывов
+                            {% endif %}
+                        </div>
+                        <div style="display: flex; justify-content: right; align-items: center; width: 100%;"> 
+                            <a href="{% url 'sellers:storefront' seller_id=product.seller.id %}" class="seller_magazin_link" style="font-family: Montserrat; font-size: 14px; text-align: center; white-space: nowrap; padding: 3% 8%; background-color: #272526; border: none; gap: 10px; border-radius:10px; outline: none; text-decoration: none; color: white;">В магазин</a>
+                        </div> 
+                    </div>
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="text-muted small" style="font-family: Montserrat;">
+       
+    </div>
+{% endif %}
+                    
+                    
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- БЛОК ОПИСАНИЯ  -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="">
+            <div class="card-body">
+                <h4 class="card-title mb-3">Описание</h4>
+                <div class="product-description">
+                    {{ product.description|striptags|linebreaks }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- БЛОК ХАРАКТЕРИСТИК -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="">
+            <div class="card-body">
+                <h4 class="card-title mb-3">Характеристики</h4>
+                <div class="row">
+                    <!-- Первая колонка характеристик -->
+                    <div class="col-md-6">
+                        <div class="characteristics-list">
+                            <div class="d-flex justify-content-between border-bottom py-2">
+                                <span class="text-muted">Тип товара:</span>
+                                <span class="fw-medium">{{ product.get_product_type_display }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between border-bottom py-2">
+                                <span class="text-muted">Производитель:</span>
+                                <span class="fw-medium">
+                                    {% if product.manufacturer %}{{ product.manufacturer.name }}{% else %}Не указан{% endif %}
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between border-bottom py-2">
+                                <span class="text-muted">Тип транспорта:</span>
+                                <span class="fw-medium">{{ product.get_vehicle_type_display }}</span>
+                            </div>
+                            {% if product.weight %}
+                            <div class="d-flex justify-content-between border-bottom py-2">
+                                <span class="text-muted">Вес:</span>
+                                <span class="fw-medium">{{ product.weight }} кг</span>
+                            </div>
+                            {% endif %}
+                            {% if product.dimensions %}
+                            <div class="d-flex justify-content-between border-bottom py-2">
+                                <span class="text-muted">Габариты:</span>
+                                <span class="fw-medium">{{ product.dimensions }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Вторая колонка характеристик -->
+                    <div class="col-md-6">
+                        <div class="characteristics-list">
+                            {% if product.warranty %}
+                            <div class="d-flex justify-content-between border-bottom py-2">
+                                <span class="text-muted">Гарантия:</span>
+                                <span class="fw-medium">{{ product.warranty }} мес.</span>
+                            </div>
+                            {% endif %}
+                            {% if product.product_type == 'oil_chem' and product.viscosity %}
+                            <div class="d-flex justify-content-between border-bottom py-2">
+                                <span class="text-muted">Вязкость:</span>
+                                <span class="fw-medium">{{ product.viscosity }}</span>
+                            </div>
+                            {% endif %}
+                            {% if product.product_type == 'oil_chem' and product.volume %}
+                            <div class="d-flex justify-content-between border-bottom py-2">
+                                <span class="text-muted">Объем:</span>
+                                <span class="fw-medium">{{ product.volume }} л</span>
+                            </div>
+                            {% endif %}
+                            <!-- Добавьте другие характеристики по необходимости -->
+
+                            <!-- Пример дополнительных характеристик -->
+                            {% if product.part_number %}
+                            <div class="d-flex justify-content-between border-bottom py-2">
+                                <span class="text-muted">Артикул:</span>
+                                <span class="fw-medium">{{ product.part_number }}</span>
+                            </div>
+                            {% endif %}
+
+                            {% if product.internal_code %}
+                            <div class="d-flex justify-content-between border-bottom py-2">
+                                <span class="text-muted">Внутренний код:</span>
+                                <span class="fw-medium">{{ product.internal_code }}</span>
+                            </div>
+                            {% endif %}
+
+                            {% if product.vin %}
+                            <div class="d-flex justify-content-between border-bottom py-2">
+                                <span class="text-muted">VIN:</span>
+                                <span class="fw-medium">{{ product.vin }}</span>
+                            </div>
+                            {% endif %}
+
+                            <!-- Можно добавить больше характеристик из вашей модели -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- БЛОК ТЕГОВ / КЛЮЧЕВЫХ СЛОВ -->
+{% if product.tags.all %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="mb-4">
+            <div class="d-flex flex-wrap gap-2">
+                {% for tag in product.tags.all %}
+                <a href="{% url 'shop:tag_detail' tag.slug %}"
+                   class="tag-link"
+                   style="background-color: rgba(13, 110, 253, 0.1); color:#89BEE8;">
+                    #{{ tag.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+.tag-link {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: none !important;
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.1);
+}
+
+.tag-link:hover {
+    background-color: rgba(13, 110, 253, 0.15) !important;
+    color: #89BEE8 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.15);
+    text-decoration: none;
+}
+
+.tag-link:active {
+    transform: translateY(0);
+}
+
+/* Вариант с градиентом */
+.tag-link.gradient {
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.1), rgba(13, 110, 253, 0.05)) !important;
+    color:#89BEE8 !important;
+}
+
+.tag-link.gradient:hover {
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.15), rgba(13, 110, 253, 0.1)) !important;
+}
+
+/* Вариант с иконками */
+.tag-link.with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.tag-link.with-icon i {
+    font-size: 0.8rem;
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 768px) {
+    .tag-link {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+    }
+}
+</style>
+{% endif %}
+
+
+
+<style>
+.btn-tag {
+    font-size: 0.85rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.btn-tag:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+}
+
+/* Цвета для популярных категорий тегов */
+.tag-autoparts { background-color: rgba(13, 110, 253, 0.1) !important; color: #0d6efd !important; border-color: rgba(13, 110, 253, 0.3) !important; }
+.tag-oil { background-color: rgba(255, 193, 7, 0.1) !important; color: #ffc107 !important; border-color: rgba(255, 193, 7, 0.3) !important; }
+.tag-tires { background-color: rgba(40, 167, 69, 0.1) !important; color: #28a745 !important; border-color: rgba(40, 167, 69, 0.3) !important; }
+.tag-tools { background-color: rgba(111, 66, 193, 0.1) !important; color: #6f42c1 !important; border-color: rgba(111, 66, 193, 0.3) !important; }
+.tag-accessories { background-color: rgba(253, 126, 20, 0.1) !important; color: #fd7e14 !important; border-color: rgba(253, 126, 20, 0.3) !important; }
+.tag-original { background-color: rgba(220, 53, 69, 0.1) !important; color: #dc3545 !important; border-color: rgba(220, 53, 69, 0.3) !important; }
+</style>
+<!-- Секция отзывов -->
+{% include 'shop/product_reviews.html' %}
+
+<!-- Секции похожих и рекомендуемых товаров -->
+<div class="container " style="max-width: none !important;">
+    <!-- Похожие товары -->
+    {% if similar_products %}
+    <section class="similar-products mb-5" >
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold mb-0">Похожие товары</h3>
+            {% if similar_products|length > 5 %}
+            <a href="{% url 'shop:category' product.category.slug %}" class="btn btn-outline-dark btn-sm smotret-vse">
+                Смотреть все
+            </a>
+            {% endif %}
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap;">
+            {% for similar_product in similar_products|slice:":5" %}
+            
+                {% include 'shop/product_card.html' with product=similar_product %}
+           
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Рекомендуемые товары -->
+    {% if recommended_products %}
+    <section class="recommended-products">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold mb-0">Рекомендуем</h3>
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap;">
+            {% for recommended_product in recommended_products|slice:":5" %}
+           
+                {% include 'shop/product_card.html' with product=recommended_product %}
+            
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+
+
+<div class="image-modal" id="image-modal">
+    
+    
+    
+    <div style="display: flex; justify-content: space-between; flex-direction: column; position: absolute; align-items: center; width: 66%; height: 85vh; margin: 0 auto; border-radius: 6px;">
+        
+        <img id="modal-zoomed-image" style="object-fit: fill; justify-content: center; align-items: center; flex-direction: column; width: 100%; height: 100%; position: absolute; display: flex; padding: 1.6rem;">
+       
+       <div style="display: flex; align-items: center; justify-content:right;  width: 96%; height: 12vh;   position: relative;">
+        <div style="display: flex; margin-bottom: 14vh; padding: 4px; gap: 8px; justify-content: space-between; align-items: center; background-color: white; border: none; border-radius: 15px;">
+            
+            <div class="share-containers position-relative">
+                <button class="btn btn-share" id="shareButtons" aria-label="Поделиться товаром">
+                    <i class="bi bi-share me-2" style="color: black ; font-size: 1.1rem; font-weight: 800;"></i>
+                </button>
+                <div class="share-dropdowns" id="shareDropdowns">
+                    <a href="https://vk.com/share.php?url=current_url" class="share-options" data-social="vk" title="Поделиться ВКонтакте" target="_blank">
+                        <i class="bi bi-vimeo"></i> ВКонтакте
+                    </a>
+                    <a href="https://t.me/share/url?url=current_url" class="share-options" data-social="telegram" title="Поделиться в Telegram" target="_blank">
+                        <i class="bi bi-telegram"></i> Telegram
+                    </a>
+                    <a href="https://max.ru/?text=product_name" class="share-options" data-social="MAX" title="Поделиться в Max" target="_blank">
+                        <img src="https://logo-teka.com/wp-content/uploads/2025/07/max-messenger-sign-logo.svg" alt="SVG logo Max" style="width: 100%; height: 100%; max-width: 17px; max-height: 20px;" />
+                        <span style="margin-left: 1rem;">MAX</span>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="share-options" data-social="copy" title="Скопировать ссылку">
+                        <i class="bi bi-link-45deg"></i> Копировать ссылку
+                    </a>
+                </div>
+            </div>
+            <i data-lucide="x" class="modal-nav-icon" id="close-view-image"></i>
+        </div>
+    </div>
+       
+        <div style="display: flex; position: fixed; left: 4%; justify-content: left; align-items: center;  height:80vh; z-index: 9999;" class="modal-el"> 
+            <div class="chevron-modal" id="modalPrevBtn">
+                <i data-lucide="arrow-left" style="color: black; font-size: 10rem;"></i>
+            </div>
+        </div>
+
+       
+        <div style="display: flex; position: fixed; right: 4%; justify-content: right; align-items: center;  height:80vh; z-index: 9999;" class="modal-el"> 
+            <div class="chevron-modal" id="modalNextBtn">
+                <i data-lucide="arrow-right" style="color: black; font-size: 10rem;"></i>
+            </div>
+        </div>
+ </div>
+    
+  
+    <!-- <div class="modal-thumbnails-container" style="position: absolute; bottom: 20px; left: 0; right: 0; margin: 0 auto; width: 66%; display: none; justify-content: center; gap: 8px; padding: 10px; background:transparent; border-radius: 12px;">
+        {% with all_images=product.get_all_images %}
+        {% if all_images|length > 0 %}
+            {% for img_data in all_images %}
+                {% if img_data.url and img_data.url|length > 0 %}
+                <div class="modal-thumb-item-wrapper">
+                    <img src="{{ img_data.url }}" 
+                         class="modal-thumb-img {% if forloop.first %}active{% endif %}"
+                         style="width: 50px; height: 50px; cursor: pointer; object-fit: cover; border: 2px solid transparent; border-radius: 6px;"
+                         data-index="{{ forloop.counter0 }}"
+                         data-src="{{ img_data.url }}"
+                         alt="{{ img_data.alt }}">
+                </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+</div> -->
+
+
+
+{% include 'accounts/modals/auth_modals.html' %}
+<!-- Мобильные отзывы -->
+{% include 'shop/mobile_product_reviews.html' %}
+{% include 'shop/back_to_top.html' %}
+<style>
+    .border-bottom{
+        border-bottom: 1px solid rgb(0, 0, 0, .075) !important;
+    }
+    
+    /* Стили для пагинации */
+    .modal-pagination-info {
+        padding: 4px 12px;
+        background: transparent;
+        border-radius: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .modal-thumb-img.active {
+        border-color: #89BEE8 !important;
+    }
+    
+    .modal-thumb-img:hover {
+        transform: scale(1.05);
+        transition: transform 0.2s ease;
+    }
+    
+  
+    .chevron-modal:hover {
+        background-color: #89BEE8 !important;
+        transition: background-color 0.3s ease;
+    }
+    
+    .chevron-modal:hover i {
+        color: white !important;
+    }
+</style>
+<style>
+    .modal-nav-icon:hover{
+        transition: 0.4s ease-in;
+        color:#89BEE8  !important;
+        scale: 1.2 !important;
+    }
+    .chevron-modal{
+        display: flex;
+        position: fixed;
+         justify-content: center; 
+         align-items: center; 
+         background-color:  white; 
+         width: 3%; 
+         max-width: 2.4rem;
+         height: 4%; 
+         max-height: 2.4rem;
+         border-radius: 100%;  
+         z-index: 9999;
+    }
+    .image-modal{
+        position: fixed;
+        flex-direction: column;
+        top: 0;
+        margin-top: 0 !important;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        backdrop-filter: blur(16px); 
+        -webkit-backdrop-filter: blur(16px); 
+        background-color: rgba(0, 0, 0, 0.274);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+</style>
+    <!-- Стили для секций похожих и рекомендуемых товаров  -->
+<style>
+    /* Стили для секций похожих и рекомендуемых товаров */
+    .similar-products,
+    .recommended-products {
+        background: #fff;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .add-to-cat-da:hover{
+        background-color: #89BEE8;
+        border-color: #89BEE8;
+    }
+
+    .mobile-address-btn{
+    display: none !important;
+  }
+
+        
+    .smotret-vse{
+        color: black;
+    }
+
+    .smotret-vse:hover{
+        border-color: #89BEE8 ;
+        background-color: #89BEE8;
+    }
+
+    .similar-products h3,
+    .recommended-products h3 {
+        color: #1a1a1a;
+        font-size: 1.5rem;
+    }
+
+    /* Адаптивность */
+    @media (max-width: 768px) {
+        .similar-products,
+        .recommended-products {
+            padding: 1rem;
+            margin-left: -1rem;
+            margin-right: -1rem;
+            border-radius: 0;
+        }
+
+        .similar-products h3,
+        .recommended-products h3 {
+            font-size: 1.3rem;
+        }
+    }
+</style>
+
+
+    <!-- Стили для копирования артикула  -->
+<style>
+/* Стили для иконок копирования */
+.copy-icon {
+    font-size: 1rem !important;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+}
+
+.copy-icon:hover {
+    opacity: 1;
+    font-size: 1.1rem;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/* Стили для уведомления */
+.copy-notification {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+
+.copy-notification.show {
+    opacity: 1;
+}
+</style>
+    <!-- Стили блока цены и продавца  -->
+<style>
+    /* Стили для блока продавца */
+
+    .seller-card .star-rating.small i {
+        font-size: 0.8rem;
+    }
+
+    .seller-card .btn-sm {
+        border-radius: 6px;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    /* Обновленные стили для компактного блока цены и действий */
+    .price-actions-card {
+        background: linear-gradient(135deg, #FFFFFF 0%, #ffffff 100%);
+    }
+
+    .price-actions-card .btn {
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        font-size: 0.9rem;
+    }
+
+    .price-actions-card .btn-lg {
+        padding: 0.6rem 1rem;
+    }
+
+    .price-actions-card .btn-favorite-detail.active {
+        background-color: #fff5f5;
+        border-color: #dc3545;
+        color: #dc3545;
+    }
+
+    .price-actions-card .btn-favorite-detail:hover {
+        transform: translateY(-1px);
+    }
+
+    /* Адаптивность для мобильных */
+    @media (max-width: 768px) {
+        .price-actions-card {
+            margin-top: 1.5rem !important;
+        }
+    }
+</style>
+<!-- Стили для секции отзывов -->
+<style>
+/* Стили для прогресс-звезды */
+.single-star-progress {
+    display: inline-block;
+    position: relative;
+}
+
+.star-progress-fill {
+    top: 0;
+    left: 0;
+    white-space: nowrap;
+}
+
+/* Альтернативный вариант с градиентом */
+.single-star-gradient {
+    position: relative;
+    display: inline-block;
+}
+
+.star-gradient-bg {
+    background: linear-gradient(90deg, #ffc107 var(--rating-percent), #e4e5e9 var(--rating-percent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+</style>
+
+<!-- Стили для секции отзывов -->
+<style>
+    /* Общие стили для секции */
+    #reviews-section {
+        background: #fff;
+        border-radius: 12px;
+        padding: 2rem;
+    }
+
+    /* Звездный рейтинг */
+    .star-rating {
+        display: flex;
+        gap: 2px;
+    }
+
+    .star-rating i {
+        font-size: 1.1rem;
+        color: #ffc107;
+    }
+
+    /* Интерактивный рейтинг в форме */
+    .star-rating-input {
+        display: flex;
+        gap: 8px;
+        direction: rtl;
+    }
+
+    .star-rating-input input {
+        display: none;
+    }
+
+    .star-rating-input label {
+        color: #ddd;
+        cursor: pointer;
+        font-size: 1.8rem;
+        transition: all 0.2s;
+        position: relative;
+    }
+
+    .star-rating-input label i.fas {
+        position: absolute;
+        left: 0;
+        opacity: 0;
+        color: #ffc107;
+        transition: all 0.2s;
+    }
+
+    .star-rating-input input:checked ~ label i.fas,
+    .star-rating-input label:hover i.fas,
+    .star-rating-input label:hover ~ label i.fas {
+        opacity: 1;
+    }
+
+    /* Карточки отзывов */
+    .reviews-list .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        border-radius: 10px;
+    }
+
+    .reviews-list .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08) !important;
+    }
+
+    /* Кнопки полезности */
+    .like-btn:hover {
+        background-color: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+    }
+
+    .dislike-btn:hover {
+        background-color: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+
+    /* Форма отзыва */
+    .file-upload-wrapper {
+        position: relative;
+    }
+ 
+    .file-upload-wrapper input[type="file"] {
+        opacity: 0;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        cursor: pointer;
+    }
+
+    /* Пагинация */
+    .pagination .page-item .page-link {
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 3px;
+        border: none;
+        color: #495057;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #0d6efd;
+        color: white;
+    }
+
+    .pagination .page-item:not(.active) .page-link:hover {
+        background-color: #f8f9fa;
+    }
+
+    /* Анимации */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .reviews-list .card {
+        animation: fadeIn 0.3s ease-out forwards;
+    }
+    
+    @media (max-width: 1060px){
+         .add-to-cart{
+          padding-inline: 26px !important;
+        }
+    }
+     @media (max-width: 860px){
+         .add-to-cart{
+            padding-inline: 12px !important;
+        }
+    }
+
+    /* Адаптивность */
+    @media (max-width: 768px) {
+        .star-rating-input label {
+            font-size: 1.5rem;
+        }
+
+        #reviews-section {
+            padding: 1rem;
+        }
+       
+    }
+</style>
+<!--Для VIN-->
+<style>
+    /* Добавьте в секцию стилей */
+    .vin-code {
+        font-family: monospace;
+        letter-spacing: 1px;
+        background-color: #f8f9fa;
+        padding: 2px 6px;
+        border-radius: 4px;
+        display: inline-block;
+    }
+</style>
+<!-- Скрипт для звездного рейтинга в форме -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    //Скрытие хедера
+    const MobileHeader = document.querySelector('.mobile-header');
+    if (MobileHeader) MobileHeader.style.display = 'none'
+    
+    
+    
+    // Инициализация звездного рейтинга
+    const stars = document.querySelectorAll('.star-rating-input input');
+    stars.forEach(star => {
+        star.addEventListener('change', function() {
+            const rating = this.value;
+            console.log('Выбрано звезд:', rating);
+        });
+    });
+
+    // Обработка сортировки отзывов
+    const sortDropdownItems = document.querySelectorAll('.dropdown-item[href^="#sort="]');
+    sortDropdownItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const sortType = this.getAttribute('href').split('=')[1];
+            document.querySelector('#sortReviews').textContent = 'Сортировать по: ' + this.textContent;
+            // Здесь можно добавить логику сортировки
+        });
+    });
+
+    // Обработка полезности отзывов
+    document.querySelectorAll('.btn-outline-secondary').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const isHelpful = this.querySelector('.fa-thumbs-up') ? 'yes' : 'no';
+            const reviewId = this.closest('.card').dataset.reviewId;
+            // Здесь можно добавить AJAX-запрос для отметки полезности
+        });
+    });
+});
+</script>
+<style>
+    /* Обновленные стили для кнопки поделиться */
+    .btn-share {
+        position: relative;
+        padding: 8px 16px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        background-color: transparent;
+        border: none;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font-weight: 500;
+    }
+    .btn-shares {
+        position: relative;
+        padding: 8px 16px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        background-color: transparent;
+        border: none;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font-weight: 500;
+    }
+
+    .btn-share:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+        color: #495057;
+    }
+    .btn-shares:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+        color: #495057;
+    }
+
+    .share-container {
+        display: inline-block;
+        position: relative;
+    }
+    .share-containers {
+        display: inline-block;
+        position: relative;
+    }
+
+    .share-dropdown {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        padding: 8px 0;
+        min-width: 200px;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-8px);
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        margin-top: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+    }
+    .share-dropdowns {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        padding: 8px 0;
+        min-width: 200px;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-8px);
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        margin-top: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .share-dropdown.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+    .share-dropdowns.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    .share-option {
+        display: flex;
+        align-items: center;
+        padding: 10px 16px;
+        color: #212529;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        font-size: 14px;
+    }
+    .share-options {
+        display: flex;
+        align-items: center;
+        padding: 10px 16px;
+        color: #212529;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        font-size: 14px;
+    }
+    .seller_magazin_link:hover{
+        transition: 0.4s ease-in-out;
+        background-color: #89BEE8 !important; 
+
+    }
+    .share-option:hover {
+        background-color: #f8f9fa;
+        cursor: pointer;
+    }
+    .share-options:hover {
+        background-color: #f8f9fa;
+        cursor: pointer;
+    }
+    
+
+    .share-option i {
+        margin-right: 12px;
+        font-size: 1.1rem;
+        width: 20px;
+        text-align: center;
+    }
+    .share-options i {
+        margin-right: 12px;
+        font-size: 1.1rem;
+        width: 20px;
+        text-align: center;
+    }
+
+    .dropdown-divider {
+        height: 1px;
+        background-color: rgba(0, 0, 0, 0.08);
+        margin: 6px 0;
+    }
+    .dropdown-dividers {
+        height: 1px;
+        background-color: rgba(0, 0, 0, 0.08);
+        margin: 6px 0;
+    }
+
+    /* Цвета для иконок соцсетей */
+    .share-option[data-social="vk"] i { color: #2787F5; }
+    .share-option[data-social="telegram"] i { color: #2AABEE; }
+    .share-option[data-social="whatsapp"] i { color: #25D366; }
+    .share-option[data-social="copy"] i { color: #6c757d; }
+
+    .share-options[data-social="vk"] i { color: #2787F5; }
+    .share-options[data-social="telegram"] i { color: #2AABEE; }
+    .share-options[data-social="whatsapp"] i { color: #25D366; }
+    .share-options[data-social="copy"] i { color: #6c757d; }
+
+    /* Анимация для кнопки */
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    .btn-share:active {
+        animation: pulse 0.3s ease;
+    }
+
+    /* Тултип для уведомления о копировании */
+    .copy-tooltip {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+        backdrop-filter: blur(4px);
+    }
+     .copy-tooltips {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+        backdrop-filter: blur(4px);
+    }
+
+    .copy-tooltip.show {
+        opacity: 1;
+    }
+    .copy-tooltips.show {
+        opacity: 1;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const shareButton = document.getElementById('shareButton');
+    const shareDropdown = document.getElementById('shareDropdown');
+    const shareContainer = document.querySelector('.share-container');
+    let isDropdownOpen = false;
+
+    // Получаем текущий URL и данные о продукте
+    const currentUrl = encodeURIComponent(window.location.href);
+    const productName = encodeURIComponent(document.title || '');
+    const productDescription = encodeURIComponent('');
+
+    // Обновляем ссылки в меню
+    const vkLink = document.querySelector('.share-option[data-social="vk"]');
+    const telegramLink = document.querySelector('.share-option[data-social="telegram"]');
+    const whatsappLink = document.querySelector('.share-option[data-social="whatsapp"]');
+
+    if (vkLink) {
+        vkLink.href = `https://vk.com/share.php?url=${currentUrl}&title=${productName}&description=${productDescription}`;
+    }
+    if (telegramLink) {
+        telegramLink.href = `https://t.me/share/url?url=${currentUrl}&text=${productName}`;
+    }
+    if (whatsappLink) {
+        whatsappLink.href = `https://wa.me/?text=${productName}%20${currentUrl}`;
+    }
+
+    // Открытие/закрытие по клику
+    shareButton.addEventListener('click', function(e) {
+        e.stopPropagation();
+        isDropdownOpen = !isDropdownOpen;
+        shareDropdown.classList.toggle('show', isDropdownOpen);
+    });
+
+    // Закрытие при клике вне меню
+    document.addEventListener('click', function(e) {
+        if (!shareContainer.contains(e.target)) {
+            isDropdownOpen = false;
+            shareDropdown.classList.remove('show');
+        }
+    });
+
+    // Закрытие при нажатии Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && isDropdownOpen) {
+            isDropdownOpen = false;
+            shareDropdown.classList.remove('show');
+        }
+    });
+
+    // Создаем тултип для копирования
+    const copyTooltip = document.createElement('div');
+    copyTooltip.className = 'copy-tooltip';
+    document.body.appendChild(copyTooltip);
+
+    // Обработчик только для кнопки "Копировать ссылку"
+    document.querySelector('.share-option[data-social="copy"]').addEventListener('click', function(e) {
+        e.preventDefault();
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            copyTooltip.textContent = 'Ссылка скопирована в буфер обмена!';
+            copyTooltip.classList.add('show');
+            setTimeout(() => copyTooltip.classList.remove('show'), 2000);
+        }).catch(() => {
+            copyTooltip.textContent = 'Не удалось скопировать ссылку';
+            copyTooltip.classList.add('show');
+            setTimeout(() => copyTooltip.classList.remove('show'), 2000);
+        });
+
+        // Закрываем меню после выбора
+        isDropdownOpen = false;
+        shareDropdown.classList.remove('show');
+    });
+});
+</script>
+<!--Отзывы -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Элементы для работы с изображениями отзыва
+    const imageInput = document.getElementById('review-image');
+    const previewContainer = document.querySelector('.image-preview');
+    const removeBtn = document.querySelector('.remove-image');
+    const attachBtn = document.querySelector('.review-attach-btn');
+
+    if (imageInput && previewContainer && removeBtn) {
+        // Обработчик изменения input файла
+        imageInput.addEventListener('change', function() {
+            const files = this.files;
+            if (files && files.length > 0) {
+                previewContainer.style.display = 'block';
+                updatePreview(files);
+                if (attachBtn) attachBtn.classList.add('has-file');
+            }
+        });
+
+        // Обработчик кнопки удаления
+        removeBtn.addEventListener('click', function() {
+            imageInput.value = '';
+            previewContainer.style.display = 'none';
+            previewContainer.innerHTML = ''; // Очищаем все превью
+            if (attachBtn) attachBtn.classList.remove('has-file');
+        });
+    }
+
+    // Функция обновления превью
+    function updatePreview(files) {
+        previewContainer.innerHTML = ''; // Очищаем предыдущие превью
+
+        // Создаем контейнер для превьюшек
+        const previewsWrapper = document.createElement('div');
+        previewsWrapper.className = 'd-flex flex-wrap gap-2 mb-2';
+        previewContainer.appendChild(previewsWrapper);
+
+        // Добавляем превью для каждого файла
+        Array.from(files).forEach(file => {
+            if (file.type.match('image.*')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'position-relative';
+                    previewItem.style.width = '100px';
+
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'img-thumbnail rounded-3';
+                    img.style.width = '100%';
+                    img.style.height = '100px';
+                    img.style.objectFit = 'cover';
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.className = 'btn btn-sm btn-danger position-absolute top-0 end-0';
+                    removeBtn.innerHTML = '&times;';
+                    removeBtn.style.transform = 'translate(50%, -50%)';
+                    removeBtn.addEventListener('click', function() {
+                        previewItem.remove();
+                        updateFileInput(files, file);
+                    });
+
+                    previewItem.appendChild(img);
+                    previewItem.appendChild(removeBtn);
+                    previewsWrapper.appendChild(previewItem);
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Добавляем кнопку "Удалить все" если больше одного файла
+        if (files.length > 1) {
+            const removeAllBtn = document.createElement('button');
+            removeAllBtn.type = 'button';
+            removeAllBtn.className = 'btn btn-sm btn-outline-danger mt-2 remove-image';
+            removeAllBtn.innerHTML = '<i class="bi bi-trash me-1"></i> Удалить все';
+            removeAllBtn.addEventListener('click', function() {
+                imageInput.value = '';
+                previewContainer.style.display = 'none';
+                previewContainer.innerHTML = '';
+                if (attachBtn) attachBtn.classList.remove('has-file');
+            });
+            previewContainer.appendChild(removeAllBtn);
+        }
+    }
+
+    // Функция обновления input файла после удаления одного из превью
+    function updateFileInput(allFiles, fileToRemove) {
+        const newFiles = Array.from(allFiles).filter(f => f !== fileToRemove);
+        const dataTransfer = new DataTransfer();
+
+        newFiles.forEach(file => {
+            dataTransfer.items.add(file);
+        });
+
+        imageInput.files = dataTransfer.files;
+    }
+});
+</script>
+<!-- форма отзыва-->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const collapseEl = document.getElementById('reviewFormCollapse');
+    const toggleBtn = document.getElementById('toggleReviewForm');
+    const bsCollapse = new bootstrap.Collapse(collapseEl, { toggle: false });
+
+    toggleBtn.addEventListener('click', function () {
+        if (collapseEl.classList.contains('show')) {
+            bsCollapse.hide();
+            toggleBtn.textContent = 'Оставить отзыв';
+        } else {
+            bsCollapse.show();
+            toggleBtn.textContent = 'Скрыть форму';
+        }
+    });
+});
+</script>
+<!--прогресс-баров-->
+<style>
+    .progress {
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        transition: width 0.6s ease;
+    }
+
+    .rating-distribution .rating-row {
+        margin-bottom: 12px;
+    }
+
+    .rating-distribution .stars {
+        min-width: 70px;
+    }
+
+    .rating-distribution .count {
+        min-width: 50px;
+        text-align: right;
+    }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    //Скрытие хедера
+    const MobileHeader = document.querySelector('.mobile-header');
+    if (MobileHeader) MobileHeader.style.display = 'none'
+    
+    
+    // Анимация прогресс-баров при загрузке
+    const progressBars = document.querySelectorAll('.progress-bar');
+
+    progressBars.forEach(bar => {
+        const targetWidth = bar.getAttribute('aria-valuenow');
+        bar.style.width = '0%';
+
+        setTimeout(() => {
+            bar.style.width = targetWidth + '%';
+        }, 100);
+    });
+
+    // Обработка сортировки отзывов
+    const sortSelect = document.querySelector('#reviews-section form-select-sort');
+    const sortselmenu = document.querySelector('.form-select-menu');
+    const sortItems = document.querySelectorAll('#reviewSort li');
+    const sorttextt = document.getElementById('reviev-sort-text');
+    sortItems.forEach(item => {
+    item.addEventListener('click', function() {
+        const sortType = this.getAttribute('value');
+        console.log('Сортировка по:', sortType);
+        
+       const sorttexttt = {
+        "newest" : 'Сначала новые',
+        "highest" : 'С высоким рейтингом',
+        "lowest" : 'С низким рейтингом',
+        "helpful" : 'Самые полезные',
+       }
+
+        if (typeof loadReviewsWithSort === 'function') {
+            loadReviewsWithSort(sortType);
+        }
+        sorttextt.textContent = sorttexttt[sortType] || "Сначала новые"
+    });  
+    let Isrevsortactive = false
+    document.addEventListener('click', function(e){
+      
+        if(e.target.id === 'reviev-sort-text' && Isrevsortactive === false) {
+            sortselmenu.style.display = 'flex';
+            Isrevsortactive = !Isrevsortactive
+        }
+        else{
+             sortselmenu.style.display = 'none';
+               Isrevsortactive = !Isrevsortactive
+        }
+         if(e.target.id !== 'reviev-sort-text') {
+    sortselmenu.style.display = 'none';
+    Isrevsortactive = false;
+}
+    })
+})});
+</script>
+
+
+<style>
+    .mobile-header {
+        display: none !important;
+    }
+    /* Стиль для активной миниатюры */
+    .thumb-img.active {
+        border: 2px solid #89BEE8;
+        box-shadow: 0 0 5px rgba(13, 110, 253, 0.5);
+    }
+
+    /* Плавное переключение изображений */
+    #main-product-image {
+        transition: opacity 0.15s ease-in-out;
+    }
+
+    /* Галерея миниатюр с прокруткой */
+    .thumbnails-gallery-container {
+        position: relative;
+        min-width: fit-content;
+    }
+   
+    .thumbnails-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-behavior: smooth;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE и Edge */
+        padding: 4px 0;
+    }
+
+    .thumbnails-wrapper::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, Opera */
+    }
+
+    .thumb-item-wrapper {
+        flex-shrink: 0;
+        min-width: 50px;
+    }
+
+    .thumb-img-placeholder {
+        cursor: default;
+    }
+
+    /* Кнопки прокрутки миниатюр */
+    .thumb-scroll-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 10;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: all 0.2s ease;
+    }
+
+    .thumb-scroll-btn:hover {
+        background: #f8f9fa;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .thumb-scroll-btn:active {
+        transform: translateY(-50%) scale(0.95);
+    }
+
+    .thumb-scroll-left {
+        left: -16px;
+    }
+
+    .thumb-scroll-right {
+        right: -16px;
+    }
+
+    .thumb-scroll-btn i {
+        font-size: 1.2rem;
+        color: #495057;
+    }
+
+    /* Фиксируем правую колонку */
+    .sticky-top {
+        position: -webkit-sticky;
+        position: sticky;
+        align-self: flex-start;
+    }
+
+    /* Салатовая кнопка */
+    .btn-cart-success {
+        background-color: #c1e7ff;
+        border-color: #c1e7ff;
+        color: #000;
+    }
+
+    .btn-cart-success:hover {
+        background-color: #c1e7ff !important;
+        border-color: #c1e7ff !important;
+        color: #000 !important;
+    }
+</style>
+<!-- Стили для кнопки избранного -->
+<style>
+    /* Стили для кнопки избранного */
+    .btn-favorite-detail {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        color: #6c757d;
+        cursor: pointer;
+    }
+
+    .btn-favorite-detail:hover {
+        background-color: #f1f1f1;
+        transform: scale(1.05);
+    }
+
+    .btn-favorite-detail i {
+        font-size: 1.25rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-favorite-detail.active i {
+        color: #dc3545 !important;
+    }
+
+    /* Анимация сердца */
+    @keyframes heartBeat {
+        0% { transform: scale(1); }
+        25% { transform: scale(1.2); }
+        50% { transform: scale(0.9); }
+        75% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+
+    .heart-beat {
+        animation: heartBeat 0.6s ease;
+    }
+</style>
+<!--Проверка авторизации-->
+<script>
+// Передаем информацию о возможности оставить отзыв в JavaScript
+const canReview = {% if user.is_authenticated and can_review %}true{% else %}false{% endif %};
+
+function checkAuthBeforeReview() {
+    {% if user.is_authenticated %}
+        // Проверяем, может ли пользователь оставить отзыв
+        if (!canReview) {
+            // Показываем сообщение, что только покупатели могут оставить отзыв
+            alert('Только покупатели могут оставить отзыв об этом товаре. Чтобы оставить отзыв, необходимо приобрести товар.');
+            return;
+        }
+        // Если пользователь авторизован и может оставить отзыв, показываем форму отзыва
+        showReviewForm();
+    {% else %}
+        // Если не авторизован, показываем модальное окно авторизации
+        const authModalElement = document.getElementById('authModal');
+        if (authModalElement) {
+            const authModal = bootstrap.Modal.getOrCreateInstance(authModalElement, {
+                backdrop: true,
+                keyboard: true
+            });
+            authModal.show();
+        }
+
+        // Сохраняем URL для редиректа после авторизации
+        const nextUrl = window.location.pathname;
+        const loginForm = document.querySelector('#authModal form[action*="login"]');
+        if (loginForm) {
+            let nextInput = loginForm.querySelector('input[name="next"]');
+            if (!nextInput) {
+                nextInput = document.createElement('input');
+                nextInput.type = 'hidden';
+                nextInput.name = 'next';
+                loginForm.appendChild(nextInput);
+            }
+            nextInput.value = nextUrl;
+        }
+    {% endif %}
+}
+
+function showReviewForm() {
+    // Ваша функция для показа формы отзыва
+    // Например: document.getElementById('reviewForm').style.display = 'block';
+    console.log('Показываем форму отзыва');
+}
+</script>
+<script>
+// Общие функции для работы с состояниями (должны быть в обоих шаблонах)
+// Старые функции удалены, используются общие версии ниже
+// initializeStates() удалена - используется initializeMobileStates() из mobile_product.html
+
+// Функция для получения CSRF токена
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function getCsrfToken() {
+    return getCookie('csrftoken') || '{{ csrf_token }}';
+}
+
+// Работа с избранным
+function handleFavoriteClicks(button, productId) {
+    {% if user.is_authenticated %}
+        toggleFavorites(button, productId);
+    {% else %}
+        const authModalElement = document.getElementById('authModal');
+        if (authModalElement) {
+            const authModal = bootstrap.Modal.getOrCreateInstance(authModalElement, {
+                backdrop: true,
+                keyboard: true
+            });
+            authModal.show();
+        }
+        const nextUrl = window.location.pathname;
+        const loginForm = document.querySelector('#authModal form[action*="login"]');
+        if (loginForm) {
+            let nextInput = loginForm.querySelector('input[name="next"]');
+            if (!nextInput) {
+                nextInput = document.createElement('input');
+                nextInput.type = 'hidden';
+                nextInput.name = 'next';
+                loginForm.appendChild(nextInput);
+            }
+            nextInput.value = nextUrl;
+        }
+    {% endif %}
+}
+
+function toggleFavorites(button, productId) {
+    const icon = button.querySelector('i');
+    const wasFavorite = icon.classList.contains('fas');
+
+    // Мгновенное визуальное изменение
+    updateFavoriteButtons(button, !wasFavorite);
+    icon.classList.add('heart-beat');
+
+    // Отправка на сервер
+    fetch(`/favorites/toggle/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCsrfToken(),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // ОБНОВЛЯЕМ СЧЕТЧИК ИЗБРАННОГО В ШАПКЕ
+            if (typeof refreshFavoriteCounter === 'function') {
+                refreshFavoriteCounter();
+            }
+        } else {
+            // Откат при ошибке
+            updateFavoriteButtons(button, wasFavorite);
+            showToast('Ошибка при обновлении избранного');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        updateFavoriteButton(button, wasFavorite);
+        showToast('Ошибка при обновлении избранного');
+    })
+    .finally(() => {
+        setTimeout(() => icon.classList.remove('heart-beat'), 400);
+    });
+}
+// Работа с корзиной
+function setupCartButtons() {
+    document.querySelectorAll('.add-to-cart').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const productId = this.getAttribute('data-product-id');
+            const isInCart = this.classList.contains('btn-cart-success');
+
+            if (isInCart) {
+                window.location.href = "{% url 'cart:cart_detail' %}";
+                return;
+            }
+
+            fetch(`/cart/add/${productId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken(),
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({quantity: 1})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateCartButton(this, true);
+                    showToast('Товар добавлен в корзину');
+                } else {
+                    showToast('Ошибка при добавлении в корзину');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Ошибка при добавлении в корзину');
+            });
+        });
+    });
+}
+
+// Проверка состояний с сервера после загрузки
+function checkServerStates() {
+    // Проверка избранного
+    fetch('/favorites/get_favorite_ids/', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.favorite_ids) {
+            document.querySelectorAll('.btn-favorite, .btn-favorite-detail').forEach(button => {
+                const productId = parseInt(button.getAttribute('data-product-id'));
+                updateFavoriteButtons(button, data.favorite_ids.includes(productId));
+            });
+        }
+    })
+    .catch(console.error);
+
+    // Проверка корзины
+    fetch('/cart/get_cart_items/', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.querySelectorAll('.add-to-cart').forEach(button => {
+                const productId = parseInt(button.getAttribute('data-product-id'));
+                const isInCart = data.items.some(item => item.product_id === productId);
+                updateCartButton(button, isInCart);
+            });
+        }
+    })
+    .catch(console.error);
+}
+
+// Инициализация (десктоп-специфичные функции)
+document.addEventListener('DOMContentLoaded', function() {
+    // initializeStates() удален - используется initializeMobileStates() из mobile_product.html
+    setupCartButtons();
+    // checkServerStates() удален - данные приходят из шаблона
+
+    // Смена главного изображения (специфично для product_detail)
+    function changeMainImage(thumb, imageUrl) {
+        const mainImg = document.getElementById('main-product-image');
+        if (!mainImg) return;
+        
+        mainImg.style.opacity = '0';
+
+        setTimeout(() => {
+            if (imageUrl) {
+                mainImg.src = imageUrl;
+            }
+            mainImg.style.opacity = '1';
+        }, 150);
+
+        document.querySelectorAll('.thumb-img').forEach(img => {
+            img.classList.remove('active');
+        });
+
+        if (thumb && thumb.classList) {
+            thumb.classList.add('active');
+        }
+    }
+
+    // Инициализация миниатюр изображений
+    document.querySelectorAll('.thumb-img').forEach(thumb => {
+        thumb.addEventListener('click', function() {
+            changeMainImage(this, this.src);
+        });
+    });
+
+    // Прокрутка миниатюр влево/вправо
+    function initThumbnailsScroll() {
+        const wrapper = document.getElementById('thumbnailsWrapper');
+        const leftBtn = document.getElementById('thumbScrollLeft');
+        const rightBtn = document.getElementById('thumbScrollRight');
+        
+        if (!wrapper || !leftBtn || !rightBtn) return;
+
+        function checkScrollButtons() {
+            const scrollLeft = wrapper.scrollLeft;
+            const scrollWidth = wrapper.scrollWidth;
+            const clientWidth = wrapper.clientWidth;
+            
+            // Показываем кнопку влево, если есть что прокручивать влево
+            leftBtn.style.display = scrollLeft > 0 ? 'flex' : 'none';
+            
+            // Показываем кнопку вправо, если есть что прокручивать вправо
+            rightBtn.style.display = (scrollLeft < scrollWidth - clientWidth - 1) ? 'flex' : 'none';
+        }
+
+        // Прокрутка влево
+        leftBtn.addEventListener('click', function() {
+            wrapper.scrollBy({
+                left: -200,
+                behavior: 'smooth'
+            });
+        });
+
+        // Прокрутка вправо
+        rightBtn.addEventListener('click', function() {
+            wrapper.scrollBy({
+                left: 200,
+                behavior: 'smooth'
+            });
+        });
+
+        // Проверка при прокрутке
+        wrapper.addEventListener('scroll', checkScrollButtons);
+        
+        // Проверка при изменении размера окна
+        window.addEventListener('resize', checkScrollButtons);
+        
+        // Первоначальная проверка
+        setTimeout(checkScrollButtons, 100);
+        checkScrollButtons();
+    }
+
+    // Инициализация прокрутки миниатюр
+    initThumbnailsScroll();
+});
+
+function showToast(message) {
+    // Реализуйте вашу систему уведомлений
+    console.log(message);
+}
+</script>
+<script>
+// ===== ОБЩИЕ ФУНКЦИИ ДЛЯ ВСЕХ ВЕРСИЙ =====
+
+// Функции для мобильной версии
+function toggleMobileShareMenu() {
+    document.getElementById('mobileShareMenu').classList.toggle('show');
+}
+
+function copyMobileLink() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+        alert('Ссылка скопирована!');
+        toggleMobileShareMenu();
+    }).catch(() => {
+        alert('Не удалось скопировать ссылку');
+    });
+}
+
+function toggleMobileDescription() {
+    const content = document.querySelector('.description-content');
+    const button = document.querySelector('.btn-show-more');
+
+    content.classList.toggle('collapsed');
+    button.textContent = content.classList.contains('collapsed') ?
+        'Показать полностью' : 'Свернуть';
+}
+
+// Функция для обновления состояния кнопки корзины
+function updateCartButtonState(button, isInCart) {
+    if (isInCart) {
+        button.classList.remove('btn-primary');
+        button.classList.add('btn-cart-success');
+        const buttonText = button.querySelector('.button-text');
+        if (buttonText) {
+            buttonText.textContent = 'В корзине';
+        } else {
+            button.innerHTML = '<i class="bi bi-cart-check me-2"></i> В корзине';
+        }
+        const icon = button.querySelector('i');
+        if (icon) icon.className = 'bi bi-cart-check';
+    } else {
+        button.classList.remove('btn-cart-success');
+        button.classList.add('btn-primary');
+        const buttonText = button.querySelector('.button-text');
+        if (buttonText) {
+            buttonText.textContent = 'В корзину';
+        } else {
+            button.innerHTML = '<i class="bi bi-cart3 me-2"></i> В корзину';
+        }
+        const icon = button.querySelector('i');
+        if (icon) icon.className = 'bi bi-cart3';
+    }
+}
+
+// Функция для обновления состояния кнопки избранного (универсальная)
+function updateFavoriteButtons(button, isFavorite) {
+    const icon = button.querySelector('i');
+    if (icon) {
+        icon.classList.toggle('far', !isFavorite);
+        icon.classList.toggle('fas', isFavorite);
+        button.classList.toggle('active', isFavorite);
+
+        // Для десктопной версии добавляем цвет
+        if (button.classList.contains('btn-favorite-detail')) {
+            icon.classList.toggle('text-secondary', !isFavorite);
+            icon.classList.toggle('text-danger', isFavorite);
+        }
+    }
+}
+
+// Сохранение состояния корзины в localStorage
+function saveCartState(productId, isInCart) {
+    const cartState = getCartState();
+    if (isInCart) {
+        cartState[productId] = true;
+    } else {
+        delete cartState[productId];
+    }
+    localStorage.setItem('cartState', JSON.stringify(cartState));
+}
+
+// Получение состояния корзины из localStorage
+function getCartState() {
+    try {
+        return JSON.parse(localStorage.getItem('cartState')) || {};
+    } catch {
+        return {};
+    }
+}
+
+// Сохранение состояния избранного в localStorage
+function saveFavoriteState(productId, isFavorite) {
+    const favoriteState = getFavoriteState();
+    if (isFavorite) {
+        favoriteState[productId] = true;
+    } else {
+        delete favoriteState[productId];
+    }
+    localStorage.setItem('favoriteState', JSON.stringify(favoriteState));
+}
+
+// Получение состояния избранного из localStorage
+function getFavoriteState() {
+    try {
+        return JSON.parse(localStorage.getItem('favoriteState')) || {};
+    } catch {
+        return {};
+    }
+}
+
+// Функция для показа уведомлений
+function showToast(message) {
+    // Временная реализация - можно заменить на вашу систему уведомлений
+    console.log(message);
+}
+
+// ===== ОБРАБОТЧИКИ ИЗБРАННОГО =====
+
+function handleFavoriteClicks(button, productId) {
+    {% if user.is_authenticated %}
+        toggleFavorites(button, productId);
+    {% else %}
+        // Показываем модальное окно авторизации
+        const authModalElement = document.getElementById('authModal');
+        if (authModalElement) {
+            const authModal = bootstrap.Modal.getOrCreateInstance(authModalElement, {
+                backdrop: true,
+                keyboard: true
+            });
+            authModal.show();
+        }
+
+        // Сохраняем URL для редиректа после авторизации
+        const nextUrl = window.location.pathname;
+        const loginForm = document.querySelector('#authModal form[action*="login"]');
+        if (loginForm) {
+            let nextInput = loginForm.querySelector('input[name="next"]');
+            if (!nextInput) {
+                nextInput = document.createElement('input');
+                nextInput.type = 'hidden';
+                nextInput.name = 'next';
+                loginForm.appendChild(nextInput);
+            }
+            nextInput.value = nextUrl;
+        }
+    {% endif %}
+}
+
+function toggleFavorites(button, productId) {
+    const icon = button.querySelector('i');
+    const wasFavorite = icon.classList.contains('fas');
+
+    // Мгновенное визуальное изменение
+    updateFavoriteButtons(button, !wasFavorite);
+    icon.classList.add('heart-beat');
+
+    // Сохраняем локально
+    saveFavoriteState(productId, !wasFavorite);
+
+    // Отправка на сервер
+    fetch(`/favorites/toggle/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCsrfToken(),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (typeof refreshFavoriteCounter === 'function') {
+                refreshFavoriteCounter();
+            }
+        } else {
+            // Откат при ошибке
+            updateFavoriteButtons(button, wasFavorite);
+            saveFavoriteState(productId, wasFavorite);
+            showToast('Ошибка при обновлении избранного');
+        }
+    })
+    .catch(() => {
+        updateFavoriteButtons(button, wasFavorite);
+        saveFavoriteState(productId, wasFavorite);
+        showToast('Ошибка при обновлении избранного');
+    })
+    .finally(() => {
+        setTimeout(() => icon.classList.remove('heart-beat'), 400);
+    });
+}
+
+// ===== ОБРАБОТЧИКИ КОРЗИНЫ =====
+
+function handleCartClick(button, productId) {
+    const isInCart = button.classList.contains('btn-cart-success');
+
+    if (isInCart) {
+        window.location.href = "{% url 'cart:cart_detail' %}";
+        return;
+    }
+
+    // Мгновенное обновление состояния кнопки
+    updateCartButtonState(button, true);
+
+    // Сохраняем состояние в localStorage
+    saveCartState(productId, true);
+
+    // Отправка на сервер
+    fetch(`/cart/add/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCsrfToken(),
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({quantity: 1})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            // Откат при ошибке
+            updateCartButtonState(button, false);
+            saveCartState(productId, false);
+            showToast('Ошибка при добавлении в корзину');
+        } else {
+            showToast('Товар добавлен в корзину');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Откат при ошибке
+        updateCartButtonState(button, false);
+        saveCartState(productId, false);
+        showToast('Ошибка при добавлении в корзину');
+    });
+}
+
+// ===== ПРОВЕРКА СОСТОЯНИЙ =====
+
+// Проверка локального состояния при загрузке
+function checkLocalStates() {
+    const cartState = getCartState();
+    const favoriteState = getFavoriteState();
+
+    // Применяем состояния корзины
+    document.querySelectorAll('.mobile-add-to-cart, .add-to-cart').forEach(button => {
+        const productId = button.getAttribute('data-product-id');
+        if (cartState[productId]) {
+            updateCartButtonState(button, true);
+        }
+    });
+
+    // Применяем состояния избранного
+    document.querySelectorAll('.btn-favorite-mobile, .btn-favorite-detail').forEach(button => {
+        const productId = button.getAttribute('data-product-id');
+        if (favoriteState[productId]) {
+            updateFavoriteButton(button, true);
+        }
+    });
+}
+
+// Проверка состояний с сервера
+function checkServerStates() {
+    // Сначала применяем локальные состояния для мгновенного отображения
+    checkLocalStates();
+
+    // Затем проверяем серверные данные и синхронизируем
+    // Проверка избранного
+    fetch('/favorites/get_favorite_ids/', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.favorite_ids) {
+            document.querySelectorAll('.btn-favorite-mobile, .btn-favorite-detail').forEach(button => {
+                const productId = parseInt(button.getAttribute('data-product-id'));
+                const isFavorite = data.favorite_ids.includes(productId);
+                updateFavoriteButton(button, isFavorite);
+                saveFavoriteState(productId, isFavorite);
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching favorites:', error);
+        // Оставляем локальное состояние если сервер недоступен
+    });
+
+    // Проверка корзины
+    fetch('/cart/get_cart_items/', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.querySelectorAll('.mobile-add-to-cart, .add-to-cart').forEach(button => {
+                const productId = parseInt(button.getAttribute('data-product-id'));
+                const isInCart = data.items.some(item => item.product_id === productId);
+                updateCartButtonState(button, isInCart);
+                saveCartState(productId, isInCart);
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching cart:', error);
+        // Оставляем локальное состояние если сервер недоступен
+    });
+}
+
+// ===== ИНИЦИАЛИЗАЦИЯ =====
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация свайпера для мобильной версии
+    if (document.querySelector('.mobileProductSwiper')) {
+        const mobileSwiper = new Swiper('.mobileProductSwiper', {
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+            loop: true,
+            spaceBetween: 0,
+            autoplay: {
+                delay: 5000,
+                disableOnInteraction: false,
+            },
+        });
+    }
+
+    // Закрытие мобильного меню при клике вне его
+    document.addEventListener('click', function(e) {
+        const shareMenu = document.getElementById('mobileShareMenu');
+        if (shareMenu && !e.target.closest('.btn-share-mobile') &&
+            !e.target.closest('.share-mobile-menu') &&
+            shareMenu.classList.contains('show')) {
+            toggleMobileShareMenu();
+        }
+    });
+
+    console.log('=== Desktop initialization ===');
+    
+    // Инициализация для ДЕСКТОПНЫХ кнопок (мобильные обрабатываются в mobile_product.html)
+    try {
+        const favoriteIdsRaw = '{{ favorite_ids|safe }}';
+        console.log('Desktop: Raw favorite_ids from template:', favoriteIdsRaw);
+        const initialFavoriteIds = JSON.parse(favoriteIdsRaw || '[]');
+        console.log('Desktop: Parsed favorite IDs:', initialFavoriteIds);
+        
+        // Только десктопные кнопки избранного (без .btn-favorite-mobile)
+        const desktopFavoriteButtons = document.querySelectorAll('.btn-favorite-detail:not(.btn-favorite-mobile)');
+        console.log(`Desktop: Found ${desktopFavoriteButtons.length} favorite buttons`);
+        
+        desktopFavoriteButtons.forEach(button => {
+            const productId = parseInt(button.getAttribute('data-product-id'));
+            const isFavorite = initialFavoriteIds.includes(productId);
+            console.log(`Desktop: Product ${productId}: isFavorite=${isFavorite}, button:`, button);
+            updateFavoriteButton(button, isFavorite);
+            saveFavoriteState(productId, isFavorite);
+        });
+    } catch (e) {
+        console.error('Desktop: Error parsing favorite_ids:', e);
+    }
+
+    try {
+        const cartIdsRaw = '{{ cart_product_ids|safe }}';
+        console.log('Desktop: Raw cart_product_ids from template:', cartIdsRaw);
+        const cartProductIds = JSON.parse(cartIdsRaw || '[]');
+        console.log('Desktop: Parsed cart IDs:', cartProductIds);
+        
+        // Только десктопные кнопки корзины (без .mobile-add-to-cart)
+        const desktopCartButtons = document.querySelectorAll('.add-to-cart:not(.mobile-add-to-cart)');
+        console.log(`Desktop: Found ${desktopCartButtons.length} cart buttons`);
+        
+        desktopCartButtons.forEach(button => {
+            const productId = parseInt(button.getAttribute('data-product-id'));
+            const isInCart = cartProductIds.includes(productId);
+            console.log(`Desktop: Product ${productId}: isInCart=${isInCart}, button:`, button);
+            updateCartButtonState(button, isInCart);
+            saveCartState(productId, isInCart);
+        });
+    } catch (e) {
+        console.error('Desktop: Error parsing cart_product_ids:', e);
+    }
+
+    // Инициализация кнопок корзины (только десктопные)
+    const cartButtons = document.querySelectorAll('.add-to-cart:not(.mobile-add-to-cart)');
+    cartButtons.forEach(button => {
+        const productId = button.getAttribute('data-product-id');
+        button.addEventListener('click', function() {
+            handleCartClick(this, productId);
+        });
+    });
+
+    
+
+    // Функции для десктопной версии (галерея изображений)
+    if (document.getElementById('main-product-image')) {
+        function changeMainImage(thumb, imageUrl) {
+            const mainImg = document.getElementById('main-product-image');
+            if (!mainImg || !imageUrl) return;
+            
+            mainImg.style.opacity = '0';
+
+            setTimeout(() => {
+                if (imageUrl) {
+                    mainImg.src = imageUrl;
+                }
+                mainImg.style.opacity = '1';
+            }, 150);
+
+            document.querySelectorAll('.thumb-img').forEach(img => {
+                img.classList.remove('active');
+            });
+
+            if (thumb && thumb.classList) {
+                thumb.classList.add('active');
+            }
+        }
+
+        // Инициализация миниатюр изображений для десктопной версии
+        document.querySelectorAll('.thumb-img').forEach(thumb => {
+            thumb.addEventListener('click', function() {
+                if (this.src) {
+                    changeMainImage(this, this.src);
+                }
+            });
+        });
+    }
+});
+
+// ===== СТИЛИ ДЛЯ АНИМАЦИЙ =====
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes heartBeat {
+        0% { transform: scale(1); }
+        25% { transform: scale(1.2); }
+        50% { transform: scale(0.9); }
+        75% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+
+    .heart-beat {
+        animation: heartBeat 0.6s ease;
+    }
+
+    .mobile-add-to-cart.btn-cart-success,
+    .add-to-cart.btn-cart-success {
+        background-color: #89BEE8
+        border-color: #89BEE8
+        color: #000;
+    }
+
+    .mobile-add-to-cart.btn-cart-success:hover,
+    .add-to-cart.btn-cart-success:hover {
+        background-color:#89BEE8 !important;
+        border-color: #89BEE8 !important;
+        color: #000 !important;
+    }
+    
+    /* Hover для кнопки корзины - остается синей */
+    .add-to-cart.btn-primary:hover {
+        background-color: #89BEE8 !important;
+        border-color:#89BEE8 !important;
+        color: white !important;
+    }
+    
+    /* Hover для мобильной кнопки корзины - остается синей */
+    .mobile-add-to-cart.btn-primary:hover {
+        background-color: #89BEE8 !important;
+        border-color: #89BEE8 !important;
+        color: white !important;
+    }
+
+    .btn-favorite-mobile.active,
+    .btn-favorite-detail.active {
+        color: #dc3545;
+    }
+`;
+document.head.appendChild(style);
+</script>
+        <!-- копирования артикула  -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Создаем элемент для уведомления
+    const notification = document.createElement('div');
+    notification.className = 'copy-notification';
+    document.body.appendChild(notification);
+
+    // Обработчик клика по иконкам копирования
+    document.querySelectorAll('.copy-icon').forEach(icon => {
+        icon.addEventListener('click', function() {
+            const textToCopy = this.getAttribute('data-text');
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                // Показываем уведомление
+                notification.textContent = 'Скопировано!';
+                notification.classList.add('show');
+
+                // Меняем иконку на короткое время
+                const originalClass = this.className;
+                this.className = 'bi bi-check text-success cursor-pointer';
+
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    this.className = originalClass;
+                }, 2000);
+
+            }).catch(err => {
+                console.error('Ошибка копирования: ', err);
+                notification.textContent = 'Ошибка копирования';
+                notification.classList.add('show');
+                setTimeout(() => notification.classList.remove('show'), 2000);
+            });
+        });
+    });
+});
+</script>
+
+<!-- КОПИРОВАНИЕ КОДА ТОВАРА ПО КЛИКУ -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const codeElement = document.getElementById('product-code-value');
+    
+    if (codeElement) {
+        const codeValue = codeElement.textContent.trim();
+        
+        codeElement.style.cursor = 'pointer';
+        codeElement.style.transition = 'opacity 0.2s';
+        codeElement.title = 'Нажмите, чтобы скопировать код';
+        
+        codeElement.addEventListener('mouseenter', function() {
+            this.style.opacity = '0.7';
+        });
+        
+        codeElement.addEventListener('mouseleave', function() {
+            this.style.opacity = '1';
+        });
+        
+        codeElement.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            navigator.clipboard.writeText(codeValue).then(() => {
+                const notification = document.createElement('div');
+                notification.textContent = 'Код скопирован!';
+                notification.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#000;color:#fff;padding:8px 16px;border-radius:8px;z-index:10000;font-size:14px;';
+                document.body.appendChild(notification);
+                
+                setTimeout(() => notification.remove(), 1500);
+            }).catch(err => {
+                console.error('Ошибка копирования:', err);
+            });
+        });
+    }
+});
+</script>
+
+<script>
+    // Скрипт для зум изображения товара
+  document.querySelectorAll(".image-view").forEach(img =>{
+    img.addEventListener("click" , function() {
+        const modalwindow = document.getElementById("image-modal");
+        const modalImage = document.getElementById('modal-zoomed-image');
+        
+        
+        modalImage.src = this.src;
+        modalImage.alt = this.alt;
+
+        modalwindow.style = "display: flex !important";
+
+        document.body.style = "overflow: hidden !important";
+
+        
+
+        
+    })
+  })
+  //Доп функции
+  const modalwindow = document.getElementById("image-modal");
+    modalwindow.addEventListener("click", function(e) {
+    //Закрытие модалки
+     if (e.target === this || e.target.classList.contains('modal-zoomed-image')) {
+        this.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+    if (e.target.id === 'close-view-image'){
+        this.style.display = 'none';
+         document.body.style.overflow = 'auto';
+    }
+    
+});
+
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const shareButton = document.getElementById('shareButtons');
+    const shareDropdown = document.getElementById('shareDropdowns');
+    const shareContainer = document.querySelector('.share-containers');
+    let isDropdownOpen = false;
+
+    // Получаем текущий URL и данные о продукте
+    const currentUrl = encodeURIComponent(window.location.href);
+    const productName = encodeURIComponent(document.title || '');
+    const productDescription = encodeURIComponent('');
+
+    // Обновляем ссылки в меню
+    const vkLink = document.querySelector('.share-options[data-social="vk"]');
+    const telegramLink = document.querySelector('.share-options[data-social="telegram"]');
+    const whatsappLink = document.querySelector('.share-options[data-social="whatsapp"]');
+
+    if (vkLink) {
+        vkLink.href = `https://vk.com/share.php?url=${currentUrl}&title=${productName}&description=${productDescription}`;
+    }
+    if (telegramLink) {
+        telegramLink.href = `https://t.me/share/url?url=${currentUrl}&text=${productName}`;
+    }
+    if (whatsappLink) {
+        whatsappLink.href = `https://wa.me/?text=${productName}%20${currentUrl}`;
+    }
+
+    // Открытие/закрытие по клику
+    shareButton.addEventListener('click', function(e) {
+        e.stopPropagation();
+        isDropdownOpen = !isDropdownOpen;
+        shareDropdown.classList.toggle('show', isDropdownOpen);
+    });
+
+    // Закрытие при клике вне меню
+    document.addEventListener('click', function(e) {
+        if (!shareContainer.contains(e.target)) {
+            isDropdownOpen = false;
+            shareDropdown.classList.remove('show');
+        }
+    });
+
+    // Закрытие при нажатии Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && isDropdownOpen) {
+            isDropdownOpen = false;
+            shareDropdown.classList.remove('show');
+        }
+    });
+
+    // Создаем тултип для копирования
+    const copyTooltip = document.createElement('div');
+    copyTooltip.className = 'copy-tooltips';
+    document.body.appendChild(copyTooltip);
+
+    // Обработчик только для кнопки "Копировать ссылку"
+    document.querySelector('.share-options[data-social="copy"]').addEventListener('click', function(e) {
+        e.preventDefault();
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            copyTooltip.textContent = 'Ссылка скопирована в буфер обмена!';
+            copyTooltip.classList.add('show');
+            setTimeout(() => copyTooltip.classList.remove('show'), 2000);
+        }).catch(() => {
+            copyTooltip.textContent = 'Не удалось скопировать ссылку';
+            copyTooltip.classList.add('show');
+            setTimeout(() => copyTooltip.classList.remove('show'), 2000);
+        });
+
+        // Закрываем меню после выбора
+        isDropdownOpen = false;
+        shareDropdown.classList.remove('show');
+    });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  
+    let currentModalImageIndex = 0;
+    let modalImages = [];
+    
+  
+    function getProductImages() {
+        const images = [];
+        
+    
+        document.querySelectorAll('.thumb-img').forEach(img => {
+            if (img.src && img.src.length > 0) {
+                images.push({
+                    src: img.src,
+                    alt: img.alt
+                });
+            }
+        });
+        
+        
+        const imageElements = document.querySelectorAll('[data-image-src]');
+        if (imageElements.length > 0) {
+            images.length = 0; 
+            imageElements.forEach(el => {
+                images.push({
+                    src: el.getAttribute('data-image-src'),
+                    alt: el.getAttribute('data-image-alt') || 'Изображение товара'
+                });
+            });
+        }
+        
+        return images;
+    }
+    
+   
+    document.querySelectorAll(".image-view").forEach(img => {
+        img.addEventListener("click", function() {
+            const modalwindow = document.getElementById("image-modal");
+            const modalImage = document.getElementById('modal-zoomed-image');
+            
+          
+            modalImages = getProductImages();
+            
+          
+            currentModalImageIndex = modalImages.findIndex(image => image.src === this.src);
+            if (currentModalImageIndex === -1) currentModalImageIndex = 0;
+            
+           
+            modalImage.src = this.src;
+            modalImage.alt = this.alt;
+            
+            
+            updateModalPagination();
+            
+           
+            modalwindow.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            
+           
+            const thumbnailsContainer = document.querySelector('.modal-thumbnails-container');
+            if (modalImages.length > 1) {
+                thumbnailsContainer.style.display = 'flex';
+                updateModalThumbnails();
+            } else {
+                thumbnailsContainer.style.display = 'none';
+            }
+        });
+    });
+    
+ 
+    function updateModalPagination() {
+        const currentIndexElement = document.getElementById('currentImageIndex');
+        const totalImagesElement = document.getElementById('totalImages');
+        
+        if (currentIndexElement) {
+            currentIndexElement.textContent = currentModalImageIndex + 1;
+        }
+        
+        if (totalImagesElement) {
+            totalImagesElement.textContent = modalImages.length;
+        }
+        
+       
+        document.querySelectorAll('.modal-thumb-img').forEach((thumb, index) => {
+            if (index === currentModalImageIndex) {
+                thumb.classList.add('active');
+            } else {
+                thumb.classList.remove('active');
+            }
+        });
+    }
+    
+ 
+    function updateModalThumbnails() {
+        const container = document.querySelector('.modal-thumbnails-container');
+        if (!container || modalImages.length <= 1) return;
+        
+        
+        container.innerHTML = '';
+        
+       
+        modalImages.forEach((image, index) => {
+            const thumbWrapper = document.createElement('div');
+            thumbWrapper.className = 'modal-thumb-item-wrapper';
+            
+            const thumbImg = document.createElement('img');
+            thumbImg.className = `modal-thumb-img ${index === currentModalImageIndex ? 'active' : ''}`;
+            thumbImg.style.cssText = 'width: 50px; height: 50px; cursor: pointer; object-fit: cover; border: 2px solid transparent; border-radius: 6px;';
+            thumbImg.src = image.src;
+            thumbImg.alt = image.alt;
+            thumbImg.setAttribute('data-index', index);
+            
+            thumbImg.addEventListener('click', function() {
+                const index = parseInt(this.getAttribute('data-index'));
+                changeModalImage(index);
+            });
+            
+            thumbWrapper.appendChild(thumbImg);
+            container.appendChild(thumbWrapper);
+        });
+    }
+    
+   
+    function changeModalImage(index) {
+        if (index < 0 || index >= modalImages.length) return;
+        
+        currentModalImageIndex = index;
+        const modalImage = document.getElementById('modal-zoomed-image');
+        
+      
+        modalImage.style.opacity = '0';
+        
+        setTimeout(() => {
+            modalImage.src = modalImages[index].src;
+            modalImage.alt = modalImages[index].alt;
+            modalImage.style.opacity = '1';
+            
+          
+            updateModalPagination();
+        }, 150);
+    }
+    
+   
+    document.getElementById('modalPrevBtn')?.addEventListener('click', function() {
+        const newIndex = currentModalImageIndex - 1;
+        if (newIndex >= 0) {
+            changeModalImage(newIndex);
+        } else {
+       
+            changeModalImage(modalImages.length - 1);
+        }
+    });
+    
+    document.getElementById('modalNextBtn')?.addEventListener('click', function() {
+        const newIndex = currentModalImageIndex + 1;
+        if (newIndex < modalImages.length) {
+            changeModalImage(newIndex);
+        } else {
+           
+            changeModalImage(0);
+        }
+    });
+    
+   
+    document.addEventListener('keydown', function(e) {
+        const modal = document.getElementById('image-modal');
+        if (modal.style.display !== 'flex') return;
+        
+        switch(e.key) {
+            case 'ArrowLeft':
+                document.getElementById('modalPrevBtn')?.click();
+                break;
+            case 'ArrowRight':
+                document.getElementById('modalNextBtn')?.click();
+                break;
+            case 'Escape':
+                document.getElementById('close-view-image')?.click();
+                break;
+        }
+    })})
+    </script>
+{% if product.review_count > 0 %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "{{ product.name }}",
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "{{ product.get_average_rating }}",
+    "reviewCount": "{{ product.review_count }}"
+  }
+}
+</script>
+
+{% endif %}
+{% endblock %}

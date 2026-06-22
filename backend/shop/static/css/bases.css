@@ -1,0 +1,149 @@
+.search-input {
+    width: 100% !important;
+    height: 50px !important;
+    padding-left: 45px !important;
+    padding-right: 50px !important;
+    font-size: 1rem !important;
+    background-color: white !important;
+    border: 2px solid #3498db !important;
+    border-radius: 12px !important;
+    transition: all 0.3s ease !important;
+}
+
+.search-input:focus {
+    outline: none;
+    box-shadow: none !important;
+}
+
+.search-input::placeholder {
+    color: #95a5a6 !important;
+    font-weight: 400 !important;
+}
+
+/* Иконка лупы */
+.search-icon {
+    position: absolute !important;
+    left: 15px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    color: #2980b9 !important;
+    font-size: 1.1rem !important;
+    opacity: 0.6 !important;
+    transition: all 0.3s ease !important;
+    pointer-events: none !important;
+    z-index: 5 !important;
+}
+
+.search-input:focus ~ .search-icon {
+    opacity: 1;
+    color: #2980b9 !important;
+}
+#clearSearchBtn, #clearModelSearchBtn, #clearGenerationSearchBtn, #clearModificationSearchBtn, #clearManufacturerSearchBtn{
+position: absolute !important;
+    right: 15px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    background: transparent !important;
+    border: none !important;
+    color: #95a5a6 !important;
+    font-size: 1.1rem !important;
+    padding: 5px 10px !important;
+    cursor: pointer !important;
+    z-index: 10 !important;
+    transition: all 0.3s ease !important;
+    border-radius: 50% !important;
+    width: 36px !important;
+    height: 36px !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+/* Кнопка очистки */
+#clear-search {
+    position: absolute !important;
+    right: 15px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    background: transparent !important;
+    border: none !important;
+    color: #95a5a6 !important;
+    font-size: 1.1rem !important;
+    padding: 5px 10px !important;
+    cursor: pointer !important;
+    z-index: 10 !important;
+    transition: all 0.3s ease !important;
+    border-radius: 50% !important;
+    width: 36px !important;
+    height: 36px !important;
+    display: none; /* по умолчанию скрыта, показывать через JS при вводе текста */
+    align-items: center !important;
+    justify-content: center !important;
+}
+.clear-search {
+    position: absolute !important;
+    right: 15px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    background: transparent !important;
+    border: none !important;
+    color: #95a5a6 !important;
+    font-size: 1.1rem !important;
+    padding: 5px 10px !important;
+    cursor: pointer !important;
+    z-index: 10 !important;
+    transition: all 0.3s ease !important;
+    border-radius: 50% !important;
+    width: 36px !important;
+    height: 36px !important;
+    display: none; /* по умолчанию скрыта, показывать через JS при вводе текста */
+    align-items: center !important;
+    justify-content: center !important;
+}
+.pruductgrid_setka_mobile{
+    display: grid !important;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px !important;
+}
+#clear-search:hover,
+.clear-search:hover {
+    color: #e74c3c;
+    background-color: rgba(231, 76, 60, 0.1);
+}
+.sbros{
+    padding: 8px !important;
+}
+/* Адаптив для мобилок (768px и меньше) */
+@media (max-width: 768px) {
+    .search-input {
+        background-color: #eaeaead8 !important;
+        border: none !important;
+        border-radius: 24px !important;
+    }
+    .pruductgrid_setka_mobile{
+    display: grid !important;
+    grid-template-columns: repeat(2, 50%);
+    gap: 2px !important;
+}
+   
+    
+    .search-icon {
+        color: black !important;
+    }
+}
+
+/* Кнопка primary — оставил как есть, если используется отдельно */
+.btn-primary {
+    --bs-btn-color: white !important;
+    --bs-btn-bg: black !important;
+    --bs-btn-border-color: black !important;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: rgba(177, 177, 177, 0.918) !important;
+    --bs-btn-hover-border-color: none !important;
+    --bs-btn-focus-shadow-rgb: 49, 132, 253 !important;
+    --bs-btn-active-color: #fff !important;
+    --bs-btn-active-bg: #89BEE8 !important;
+    --bs-btn-active-border-color: #89BEE8 !important;
+    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125) !important;
+    --bs-btn-disabled-color: #fff !important;
+    --bs-btn-disabled-bg: rgba(177, 177, 177, 0.918) !important;
+    --bs-btn-disabled-border-color: rgba(177, 177, 177, 0.918) !important;
+}

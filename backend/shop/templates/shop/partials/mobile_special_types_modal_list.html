@@ -1,0 +1,22 @@
+<a href="javascript:void(0)" class="list-group-item list-group-item-action" onclick="selectAllSpecialTypes()">
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="mobileSpecialTypeAll">
+        <label class="form-check-label w-100" for="mobileSpecialTypeAll">
+            Все типы спецтехники
+        </label>
+    </div>
+</a>
+{% for type in special_types %}
+<a href="javascript:void(0)" class="list-group-item list-group-item-action">
+    <div class="form-check">
+        <input class="form-check-input mobile-special-type-checkbox" type="checkbox"
+               value="{{ type.slug }}" id="mobileSpecialType{{ type.id }}"
+               data-name="{{ type.name }}">
+        <label class="form-check-label w-100" for="mobileSpecialType{{ type.id }}">
+            {{ type.name }}
+        </label>
+    </div>
+</a>
+{% endfor %}
+
+

@@ -1,0 +1,23 @@
+<div class="modal fade" id="motoTypesModal" tabindex="-1" aria-labelledby="motoTypesModalLabel" aria-hidden="true" data-bs-backdrop="false">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="btn btn-back" onclick="closeMotoTypesModal()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h5 class="modal-title mx-auto" id="motoTypesModalLabel">Выберите тип мототехники</h5>
+                <button type="button" class="btn btn-outline-secondary btn-sm sbros" onclick="resetMotoTypeFilter()">
+                    Сбросить
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="list-group" id="motoTypesModalList">
+                    {% include "shop/partials/mobile_moto_types_modal_list.html" %}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary w-100" onclick="applyMotoTypeFilter()">Применить</button>
+            </div>
+        </div>
+    </div>
+</div>

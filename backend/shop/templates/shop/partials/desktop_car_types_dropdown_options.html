@@ -1,0 +1,23 @@
+<div class="multiselect-option">
+    <input type="checkbox" id="desktopCarTypeAll"
+           class="form-check-input"
+           onchange="toggleDesktopAllCarTypes(this)">
+    <label class="form-check-label w-100" for="desktopCarTypeAll">
+        Все типы кузова
+    </label>
+</div>
+
+{% for type in car_types %}
+<div class="multiselect-option">
+    <input type="checkbox" id="desktopCarType{{ type.id }}"
+           value="{{ type.slug }}"
+           data-name="{{ type.name }}"
+           class="form-check-input desktop-car-type-checkbox"
+           onchange="updateDesktopSelectedCarTypes()">
+    <label class="form-check-label w-100" for="desktopCarType{{ type.id }}">
+        {{ type.name }}
+    </label>
+</div>
+{% endfor %}
+
+

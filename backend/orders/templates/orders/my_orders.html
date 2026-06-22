@@ -1,0 +1,242 @@
+{% extends 'shop/base.html' %}
+{% load static %}
+
+{% block title %}Мои заказы – LINKAVTO{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-12">
+            <!-- Кнопка назад -->
+            <div class="mb-3">
+                <a href="{% url 'shop:index' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-2"></i>Назад
+                </a>
+            </div>
+            <h2 class="mb-4">Мои заказы</h2>
+
+            <!-- Вкладки в виде карточек -->
+            <div class="d-flex gap-3 mb-4" id="ordersTab" role="tablist">
+                <div class="nav-item" role="presentation">
+                    <button class="nav-link btn btn-outline-dark border-2 px-4 py-2 rounded-3 active"
+                            id="active-tab"
+                            data-bs-toggle="tab"
+                            data-bs-target="#active"
+                            type="button"
+                            role="tab"
+                            aria-controls="active"
+                            aria-selected="true">
+                        <span class="fw-semibold">Активные заказы</span>
+                        {% if active_orders_count %}
+                        <span class="badge btn-dark ms-2">{{ active_orders_count }}</span>
+                        {% endif %}
+                    </button>
+                </div>
+                <div class="nav-item" role="presentation">
+                    <button class="nav-link btn btn-outline-dark border-2 px-4 py-2 rounded-3"
+                            id="completed-tab"
+                            data-bs-toggle="tab"
+                            data-bs-target="#completed"
+                            type="button"
+                            role="tab"
+                            aria-controls="completed"
+                            aria-selected="false">
+                        <span class="fw-semibold">Завершенные заказы</span>
+                        {% if completed_orders_count %}
+                        <span class="badge bg-success ms-2">{{ completed_orders_count }}</span>
+                        {% endif %}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Содержимое вкладок -->
+            <div class="tab-content" id="ordersTabContent">
+                <!-- Активные заказы -->
+                <div class="tab-pane fade show active" id="active" role="tabpanel" aria-labelledby="active-tab">
+                    {% if active_orders %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Номер заказа</th>
+                                    <th>Дата</th>
+                                    <th>Сумма</th>
+                                    <th>Статус</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in active_orders %}
+                                <tr>
+                                    <td>#{{ order.id }}</td>
+                                    <td>{{ order.created_at|date:"d.m.Y H:i" }}</td>
+                                    <td>{{ order.total_cost|floatformat:"0" }} руб.</td>
+                                    <td>
+                                        <span class="badge
+                                            {% if order.status == 'shipped' %}bg-primary
+                                            {% elif order.status == 'processing' %}bg-warning
+                                            {% elif order.status == 'on_hold' %}bg-info
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ order.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'orders:order_detail' order.id %}"
+                                           class="btn btn-sm btn-outline-dark">
+                                            Подробнее
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <img src="{% static 'img/active-orders-empty.png' %}" alt="Нет активных заказов" width="290" height="220" class="mb-4">
+                        <h5 class="mt-3">Нет активных заказов</h5>
+                        <p class="text-muted">Все ваши текущие заказы будут отображаться здесь</p>
+                        <a href="{% url 'shop:index' %}" class="btn btn-dark mt-2">
+                            Перейти в каталог
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Завершенные заказы -->
+                <div class="tab-pane fade" id="completed" role="tabpanel" aria-labelledby="completed-tab">
+                    {% if completed_orders %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Номер заказа</th>
+                                    <th>Дата</th>
+                                    <th>Сумма</th>
+                                    <th>Статус</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in completed_orders %}
+                                <tr>
+                                    <td>#{{ order.id }}</td>
+                                    <td>{{ order.created_at|date:"d.m.Y H:i" }}</td>
+                                    <td>{{ order.total_cost|floatformat:"0" }} руб.</td>
+                                    <td>
+                                        <span class="badge
+                                            {% if order.status == 'delivered' %}bg-success
+                                            {% elif order.status == 'canceled' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ order.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'orders:order_detail' order.id %}"
+                                           class="btn btn-sm btn-outline-primary">
+                                            Подробнее
+                                        </a>
+                                        {% if order.status == 'delivered' %}
+                                        <button class="btn btn-sm btn-outline-success ms-1" data-bs-toggle="tooltip" title="Повторить заказ">
+                                            <i class="bi bi-arrow-repeat"></i>
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <img src="{% static 'img/completed-orders-empty.png' %}" alt="Нет завершенных заказов" width="250" height="200" class="mb-4">
+                        <h5 class="mt-3">Нет завершенных заказов</h5>
+                        <p class="text-muted">Здесь будут отображаться выполненные и отмененные заказы</p>
+                        <a href="{% url 'shop:index' %}" class="btn btn-dark mt-2">
+                            Перейти в каталог
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .mobile-header {
+    display: none !important;
+}
+    .nav-link.btn {
+        transition: all 0.3s ease;
+        border-color: #dee2e6;
+        color: #6c757d;
+        background: white;
+    }
+    .nav-link.btn.active {
+        background: #89BEE8;
+        border-color: #89BEE8;
+        color: white;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    .nav-link.btn:hover:not(.active) {
+        border-color: #89BEE8;
+        color: #89BEE8;
+        background: rgba(13, 110, 253, 0.04);
+    }
+    .nav-link.btn .badge {
+        font-size: 0.7rem;
+        padding: 0.25em 0.5em;
+    }
+    .table {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 0 0 1px rgba(0,0,0,.1);
+    }
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        background: #f8f9fa;
+    }
+    .table td {
+        vertical-align: middle;
+        border-color: #f1f3f4;
+    }
+    .badge {
+        font-size: 0.75rem;
+        font-weight: 500;
+        padding: 0.35em 0.65em;
+    }
+    .tab-pane {
+        animation: fadeIn 0.3s ease-in;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
+<script>//Скрытие хедера
+    const MobileHeader = document.querySelector('.mobile-header');
+    if (MobileHeader) MobileHeader.style.display = 'none'</script>
+
+
+<!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+    (function(m,e,t,r,i,k,a){
+        m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+        m[i].l=1*new Date();
+        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+    })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=105970773', 'ym');
+
+    ym(105970773, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/105970773" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
+
+
+
+{% endblock %}

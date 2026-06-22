@@ -1,0 +1,882 @@
+{% load static %}
+
+<style>
+    /* Мобильная версия корзины */
+    @media (max-width: 767.98px) {
+        .mobile-cart-container {
+            padding: 16px;
+            padding-top: 20px; /* Дополнительный отступ сверху */
+            padding-bottom: 100px; /* Отступ для фиксированной панели */
+        }
+
+        /* Шапка корзины */
+        .mobile-cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .mobile-cart-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin: 0;
+        }
+
+        .mobile-clear-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            transition: all 0.2s ease;
+        }
+
+        .mobile-clear-btn:hover {
+            background: #e9ecef;
+            color: #dc3545;
+        }
+
+        /* Карточки товаров */
+        .mobile-cart-items {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .mobile-cart-item {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            border: 1px solid #f0f0f0;
+        }
+
+        .mobile-item-content {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .mobile-item-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .mobile-item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .mobile-item-info {
+            flex: 1;
+        }
+
+        .mobile-item-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+
+        .mobile-item-price {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #000000;
+        }
+
+        /* Управление количеством */
+        .mobile-quantity-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 12px;
+            border-top: 1px solid #f8f9fa;
+        }
+
+        .mobile-quantity-buttons {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mobile-quantity-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #6c757d;
+            transition: all 0.2s ease;
+        }
+
+        .mobile-quantity-btn:active {
+            background: #e9ecef;
+            transform: scale(0.95);
+        }
+
+        .mobile-quantity-display {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .mobile-item-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .mobile-action-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            transition: all 0.2s ease;
+        }
+
+        .mobile-action-btn:active {
+            background: #e9ecef;
+            transform: scale(0.95);
+        }
+
+        .mobile-action-btn.delete {
+            color: #dc3545;
+        }
+
+        .mobile-action-btn.favorite.active {
+            color: #dc3545;
+        }
+
+        /* Фиксированная нижняя панель */
+        .mobile-cart-footer {
+            position: fixed;
+            bottom: 70px;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 16px;
+            border-top: 1px solid #e9ecef;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .mobile-total-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .mobile-total-label {
+            font-size: 1rem;
+            color: #6c757d;
+        }
+
+        .mobile-total-price {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .mobile-checkout-btn {
+            width: 100%;
+            height: 52px;
+            border-radius: 14px;
+            background: #000000;
+            border: none;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .mobile-checkout-btn:active {
+            background: #0b5ed7;
+            transform: scale(0.98);
+        }
+
+        .mobile-continue-shopping {
+            width: 100%;
+            height: 44px;
+            border-radius: 12px;
+            background: transparent;
+            border: 1px solid #e9ecef;
+            color: #6c757d;
+            font-size: 1rem;
+            font-weight: 500;
+            margin-top: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .mobile-continue-shopping:active {
+            background: #f8f9fa;
+        }
+
+        /* Пустая корзина */
+        .mobile-empty-cart {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .mobile-empty-image {
+            max-width: 200px;
+            margin: 0 auto 20px;
+        }
+
+        .mobile-empty-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+
+        .mobile-empty-text {
+            font-size: 1rem;
+            color: #6c757d;
+            margin-bottom: 24px;
+        }
+
+        /* Анимации */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .mobile-cart-item {
+            animation: slideIn 0.3s ease forwards;
+        }
+
+        .mobile-cart-item:nth-child(1) { animation-delay: 0.1s; }
+        .mobile-cart-item:nth-child(2) { animation-delay: 0.2s; }
+        .mobile-cart-item:nth-child(3) { animation-delay: 0.3s; }
+        .mobile-cart-item:nth-child(4) { animation-delay: 0.4s; }
+
+        /* Модальное окно */
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+        }
+
+        .modal-header {
+            border-bottom: none;
+            padding: 24px 24px 0;
+        }
+
+        .modal-body {
+            padding: 16px 24px;
+            text-align: center;
+        }
+
+        .modal-footer {
+            border-top: none;
+            padding: 0 24px 24px;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .modal-btn {
+            min-width: 120px;
+            height: 44px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+    }
+
+    /* Десктопная версия скрыта на мобильных */
+    @media (max-width: 767.98px) {
+        .container.mt-5 {
+            display: none !important;
+        }
+    }
+
+    /* Мобильная версия скрыта на десктопе */
+    @media (min-width: 768px) {
+        .mobile-cart-container {
+            display: none !important;
+        }
+    }
+
+</style>
+
+<div class="mobile-cart-container">
+    {% if cart.items.all %}
+    <!-- Шапка корзины -->
+    <div class="mobile-cart-header">
+        <!-- Стрелка назад -->
+        <button class="mobile-back-btn" onclick="history.back()" style="background: none; border: none; margin-right: 12px;">
+            <i class="bi bi-arrow-left" style="font-size: 1.5rem; color: #1a1a1a;"></i>
+        </button>
+        <h1 class="mobile-cart-title">Корзина</h1>
+        <button class="mobile-clear-btn" data-bs-toggle="modal" data-bs-target="#clearCartModal">
+            <i class="bi bi-trash"></i>
+        </button>
+    </div>
+
+    <!-- Список товаров -->
+    <div class="mobile-cart-items">
+        {% for item in cart.items.all %}
+        <div class="mobile-cart-item" data-product-id="{{ item.product.id }}" data-unit-price="{{ item.product.price }}" data-current-quantity="{{ item.quantity }}">
+            <div class="mobile-item-content">
+                <a href="{% url 'shop:product_detail' item.product.id %}" class="mobile-item-image">
+                    <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+                </a>
+                <div class="mobile-item-info">
+                    <div class="mobile-item-name">{{ item.product.name }}</div>
+                    <div class="mobile-item-price mobile-item-total" data-product-id="{{ item.product.id }}">
+                        {{ item.total_price|floatformat:"0" }} ₽
+                    </div>
+                </div>
+            </div>
+
+            <div class="mobile-quantity-controls">
+                <div class="mobile-quantity-buttons">
+                    <button class="mobile-quantity-btn decrease" data-product-id="{{ item.product.id }}">
+                        <i class="bi bi-dash"></i>
+                    </button>
+                    <span class="mobile-quantity-display" data-product-id="{{ item.product.id }}">
+                        {{ item.quantity }}
+                    </span>
+                    <button class="mobile-quantity-btn increase" data-product-id="{{ item.product.id }}">
+                        <i class="bi bi-plus"></i>
+                    </button>
+                </div>
+
+                <div class="mobile-item-actions">
+                    <button class="mobile-action-btn delete" data-product-id="{{ item.product.id }}">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                    <button class="mobile-action-btn favorite {% if item.product.id in favorite_ids %}active{% endif %}"
+                            data-product-id="{{ item.product.id }}">
+                        <i class="bi {% if item.product.id in favorite_ids %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Фиксированная нижняя панель -->
+    <div class="mobile-cart-footer">
+        <div class="mobile-total-info">
+            <span class="mobile-total-label">Товаров: <span class="mobile-total-quantity">{{ cart.total_quantity }}</span></span>
+            <span class="mobile-total-price mobile-cart-total-price">{{ cart.total_price|floatformat:"0" }} ₽</span>
+        </div>
+
+        {% if user.is_authenticated %}
+        <a href="{% url 'orders:order_create' %}" class="mobile-checkout-btn" style="text-decoration: none;">
+            Оформить заказ
+        </a>
+        {% else %}
+        <button class="mobile-checkout-btn" data-bs-toggle="modal" data-bs-target="#authModal" style="text-decoration: none;">
+            Оформить заказ
+        </button>
+        {% endif %}
+
+    </div>
+
+    {% else %}
+    <!-- Пустая корзина -->
+    <div class="mobile-empty-cart">
+        <img src="{% static 'img/empty-cart.png' %}" alt="Пустая корзина" class="mobile-empty-image">
+        <h3 class="mobile-empty-title">Корзина пуста</h3>
+        <p class="mobile-empty-text">Добавляйте товары в корзину, чтобы сделать заказ</p>
+        <a href="{% url 'shop:index' %}" class="mobile-checkout-btn" style="text-decoration: none;">
+            Начать покупки
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Модальное окно подтверждения очистки -->
+<div class="modal fade" id="mobileClearCartModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fs-5 fw-semibold">Очистка корзины</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4">
+                <p class="mb-0 text-center">Вы уверены, что хотите полностью очистить корзину?</p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pt-0">
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Отмена</button>
+                <form action="{% url 'cart:cart_clear' %}" method="post" class="mb-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-dark px-4 ms-2">Очистить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<style>
+
+    /* Стили для мобильных секций товаров */
+    .mobile-similar-products,
+    .mobile-recommended-products {
+        background: #fff;
+        border-radius: 16px;
+        padding: 20px 16px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .mobile-similar-products h4,
+    .mobile-recommended-products h4 {
+        color: #1a1a1a;
+        font-size: 1.2rem;
+        margin: 0;
+    }
+
+    /* Адаптация карточек для мобильной сетки 2 в ряд */
+    .mobile-similar-products .product-card-container,
+    .mobile-recommended-products .product-card-container {
+        width: 100% !important;
+        margin-bottom: 8px;
+    }
+
+    .mobile-similar-products .card,
+    .mobile-recommended-products .card {
+        margin-bottom: 0;
+    }
+
+    /* Улучшаем внешний вид кнопок */
+    .mobile-similar-products .btn,
+    .mobile-recommended-products .btn {
+        border-radius: 12px;
+        font-size: 0.85rem;
+        padding: 6px 12px;
+    }
+
+    /* Отступы для мобильной версии */
+    @media (max-width: 767.98px) {
+        .container.mt-4 {
+            padding: 0 16px;
+            margin-top: 20px;
+        }
+
+        /* Уменьшаем отступы между карточками */
+        .row.g-2 {
+            --bs-gutter-x: 0.5rem;
+            --bs-gutter-y: 0.5rem;
+        }
+    }
+
+    /* Адаптивность для очень маленьких экранов */
+    @media (max-width: 375px) {
+        .mobile-similar-products,
+        .mobile-recommended-products {
+            padding: 16px 12px;
+        }
+
+        .mobile-similar-products h4,
+        .mobile-recommended-products h4 {
+            font-size: 1.1rem;
+        }
+    }
+
+    /* Убираем горизонтальный скролл и используем обычную сетку */
+    .mobile-products-scroll {
+        display: none; /* Скрываем старую структуру со скроллом */
+    }
+</style>
+
+<script>
+// Глобальные переменные для хранения состояния
+let mobileCurrentTotalPrice = parseFloat("{{ cart.total_price }}") || 0;
+let mobileCurrentTotalQuantity = parseInt("{{ cart.total_quantity }}") || 0;
+
+// Инициализация мобильной корзины
+document.addEventListener('DOMContentLoaded', function() {
+    // Обработка кнопок количества
+    document.querySelectorAll('.mobile-quantity-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const productId = this.dataset.productId;
+            const quantityDisplay = document.querySelector(`.mobile-quantity-display[data-product-id="${productId}"]`);
+            let quantity = parseInt(quantityDisplay.textContent);
+
+            if (this.classList.contains('increase')) {
+                quantity += 1;
+            } else if (this.classList.contains('decrease') && quantity > 1) {
+                quantity -= 1;
+            }
+
+            quantityDisplay.textContent = quantity;
+            // Мгновенное обновление на клиенте
+            updateMobileItemDisplay(productId, quantity);
+            // Отправка на сервер
+            updateMobileCartItem(productId, quantity);
+        });
+    });
+
+    // Обработка удаления товара
+    document.querySelectorAll('.mobile-action-btn.delete').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const productId = this.dataset.productId;
+            // Мгновенное удаление на клиенте
+            removeMobileItemImmediately(productId);
+            // Отправка на сервер
+            updateMobileCartItem(productId, 0);
+        });
+    });
+
+    // Обработка избранного
+    document.querySelectorAll('.mobile-action-btn.favorite').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const productId = this.dataset.productId;
+            handleFavoriteClickMobile(this, productId);
+        });
+    });
+
+    // Обработка кнопки оформления заказа для неавторизованных пользователей
+    document.querySelectorAll('.mobile-checkout-btn[data-bs-target="#authModal"]').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            handleCheckoutClickMobile();
+        });
+    });
+
+    // Загрузка состояния избранных товаров
+    loadFavoriteStatesMobile();
+});
+
+// Функция для мгновенного удаления товара из DOM
+function removeMobileItemImmediately(productId) {
+    const item = document.querySelector(`.mobile-cart-item[data-product-id="${productId}"]`);
+    if (item) {
+        const pricePerItem = parseFloat(item.dataset.unitPrice) || 0;
+        const oldQuantity = parseInt(item.dataset.currentQuantity) || 1;
+
+        // Мгновенное обновление итоговой суммы и количества
+        mobileCurrentTotalQuantity -= oldQuantity;
+        mobileCurrentTotalPrice -= (pricePerItem * oldQuantity);
+
+        // Обновляем отображение итогов
+        updateMobileTotalsDisplay();
+
+        // Анимация удаления
+        item.style.transition = 'opacity 0.3s, transform 0.3s';
+        item.style.opacity = '0';
+        item.style.transform = 'translateX(-100%)';
+
+        setTimeout(() => {
+            if (item.parentNode) {
+                item.parentNode.removeChild(item);
+
+                // Проверяем, пуста ли корзина
+                if (document.querySelectorAll('.mobile-cart-item').length === 0) {
+                    location.reload(); // Перезагружаем страницу для показа пустой корзины
+                }
+            }
+        }, 300);
+    }
+}
+
+// Функция для мгновенного обновления отображения в мобильной версии
+function updateMobileItemDisplay(productId, newQuantity) {
+    const itemElement = document.querySelector(`.mobile-cart-item[data-product-id="${productId}"]`);
+    if (!itemElement) return;
+
+    const pricePerItem = parseFloat(itemElement.dataset.unitPrice) || 0;
+    const oldQuantity = parseInt(itemElement.dataset.currentQuantity) || 1;
+    const newTotal = pricePerItem * newQuantity;
+
+    // Обновляем текущее количество в data-атрибуте
+    itemElement.dataset.currentQuantity = newQuantity;
+
+    // Обновляем отображение суммы для товара
+    document.querySelectorAll(`.mobile-item-total[data-product-id="${productId}"]`).forEach(el => {
+        el.textContent = Math.round(newTotal) + ' ₽';
+    });
+
+    // Мгновенное обновление итоговой суммы и количества
+    mobileCurrentTotalQuantity = mobileCurrentTotalQuantity - oldQuantity + newQuantity;
+    mobileCurrentTotalPrice = mobileCurrentTotalPrice - (pricePerItem * oldQuantity) + (pricePerItem * newQuantity);
+
+    // Обновляем отображение итогов
+    updateMobileTotalsDisplay();
+}
+
+// Функция для обновления отображения итоговых значений
+function updateMobileTotalsDisplay() {
+    // Обновляем общую сумму
+    document.querySelectorAll('.mobile-total-price').forEach(el => {
+        el.textContent = Math.round(mobileCurrentTotalPrice) + ' ₽';
+    });
+
+    // Обновляем количество товаров
+    document.querySelectorAll('.mobile-total-quantity').forEach(el => {
+        el.textContent = mobileCurrentTotalQuantity;
+    });
+}
+
+// Функция для обработки избранного в мобильной версии
+function handleFavoriteClickMobile(button, productId) {
+    {% if user.is_authenticated %}
+        toggleFavoriteMobile(button, productId);
+    {% else %}
+        // Показываем модальное окно авторизации
+        const authModal = new bootstrap.Modal(document.getElementById('authModal'));
+        authModal.show();
+
+        // Сохраняем текущий URL для редиректа после авторизации
+        const nextUrl = window.location.pathname;
+        const loginForm = document.querySelector('#authModal form[action*="login"]');
+        if (loginForm) {
+            let nextInput = loginForm.querySelector('input[name="next"]');
+            if (!nextInput) {
+                nextInput = document.createElement('input');
+                nextInput.type = 'hidden';
+                nextInput.name = 'next';
+                loginForm.appendChild(nextInput);
+            }
+            nextInput.value = nextUrl;
+        }
+    {% endif %}
+}
+
+// Функция для обработки клика по кнопке оформления заказа (если не авторизован)
+function handleCheckoutClickMobile() {
+    {% if not user.is_authenticated %}
+        // Показываем модальное окно авторизации
+        const authModal = new bootstrap.Modal(document.getElementById('authModal'));
+        authModal.show();
+
+        // Сохраняем URL оформления заказа для редиректа после авторизации
+        const nextUrl = "{% url 'orders:order_create' %}";
+        const loginForm = document.querySelector('#authModal form[action*="login"]');
+        if (loginForm) {
+            let nextInput = loginForm.querySelector('input[name="next"]');
+            if (!nextInput) {
+                nextInput = document.createElement('input');
+                nextInput.type = 'hidden';
+                nextInput.name = 'next';
+                loginForm.appendChild(nextInput);
+            }
+            nextInput.value = nextUrl;
+        }
+        return false;
+    {% endif %}
+    return true;
+}
+
+// Функция для переключения избранного в мобильной версии
+function toggleFavoriteMobile(button, productId) {
+    const icon = button.querySelector('i');
+    const wasFavorite = icon.classList.contains('bi-heart-fill');
+
+    // Мгновенное визуальное изменение
+    updateFavoriteButtonMobile(button, !wasFavorite);
+
+    // Отправка на сервер
+    fetch(`/favorites/toggle/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Обновляем иконку
+            if (data.is_favorite) {
+                icon.classList.remove('bi-heart');
+                icon.classList.add('bi-heart-fill', 'text-danger');
+                button.classList.add('active');
+            } else {
+                icon.classList.remove('bi-heart-fill', 'text-danger');
+                icon.classList.add('bi-heart');
+                button.classList.remove('active');
+            }
+
+            // Обновляем счетчик избранного в шапке
+            if (typeof refreshFavoriteCounter === 'function') {
+                refreshFavoriteCounter();
+            }
+
+            // Показываем уведомление
+        } else if (data.action === 'auth_required') {
+            // Откатываем изменения
+            updateFavoriteButtonMobile(button, wasFavorite);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Откатываем изменения при ошибке
+        updateFavoriteButtonMobile(button, wasFavorite);
+    });
+}
+
+// Функция для обновления состояния кнопки избранного в мобильной версии
+function updateFavoriteButtonMobile(button, isFavorite) {
+    const icon = button.querySelector('i');
+    if (icon) {
+        if (isFavorite) {
+            icon.classList.remove('bi-heart');
+            icon.classList.add('bi-heart-fill', 'text-danger');
+            button.classList.add('active');
+        } else {
+            icon.classList.remove('bi-heart-fill', 'text-danger');
+            icon.classList.add('bi-heart');
+            button.classList.remove('active');
+        }
+    }
+}
+
+// Функция для обновления корзины на сервере (мобильная версия)
+function updateMobileCartItem(productId, quantity) {
+    fetch(`/cart/update/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            'quantity': quantity
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Корректируем итоговые значения с сервера
+            mobileCurrentTotalPrice = parseFloat(data.total_price);
+            mobileCurrentTotalQuantity = parseInt(data.total_quantity);
+
+            // Обновляем итоговые значения (на случай, если сервер вернул другие данные)
+            updateMobileTotalsDisplay();
+
+            if (data.new_quantity <= 0 && quantity === 0) {
+                // Товар уже удален мгновенно, просто синхронизируем состояние
+                console.log('Товар успешно удален с сервера');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error updating cart:', error);
+        // В случае ошибки можно показать уведомление пользователю
+        showToastMobile('Ошибка обновления корзины', 'error');
+    });
+}
+
+// Функция для загрузки состояния избранных товаров
+function loadFavoriteStatesMobile() {
+    fetch('/favorites/ids/')
+    .then(response => response.json())
+    .then(data => {
+        data.favorite_ids.forEach(productId => {
+            const buttons = document.querySelectorAll(`.mobile-action-btn.favorite[data-product-id="${productId}"]`);
+            buttons.forEach(button => {
+                const icon = button.querySelector('i');
+                if (icon) {
+                    icon.classList.remove('bi-heart');
+                    icon.classList.add('bi-heart-fill', 'text-danger');
+                    button.classList.add('active');
+                }
+            });
+        });
+    })
+    .catch(error => {
+        console.error('Error loading favorite states:', error);
+    });
+}
+
+// Функция для показа уведомлений в мобильной версии
+function showToastMobile(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `position-fixed bottom-0 start-0 end-0 p-3 ${type === 'success' ? 'bg-success' : 'bg-danger'}`;
+    toast.style.zIndex = '9999';
+    toast.style.color = 'white';
+    toast.innerHTML = `
+        <div class="toast show" role="alert">
+            <div class="toast-body text-center">
+                ${message}
+            </div>
+        </div>
+    `;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 3000);
+}
+
+// Функция для обновления счетчика избранного (совместимость с десктопной версией)
+function refreshFavoriteCounter() {
+    fetch('/favorites/count/', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.count !== undefined) {
+            // Обновляем счетчик в шапке
+            const favoriteCounter = document.querySelector('.favorite-count');
+            if (favoriteCounter) {
+                favoriteCounter.textContent = data.count;
+                favoriteCounter.style.display = data.count > 0 ? 'inline-block' : 'none';
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error updating favorite counter:', error);
+    });
+}
+</script>
+
+<!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+    (function(m,e,t,r,i,k,a){
+        m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+        m[i].l=1*new Date();
+        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+    })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=105970773', 'ym');
+
+    ym(105970773, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/105970773" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
+
+
+
+

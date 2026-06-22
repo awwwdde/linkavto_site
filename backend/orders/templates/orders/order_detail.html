@@ -1,0 +1,184 @@
+{% extends 'shop/base.html' %}
+{% load static %}
+
+{% block title %}Заказ #{{ order.id }} – AvtoLink{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="mb-4">
+        <a href="{% url 'orders:my_orders' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Вернуться к списку заказов
+        </a>
+    </div>
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Заказ #{{ order.id }}</h2>
+                <span class="badge 
+                    {% if order.status == 'delivered' %}bg-success
+                    {% elif order.status == 'canceled' %}bg-danger
+                    {% elif order.status == 'shipped' %}bg-primary
+                    {% else %}bg-secondary{% endif %}">
+                    {{ order.get_status_display }}
+                </span>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Товары</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Товар</th>
+                                    <th class="text-end">Цена</th>
+                                    <th class="text-center">Кол-во</th>
+                                    <th class="text-end">Сумма</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order.items.all %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="{{ item.product.image.url }}" 
+                                                 class="img-thumbnail me-3" 
+                                                 style="width: 60px; height: 60px; object-fit: contain;">
+                                            <div>
+                                                <h6 class="mb-1">{{ item.product.name }}</h6>
+                                                <small class="text-muted">Артикул: {{ item.product.sku }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="align-middle text-end">{{ item.price|floatformat:"0" }} руб.</td>
+                                    <td class="align-middle text-center">{{ item.quantity }} шт.</td>
+                                    <td class="align-middle text-end">{{ item.get_cost|floatformat:"0" }} руб.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Информация о заказе</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>Детали оплаты</h6>
+                        <p class="mb-1">
+                            {% if order.paid %}
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>Оплачен
+                            {% else %}
+                                <i class="bi bi-x-circle-fill text-danger me-2"></i>Не оплачен
+                            {% endif %}
+                        </p>
+                        <small class="text-muted">{{ order.created_at|date:"d.m.Y H:i" }}</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>
+                            {% if order.delivery_type == 'pickup' %}
+                                <i class="bi bi-shop me-2 text-primary"></i>Самовывоз
+                            {% else %}
+                                <i class="bi bi-truck me-2 text-primary"></i>Доставка
+                            {% endif %}
+                        </h6>
+                        <p class="mb-1">{{ order.address }}</p>
+                        <small class="text-muted">Получатель: {{ order.name }}</small>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Товары:</span>
+                        <span>{{ order.total_cost|floatformat:"0" }} руб.</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Доставка:</span>
+                        <span>Бесплатно</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between fw-bold fs-5">
+                        <span>Итого:</span>
+                        <span>{{ order.total_cost|floatformat:"0" }} руб.</span>
+                    </div>
+                    
+                    {% if order.status == 'processing' and order.paid %}
+                    <button class="btn btn-outline-danger w-100 mt-3" data-bs-toggle="modal" data-bs-target="#cancelOrderModal">
+                        Отменить заказ
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно отмены заказа -->
+<div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Отмена заказа</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите отменить заказ #{{ order.id }}?</p>
+                <p class="text-muted small">При отмене заказа средства будут возвращены на ваш счет в течение 3-5 рабочих дней.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <form method="post" action="{% url 'orders:cancel_order' order.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Подтвердить отмену</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 10px;
+        border: 1px solid rgba(0,0,0,.05);
+        box-shadow: 0 2px 10px rgba(0,0,0,.03);
+    }
+    .card-header {
+        border-bottom: 1px solid rgba(0,0,0,.05);
+    }
+    .table {
+        --bs-table-bg: transparent;
+    }
+    .table th {
+        font-weight: 500;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6c757d;
+    }
+</style>
+
+<!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+    (function(m,e,t,r,i,k,a){
+        m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+        m[i].l=1*new Date();
+        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+    })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=105970773', 'ym');
+
+    ym(105970773, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/105970773" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
+
+
+
+{% endblock %}

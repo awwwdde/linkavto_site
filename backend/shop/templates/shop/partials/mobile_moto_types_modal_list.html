@@ -1,0 +1,22 @@
+<a href="javascript:void(0)" class="list-group-item list-group-item-action" onclick="selectAllMotoTypes()">
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="mobileMotoTypeAll">
+        <label class="form-check-label w-100" for="mobileMotoTypeAll">
+            Все типы мототехники
+        </label>
+    </div>
+</a>
+{% for type in moto_types %}
+<a href="javascript:void(0)" class="list-group-item list-group-item-action">
+    <div class="form-check">
+        <input class="form-check-input mobile-moto-type-checkbox" type="checkbox"
+               value="{{ type.slug }}" id="mobileMotoType{{ type.id }}"
+               data-name="{{ type.name }}">
+        <label class="form-check-label w-100" for="mobileMotoType{{ type.id }}">
+            {{ type.name }}
+        </label>
+    </div>
+</a>
+{% endfor %}
+
+

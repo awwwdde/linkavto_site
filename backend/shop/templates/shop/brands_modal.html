@@ -1,0 +1,674 @@
+<!-- Фильтры для выбора марки -->
+<div class="modal fade" id="brandsModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="false">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="btn btn-back" onclick="closeBrandsModal()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h5 class="modal-title flex-grow-1 text-center">Выберите марки</h5>
+                <button type="button" class="btn btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn btn-outline-secondary sbros" onclick="resetBrandFilter()">
+                    Сбросить
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Поиск по маркам -->
+                <div class="search-container mb-3">
+                    <div class="input-group input-group-lg">
+                       
+                            <i class="fas fa-search text-muted search-icon"></i>
+                       
+                        <input
+                            type="text"
+                            class="form-control border-start-0 border-end-0 search-input"
+                            id="brandSearchInput"
+                            placeholder="Поиск марки..."
+                            oninput="filterBrands()"
+                            autocomplete="off"
+                            style="height: 56px; border-radius: 24px !important;"
+                        >
+                        <button
+                            class="btn btn-outline-secondary border-start-0 clear-search
+                            type="button"
+                            id="clearSearchBtn"
+                            onclick="clearSearch()"
+                            style="visibility: hidden; pointer-events: none;"
+                        >
+                            <i class="fas fa-times" style="padding-left: 20px;"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Счетчик найденных результатов -->
+                <div class="search-results-info mb-2 px-2" id="searchResultsInfo" style="display: none;">
+                    <small class="text-muted">Найдено: <span id="foundCount">0</span></small>
+                </div>
+
+                <div class="list-group mb-3">
+                    <div class="list-group-item list-group-item-action d-flex align-items-center">
+                        <div class="form-check mb-0 w-100 d-flex align-items-center">
+                            <input class="form-check-input me-3" type="checkbox" id="brandAll"
+                                   onchange="toggleAllBrands(this)">
+                            <label class="form-check-label fw-bold w-100" for="brandAll">
+                                Все марки
+                            </label>
+                        </div>
+                    </div>
+                    {% for brand in brands %}
+                    <div class="list-group-item list-group-item-action d-flex align-items-center brand-item"
+                         data-name="{{ brand.name|lower }}"
+                         data-name-translit="{{ brand.name|lower }}">
+                        <div class="form-check mb-0 w-100 d-flex align-items-center">
+                            <input class="form-check-input me-3 brand-checkbox" type="checkbox"
+                                   id="brand{{ brand.id }}" value="{{ brand.slug }}"
+                                   data-name="{{ brand.name }}"
+                                   onchange="updateSelectedBrands()">
+                            <label class="form-check-label w-100 d-flex align-items-center" for="brand{{ brand.id }}">
+                                {% if brand.logo %}
+                                <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" class="brand-logo me-3" style="width: 30px; height: 30px; object-fit: contain;">
+                                {% else %}
+                                <div class="brand-logo-placeholder me-3 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; background: #f8f9fa; border-radius: 4px;">
+                                    <span class="text-muted" style="font-size: 12px;">{{ brand.name|slice:":1" }}</span>
+                                </div>
+                                {% endif %}
+                                <span class="brand-name">{{ brand.name }}</span>
+                            </label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="modal-footer sticky-bottom bg-white border-top py-3">
+                <div class="d-grid gap-2 w-100">
+                    <button type="button" class="btn btn-dark" onclick="applyBrandFilter()">
+                        Применить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* z-index модалок/подложки задается глобально в `base.html` (modal=9999, backdrop=9998).
+       Локальные z-index здесь не задаём, чтобы backdrop не перекрывал модалку. */
+
+    /* Стили для модального окна выбора марки */
+    #brandsModal .list-group-item {
+        border: none;
+        border-bottom: 1px solid #eee;
+        padding: 0.75rem 1.25rem;
+        font-size: 1rem;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    #brandsModal .list-group-item:last-child {
+        border-bottom: none;
+    }
+
+    #brandsModal .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    /* Стили для чекбоксов */
+    #brandsModal .form-check-input {
+        width: 1.2em;
+        height: 1.2em;
+        margin-top: 0;
+    }
+
+    #brandsModal .form-check-input:checked {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+
+    #brandsModal .form-check-input:focus {
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+
+    #brandsModal .form-check-label {
+        cursor: pointer;
+        margin-bottom: 0;
+    }
+
+    #brandsModal .modal-header {
+        border-bottom: 1px solid #dee2e6;
+        background-color: #f8f9fa;
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+    }
+
+    #brandsModal .btn-back {
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        color: #6c757d;
+        padding: 0.5rem;
+        margin-right: 0.5rem;
+    }
+
+    #brandsModal .btn-back:hover {
+        color: #0d6efd;
+        background-color: rgba(0, 0, 0, 0.05);
+        border-radius: 50%;
+    }
+
+    #brandsModal .modal-title {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    #brandsModal .modal-footer {
+        padding: 1rem;
+    }
+
+    #brandsModal .modal-footer .btn {
+        padding: 0.75rem;
+        font-weight: 500;
+    }
+
+    /* Стили для логотипов брендов */
+    .brand-logo {
+        flex-shrink: 0;
+        border-radius: 4px;
+        background: white;
+        padding: 2px;
+    }
+
+    .brand-logo-placeholder {
+        flex-shrink: 0;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+    }
+
+    #brandsModal .list-group-item .brand-logo-placeholder span {
+        font-weight: bold;
+    }
+
+    /* Стили для поиска */
+    .search-container {
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 1;
+        padding-top: 1px;
+        margin-left: -1rem;
+        margin-right: -1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    #brandsModal .modal-body {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .search-container .input-group {
+        border-radius: 0.375rem; /* скругление углов для всей группы */
+        overflow: hidden; /* чтобы скругление работало */
+    }
+    
+    .search-container .input-group-text {
+        border-top-left-radius: 0.375rem;
+        border-bottom-left-radius: 0.375rem;
+    }
+
+    #brandSearchInput {
+        border-radius: 0 !important;
+        font-size: 1rem;
+        border-color: #dee2e6 !important;
+    }
+    
+    /* Когда кнопка скрыта, инпут должен иметь скругленные углы справа */
+    #brandSearchInput.no-clear-btn {
+        border-top-right-radius: 0.375rem !important;
+        border-bottom-right-radius: 0.375rem !important;
+        border-right: 1px solid #dee2e6 !important;
+    }
+
+    #brandSearchInput:focus {
+        box-shadow: none;
+        border-color: #0d6efd !important;
+    }
+    
+    #brandSearchInput.no-clear-btn:focus {
+        border-right-color: #0d6efd !important;
+    }
+
+    #brandSearchInput::placeholder {
+        color: #6c757d;
+        opacity: 0.7;
+    }
+
+    .input-group-text {
+        border-color: #dee2e6 !important;
+        background-color: #fff !important;
+    }
+
+    #clearSearchBtn {
+        position: absolute !important;
+    right: 15px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    background: transparent !important;
+    border: none !important;
+    color: #95a5a6 !important;
+    font-size: 1.1rem !important;
+    padding: 5px 10px !important;
+    cursor: pointer !important;
+    z-index: 10 !important;
+    transition: all 0.3s ease !important;
+    border-radius: 50% !important;
+    width: 36px !important;
+    height: 36px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    }
+
+    #clearSearchBtn:hover {
+        background-color: #f8f9fa;
+    }
+
+    /* Стили для скрытых элементов */
+    .brand-item.hidden {
+        display: none !important;
+    }
+
+    /* Адаптивность для маленьких экранов */
+    @media (max-width: 375px) {
+        .brand-logo,
+        .brand-logo-placeholder {
+            width: 25px !important;
+            height: 25px !important;
+        }
+
+        #brandsModal .list-group-item {
+            padding: 0.6rem 1rem;
+        }
+
+        #brandsModal .form-check-input {
+            width: 1.1em;
+            height: 1.1em;
+        }
+
+        #brandSearchInput {
+            height: 48px !important;
+            font-size: 0.95rem;
+        }
+
+        .input-group-lg > .form-control {
+            font-size: 0.95rem;
+        }
+    }
+</style>
+
+<script>
+// Функция для транслитерации (русский ↔ английский)
+function transliterate(text) {
+    const ru = {
+        'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd',
+        'е': 'e', 'ё': 'e', 'ж': 'zh', 'з': 'z', 'и': 'i',
+        'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n',
+        'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't',
+        'у': 'u', 'ф': 'f', 'х': 'h', 'ц': 'c', 'ч': 'ch',
+        'ш': 'sh', 'щ': 'sch', 'ь': '', 'ы': 'y', 'ъ': '',
+        'э': 'e', 'ю': 'yu', 'я': 'ya',
+        'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D',
+        'Е': 'E', 'Ё': 'E', 'Ж': 'Zh', 'З': 'Z', 'И': 'I',
+        'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M', 'Н': 'N',
+        'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T',
+        'У': 'U', 'Ф': 'F', 'Х': 'H', 'Ц': 'C', 'Ч': 'Ch',
+        'Ш': 'Sh', 'Щ': 'Sch', 'Ь': '', 'Ы': 'Y', 'Ъ': '',
+        'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya'
+    };
+
+    const en = {
+        'a': 'а', 'b': 'б', 'c': 'ц', 'd': 'д', 'e': 'е',
+        'f': 'ф', 'g': 'г', 'h': 'х', 'i': 'и', 'j': 'дж',
+        'k': 'к', 'l': 'л', 'm': 'м', 'n': 'н', 'o': 'о',
+        'p': 'п', 'q': 'к', 'r': 'р', 's': 'с', 't': 'т',
+        'u': 'у', 'v': 'в', 'w': 'в', 'x': 'кс', 'y': 'й',
+        'z': 'з',
+        'A': 'А', 'B': 'Б', 'C': 'Ц', 'D': 'Д', 'E': 'Е',
+        'F': 'Ф', 'G': 'Г', 'H': 'Х', 'I': 'И', 'J': 'Дж',
+        'K': 'К', 'L': 'Л', 'M': 'М', 'N': 'Н', 'O': 'О',
+        'P': 'П', 'Q': 'К', 'R': 'Р', 'S': 'С', 'T': 'Т',
+        'U': 'У', 'V': 'В', 'W': 'В', 'X': 'Кс', 'Y': 'Й',
+        'Z': 'З'
+    };
+
+    let result = '';
+    const textLower = text.toLowerCase();
+
+    // Проверяем, содержит ли текст русские буквы
+    const hasCyrillic = /[а-яё]/i.test(text);
+
+    if (hasCyrillic) {
+        // Русский → Английский
+        for (let char of textLower) {
+            result += ru[char] || char;
+        }
+    } else {
+        // Английский → Русский (только для латинских букв)
+        for (let char of textLower) {
+            result += en[char] || char;
+        }
+    }
+
+    return result.toLowerCase();
+}
+
+// Функции для работы с модальным окном марок
+let selectedBrands = [];
+
+function openBrandsModal(event) {
+    // КРИТИЧЕСКИ ВАЖНО: предотвращаем закрытие offcanvas
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+    }
+
+    // Получаем текущие выбранные бренды из скрытого поля
+    const brandInput = document.querySelector('#mobile-filter-form input[name="brand"]');
+    const currentBrands = brandInput ? brandInput.value.split(',') : [];
+
+    // Сбрасываем все чекбоксы
+    document.querySelectorAll('#brandsModal .form-check-input').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+
+    // Устанавливаем "Все марки" если ничего не выбрано
+    if (currentBrands.length === 0 || (currentBrands.length === 1 && currentBrands[0] === '')) {
+        document.getElementById('brandAll').checked = true;
+        selectedBrands = [];
+    } else {
+        // Устанавливаем выбранные бренды
+        currentBrands.forEach(brandSlug => {
+            if (brandSlug) {
+                const checkbox = document.querySelector(`.brand-checkbox[value="${brandSlug}"]`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                }
+            }
+        });
+        document.getElementById('brandAll').checked = false;
+        selectedBrands = currentBrands.filter(slug => slug !== '');
+    }
+
+    updateSelectedCount();
+
+    // Сбрасываем поиск
+    clearSearch();
+    
+    // Убеждаемся, что инпут имеет скругленные углы справа при открытии
+    const searchInput = document.getElementById('brandSearchInput');
+    if (searchInput) {
+        searchInput.classList.add('no-clear-btn');
+    }
+
+    // Открываем модальное окно
+    const brandsModal = new bootstrap.Modal(document.getElementById('brandsModal'));
+    brandsModal.show();
+
+    // Фокусируемся на поле поиска после открытия
+    setTimeout(() => {
+        document.getElementById('brandSearchInput').focus();
+    }, 300);
+
+    // Дополнительная защита: предотвращаем закрытие offcanvas
+    setTimeout(() => {
+        const offcanvas = document.getElementById('filtersOffcanvas');
+        if (offcanvas) {
+            const bsOffcanvas = bootstrap.Offcanvas.getInstance(offcanvas);
+            if (bsOffcanvas) {
+                // Принудительно показываем offcanvas если он закрылся
+                bsOffcanvas.show();
+            }
+        }
+    }, 50);
+}
+
+function closeBrandsModal() {
+    const brandsModal = bootstrap.Modal.getInstance(document.getElementById('brandsModal'));
+    if (brandsModal) {
+        brandsModal.hide();
+    }
+    // Offcanvas фильтров остается открытым
+}
+
+function toggleAllBrands(checkbox) {
+    const brandCheckboxes = document.querySelectorAll('.brand-checkbox');
+    if (checkbox.checked) {
+        // Если выбрано "Все марки", снимаем выбор с остальных
+        brandCheckboxes.forEach(cb => cb.checked = false);
+        selectedBrands = [];
+    }
+    updateSelectedCount();
+}
+
+function updateSelectedBrands() {
+    const brandAll = document.getElementById('brandAll');
+    const selectedCheckboxes = document.querySelectorAll('.brand-checkbox:checked');
+
+    // Если выбраны конкретные бренды, снимаем "Все марки"
+    if (selectedCheckboxes.length > 0) {
+        brandAll.checked = false;
+    }
+
+    // Обновляем массив выбранных брендов
+    selectedBrands = Array.from(selectedCheckboxes).map(checkbox => checkbox.value);
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const count = selectedBrands.length;
+    const countElement = document.getElementById('selectedCount');
+    if (countElement) {
+        countElement.textContent = `Выбрано: ${count} ${getBrandWord(count)}`;
+    }
+}
+
+function getBrandWord(count) {
+    if (count === 1) return 'марка';
+    if (count >= 2 && count <= 4) return 'марки';
+    return 'марок';
+}
+
+function clearAllBrands() {
+    document.querySelectorAll('#brandsModal .form-check-input').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    document.getElementById('brandAll').checked = true;
+    selectedBrands = [];
+    updateSelectedCount();
+}
+
+// Функция фильтрации марок по поиску
+function filterBrands() {
+    const searchInput = document.getElementById('brandSearchInput');
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    const clearBtn = document.getElementById('clearSearchBtn');
+    const resultsInfo = document.getElementById('searchResultsInfo');
+    const foundCountElement = document.getElementById('foundCount');
+
+    // Показываем/скрываем кнопку очистки
+    if (searchTerm.length > 0) {
+        clearBtn.style.visibility = 'visible';
+        clearBtn.style.pointerEvents = 'auto';
+        searchInput.classList.remove('no-clear-btn');
+    } else {
+        clearBtn.style.visibility = 'hidden';
+        clearBtn.style.pointerEvents = 'none';
+        searchInput.classList.add('no-clear-btn');
+        resultsInfo.style.display = 'none';
+        // Показываем все элементы если поиск пустой
+        document.querySelectorAll('.brand-item').forEach(item => {
+            item.classList.remove('hidden');
+        });
+        return;
+    }
+
+    // Получаем транслитерированную версию поискового запроса
+    const transliteratedTerm = transliterate(searchTerm);
+
+    let foundCount = 0;
+
+    // Фильтруем элементы
+    document.querySelectorAll('.brand-item').forEach(item => {
+        const brandName = item.getAttribute('data-name');
+        const brandNameTranslit = item.getAttribute('data-name-translit');
+
+        // Проверяем совпадения по оригинальному названию и транслитерированной версии
+        const matchesOriginal = brandName.includes(searchTerm);
+        const matchesTranslit = brandNameTranslit.includes(transliteratedTerm);
+        const matchesSearchTerm = brandName.includes(transliteratedTerm);
+
+        if (matchesOriginal || matchesTranslit || matchesSearchTerm) {
+            item.classList.remove('hidden');
+            foundCount++;
+        } else {
+            item.classList.add('hidden');
+        }
+    });
+
+    // Обновляем информацию о результатах
+    if (foundCount > 0) {
+        resultsInfo.style.display = 'block';
+        foundCountElement.textContent = foundCount;
+    } else {
+        resultsInfo.style.display = 'block';
+        foundCountElement.textContent = '0';
+    }
+}
+
+// Функция очистки поиска
+function clearSearch() {
+    const searchInput = document.getElementById('brandSearchInput');
+    const clearBtn = document.getElementById('clearSearchBtn');
+    searchInput.value = '';
+    searchInput.focus();
+    // Убеждаемся, что класс добавлен при очистке
+    searchInput.classList.add('no-clear-btn');
+    clearBtn.style.visibility = 'hidden';
+    clearBtn.style.pointerEvents = 'none';
+    filterBrands();
+}
+
+// Обработка нажатия клавиши Escape в поле поиска
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('brandSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                clearSearch();
+            }
+        });
+    }
+});
+
+function applyBrandFilter() {
+    const brandAll = document.getElementById('brandAll');
+    const brandInput = document.querySelector('#mobile-filter-form input[name="brand"]');
+    const selectedBrandText = document.getElementById('selectedBrandText');
+
+    if (brandAll.checked) {
+        // Если выбрано "Все марки"
+        if (brandInput) brandInput.value = '';
+        if (selectedBrandText) selectedBrandText.textContent = 'Все марки';
+    } else {
+        // Если выбраны конкретные бренды
+        const brandSlugs = selectedBrands.join(',');
+        if (brandInput) brandInput.value = brandSlugs;
+
+        // Обновляем текст на кнопке
+        if (selectedBrandText) {
+            if (selectedBrands.length === 0) {
+                selectedBrandText.textContent = 'Все марки';
+            } else if (selectedBrands.length === 1) {
+                const selectedCheckbox = document.querySelector(`.brand-checkbox[value="${selectedBrands[0]}"]`);
+                const brandName = selectedCheckbox ? selectedCheckbox.getAttribute('data-name') : 'Марка';
+                selectedBrandText.textContent = brandName;
+            } else {
+                // ПОЛУЧАЕМ НАЗВАНИЯ ВСЕХ ВЫБРАННЫХ МАРОК
+                const selectedBrandNames = [];
+                selectedBrands.forEach(brandSlug => {
+                    const checkbox = document.querySelector(`.brand-checkbox[value="${brandSlug}"]`);
+                    if (checkbox) {
+                        selectedBrandNames.push(checkbox.getAttribute('data-name'));
+                    }
+                });
+                // ОТОБРАЖАЕМ НАЗВАНИЯ ЧЕРЕЗ ЗАПЯТУЮ
+                selectedBrandText.textContent = selectedBrandNames.join(', ');
+            }
+        }
+    }
+
+    // При смене марки сбрасываем зависимые фильтры (модель/поколение/модификация и типы кузова/техники)
+    const clearMobileHiddenAndText = (name, textId, defaultText) => {
+        const input = document.querySelector(`#mobile-filter-form input[name="${name}"]`);
+        if (input) input.value = '';
+        const textEl = document.getElementById(textId);
+        if (textEl) textEl.textContent = defaultText;
+    };
+    clearMobileHiddenAndText('model', 'selectedModelText', 'Все модели');
+    clearMobileHiddenAndText('generation', 'selectedGenerationText', 'Все поколения');
+    clearMobileHiddenAndText('modification', 'selectedModificationText', 'Все модификации');
+    clearMobileHiddenAndText('car_type', 'selectedCarTypeText', 'Все типы кузова');
+    clearMobileHiddenAndText('moto_type', 'selectedMotoTypeText', 'Все типы мототехники');
+    clearMobileHiddenAndText('truck_type', 'selectedTruckTypeText', 'Все типы техники');
+    clearMobileHiddenAndText('special_type', 'selectedSpecialTypeText', 'Все типы спецтехники');
+
+    if (typeof updateMobileModelIcon === 'function') updateMobileModelIcon();
+    if (typeof updateMobileGenerationIcon === 'function') updateMobileGenerationIcon();
+
+    // Обновляем иконку
+    if (typeof updateMobileBrandIcon === 'function') {
+        updateMobileBrandIcon();
+    }
+    
+    // Обновляем видимость моделей при изменении фильтра брендов
+    if (typeof updateModelsOnBrandChange === 'function') {
+        updateModelsOnBrandChange();
+    }
+
+    // Закрываем только модальное окно брендов, оставляя offcanvas открытым
+    closeBrandsModal();
+}
+
+function resetBrandFilter() {
+    clearAllBrands();
+    applyBrandFilter();
+}
+</script>
+<script>
+    //Скрипт на очистку поиска и показ кнопки
+    const searchInput = document.getElementById('search-input');
+    const clearButton = document.querySelector('.clear-search');
+
+   
+    function toggleClearButton() {
+        if (searchInput.value.length > 0) {
+            clearButton.style.display = 'inline-block'; 
+        } else {
+            clearButton.style.display = 'none'; 
+        }
+    }
+
+    // Слушаем ввод текста в поле поиска
+    searchInput.addEventListener('input', toggleClearButton);
+
+    // Слушаем клик по кнопке очистки
+    clearButton.addEventListener('click', function() {
+        searchInput.value = '';       
+        toggleClearButton();          
+        searchInput.focus();         
+        
+    });
+
+   
+    toggleClearButton();
+</script>

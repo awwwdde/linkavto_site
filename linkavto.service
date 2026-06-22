@@ -1,0 +1,45 @@
+# Systemd service для LinkAvto Django приложения
+# Файл должен быть скопирован в /etc/systemd/system/linkavto.service
+
+[Unit]
+Description=LinkAvto Django Application
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+RuntimeDirectory=linkavto
+WorkingDirectory=/home/linkavto/linkavto
+Environment=DJANGO_ENV=production
+Environment=PYTHONPATH=/home/linkavto/linkavto
+Environment=DJANGO_SETTINGS_MODULE=avtolink.settings
+
+# Путь к виртуальному окружению и gunicorn
+ExecStart=/home/linkavto/linkavto/venv/bin/gunicorn \
+    --config /home/linkavto/linkavto/gunicorn.conf.py \
+    avtolink.wsgi:application
+
+ExecReload=/bin/kill -s HUP $MAINPID
+
+# Автоматический перезапуск при падении
+Restart=always
+RestartSec=5
+
+# Лимиты
+LimitNOFILE=65536
+TimeoutStartSec=120
+TimeoutStopSec=60
+
+# Безопасность
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/home/linkavto/linkavto
+ReadWritePaths=/var/log/linkavto
+ReadWritePaths=/var/run
+
+[Install]
+WantedBy=multi-user.target

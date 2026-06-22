@@ -1,0 +1,148 @@
+=================================================================
+   NASTROYKA EMAIL DLYa LINKAVTO - GOTOVO!
+=================================================================
+
+PROBLEMA:
+---------
+- mail.linkavto.ru NE SUSHCHESTVUET v DNS
+- S lokalnogo PK nelzya otpravlyat cherez Reg.ru SMTP
+- mx1.hosting.reg.ru - tolko priem pochty, ne SMTP
+
+RESHENIE:
+---------
+Raznye nastroyki dlya raznykh okruzheniy:
+
+1. PRODUCTION (na servere):
+   - Ispolzuet localhost:25
+   - Fail: avtolink/settings/production.py
+   - Rabotaet na servere Reg.ru
+
+2. DEVELOPMENT (lokalnyy PK):
+   - Ispolzuet Console Backend
+   - Pisma vyvodatsya v konsol (ne otpravlyayutsya)
+   - Fail: avtolink/settings/development.py
+
+=================================================================
+TESTIROVANIE (SEYCHAS NA LOKALNOM PK):
+=================================================================
+
+1. Proverka nastroek:
+   python check_email_settings.py
+
+2. Test otpravki (pismo v konsol):
+   python test_console_email.py
+   
+   REZULTAT: [OK] Rabotaet! Pismo vyvoditsya v konsol.
+
+=================================================================
+DLYa SERVERA (POSLE DEPLOYA):
+=================================================================
+
+1. Ustanovite okruzhenie:
+   export DJANGO_ENV=production
+
+2. Proverte nastroyki:
+   python check_email_settings.py
+   
+   Dolzhno pokazat:
+   - Host: localhost
+   - Port: 25
+
+3. Otpravte testovoe pismo:
+   python test_django_email.py
+
+4. Dobavte v ~/.bashrc ili systemd service:
+   export DJANGO_ENV=production
+
+=================================================================
+ALTERNATIVY DLYa LOKALNOY RAZRABOTKI:
+=================================================================
+
+Esli nuzhno otpravlyat realnye pisma s lokalnogo PK,
+otkroyte: avtolink/settings/development.py
+
+Raskommentiruite odin iz variantov:
+
+Variant 1: Gmail
+- EMAIL_HOST = 'smtp.gmail.com'
+- EMAIL_PORT = 587
+- Nuzhno sozdat parol prilozheniya na:
+  https://myaccount.google.com/apppasswords
+
+Variant 2: Mail.ru
+- EMAIL_HOST = 'smtp.mail.ru'
+- EMAIL_PORT = 465
+- Ispolzuyte obychnyy parol
+
+Variant 3: Yandex
+- EMAIL_HOST = 'smtp.yandex.ru'
+- EMAIL_PORT = 465
+- Nuzhno sozdat parol prilozheniya
+
+=================================================================
+FAYLY:
+=================================================================
+
+Nastroyki:
+- avtolink/settings/development.py  (Console Backend)
+- avtolink/settings/production.py   (localhost:25)
+- avtolink/settings/__init__.py     (Avtovybor okruzheniya)
+
+Testy:
+- check_email_settings.py     (Pokazat nastroyki)
+- test_console_email.py       (Test Console Backend) [OK]
+- test_django_email.py        (Test Django email)
+- test_regru_smtp.py          (Test Reg.ru SMTP)
+
+Dokumentatsiya:
+- EMAIL_SETUP_FINAL.md        (Polnaya instruktsiya angliyskiy)
+- EMAIL_REGRU_INFO.md         (Info o Reg.ru)
+- EMAIL_INSTRUKCIYA.txt       (Etot fail - russkiy)
+
+=================================================================
+STATUS:
+=================================================================
+
+[OK] Lokalnaya razrabotka - GOTOVO
+     Console Backend rabotaet, pisma v konsol
+
+[ ] Production na servere - NUZHNO PROTESTRIROVAT
+     Posle deploya zapustite testy na servere
+
+=================================================================
+CHTO DALSHE:
+=================================================================
+
+1. Prodolzhite razrabotku lokalno (pisma v konsol)
+
+2. Posle deploya na server:
+   - Ustanovite DJANGO_ENV=production
+   - Proverte otpravku pisem
+   - Esli ne rabotaet, vernte starye nastroyki:
+     EMAIL_HOST = '31.31.196.47'
+     EMAIL_PORT = 25
+
+3. Esli nuzhny realnye pisma lokalno:
+   - Nastroyte Gmail/Mail.ru/Yandex v development.py
+
+=================================================================
+PODDERZHKA:
+=================================================================
+
+Esli problemy na servere:
+
+1. Proverte okruzhenie:
+   echo $DJANGO_ENV
+   
+2. Proverte dostupnost SMTP:
+   telnet localhost 25
+   
+3. Posmotrite logi:
+   tail -f debug.log
+
+4. Svyazhites s podderzhkoy Reg.ru
+
+=================================================================
+GOTOVO! UDACHI!
+=================================================================
+

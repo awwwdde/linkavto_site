@@ -1,0 +1,605 @@
+<!-- Модальное окно аутентификации -->
+<div class="modal fade" id="authModal" tabindex="-1" aria-labelledby="authModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-custom">
+    <div class="modal-content shadow-lg rounded-4 border-0 p-4">
+      <div class="modal-header border-0 pb-0 position-relative">
+        <h5 class="modal-title fw-semibold w-100 text-center">Вход</h5>
+        <button type="button" class="btn-close position-absolute end-0 top-0 mt-2 me-3" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+        <button type="button" class="btn btn-close-mobile d-lg-none position-absolute end-0 top-0 mt-2 me-3" data-bs-dismiss="modal" aria-label="Закрыть">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body py-4">
+        <!-- Форма ввода email/телефона -->
+        <form id="authForm">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{% url 'shop:index' %}">
+
+          <div class="form-floating mb-3">
+            <input type="email" class="form-control" id="authInput" name="login" placeholder="Email" required>
+            <label for="authInput">Email</label>
+          </div>
+
+          <button type="submit" class="btn btn-dark w-100 py-2 shadow-sm">Получить код</button>
+        </form>
+
+        <!-- Форма ввода кода подтверждения (изначально скрыта) -->
+        <form id="verifyCodeForm" style="display: none;">
+          {% csrf_token %}
+          <input type="hidden" id="loginData" name="login_data">
+
+          <div class="mb-3">
+            <p class="text-muted small mb-3">Мы отправили 6-значный код на ваш email. Введите его ниже.</p>
+          </div>
+
+          <div class="mb-3">
+            <div class="d-flex justify-content-center">
+              <input type="text" class="form-control text-center verification-code"
+                     id="digit1" maxlength="1" pattern="\d" inputmode="numeric" style="width: 40px; margin: 0 5px;">
+              <input type="text" class="form-control text-center verification-code"
+                     id="digit2" maxlength="1" pattern="\d" inputmode="numeric" style="width: 40px; margin: 0 5px;">
+              <input type="text" class="form-control text-center verification-code"
+                     id="digit3" maxlength="1" pattern="\d" inputmode="numeric" style="width: 40px; margin: 0 5px;">
+              <input type="text" class="form-control text-center verification-code"
+                     id="digit4" maxlength="1" pattern="\d" inputmode="numeric" style="width: 40px; margin: 0 5px;">
+              <input type="text" class="form-control text-center verification-code"
+                     id="digit5" maxlength="1" pattern="\d" inputmode="numeric" style="width: 40px; margin: 0 5px;">
+              <input type="text" class="form-control text-center verification-code"
+                     id="digit6" maxlength="1" pattern="\d" inputmode="numeric" style="width: 40px; margin: 0 5px;">
+            </div>
+            <input type="hidden" id="fullCode" name="code">
+          </div>
+
+          <div class="mb-3 text-center">
+            <a href="#" id="resendCode" class="small">Отправить код повторно</a>
+            <span id="countdown" class="small text-muted ms-2"></span>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 py-2 shadow-sm">Войти</button>
+        </form>
+      </div>
+
+      <!-- Добавляем текст с соглашением в нижнюю часть модального окна -->
+      <div class="modal-footer border-0 pt-0">
+        <div class="w-100">
+          <p class="text-muted small text-center mb-0" style="line-height: 1.4;">
+            Используя этот сайт, вы автоматически создаете или используете имеющуюся учетную запись на LinkAvto,
+            соглашаетесь на обработку персональных данных согласно
+            <a href="/privacy/" target="_blank" class="text-decoration-none">Политикой конфиденциальности</a> и
+            <a href="/privacy/" target="_blank" class="text-decoration-none" target="_blank">Пользовательских соглашений LinkAvto</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Определяем мобильное устройство
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const authModalElement = document.getElementById('authModal');
+  // Используем getOrCreateInstance чтобы избежать создания дубликатов
+  const authModal = bootstrap.Modal.getOrCreateInstance(authModalElement, {
+    backdrop: true, // Явно включаем backdrop
+    keyboard: true
+  });
+  const authForm = document.getElementById('authForm');
+  const verifyCodeForm = document.getElementById('verifyCodeForm');
+  const loginDataField = document.getElementById('loginData');
+
+  if (isMobile) {
+  // Добавляем класс для мобильной адаптации
+    document.querySelector('.modal-dialog').classList.add('mobile-modal');
+  }
+
+  // Получаем CSRF-токен из cookies
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  const csrftoken = getCookie('csrftoken');
+
+  // Переменные для управления состоянием
+  let isCodeSending = false;
+  let currentTimer = null;
+  
+  // Проверяем, не загружается ли скрипт повторно
+  if (window.authModalsLoaded) {
+    console.log('Auth modals already loaded, skipping');
+    return;
+  }
+  window.authModalsLoaded = true;
+  console.log('Auth modals script loaded');
+
+  // Обработка отправки формы ввода email/телефона
+  authForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    console.log('Form submit triggered, isCodeSending:', isCodeSending);
+
+    // Проверяем, не отправляется ли уже запрос
+    if (isCodeSending) {
+      console.log('Request blocked - already sending code');
+      return;
+    }
+
+    const loginInput = document.getElementById('authInput');
+    const loginValue = loginInput.value.trim();
+
+    if (!loginValue) {
+      loginInput.classList.add('is-invalid');
+      return;
+    }
+
+    isCodeSending = true;
+    console.log('Setting isCodeSending to true, starting request');
+    const submitButton = authForm.querySelector('button[type="submit"]');
+    const originalText = submitButton.textContent;
+    submitButton.textContent = 'Отправка...';
+    submitButton.disabled = true;
+
+    // Отправляем запрос на сервер для получения кода
+    fetch('{% url "accounts:send_verification_code" %}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': csrftoken,
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: new URLSearchParams({
+        'login': loginValue
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        loginDataField.value = loginValue;
+        authForm.style.display = 'none';
+        verifyCodeForm.style.display = 'block';
+
+        // Показываем отладочную информацию если есть
+        if (data.debug_code) {
+          console.log('Код для тестирования:', data.debug_code);
+        }
+
+        // Запускаем таймер для повторной отправки кода
+        startCountdown();
+      } else {
+        alert('Ошибка: ' + data.error);
+        loginInput.classList.add('is-invalid');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Произошла ошибка при отправке кода');
+    })
+    .finally(() => {
+      console.log('Request completed, setting isCodeSending to false');
+      isCodeSending = false;
+      submitButton.textContent = originalText;
+      submitButton.disabled = false;
+    });
+  });
+
+  // Обработка отправки формы с кодом подтверждения
+  verifyCodeForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    // Собираем полный код из отдельных цифр
+    const code = Array.from({length: 6}, (_, i) =>
+      document.getElementById(`digit${i+1}`).value
+    ).join('');
+
+    document.getElementById('fullCode').value = code;
+
+    // Отправляем код на сервер для проверки
+    fetch('{% url "accounts:verify_code_login" %}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': csrftoken,
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: new URLSearchParams({
+        'login_data': loginDataField.value,
+        'code': code,
+        'next': authForm.querySelector('[name="next"]').value
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        if (data.needs_registration) {
+          // Показываем форму регистрации
+          showRegistrationForm(data.login);
+        } else {
+          // Успешный вход
+          // Отправляем событие об успешной авторизации
+          document.dispatchEvent(new CustomEvent('userAuthenticated', {
+            detail: { address_created: data.address_created, address_id: data.address_id }
+          }));
+          authModal.hide();
+          // Очищаем backdrop
+          setTimeout(() => {
+            if (typeof cleanupModalBackdrop === 'function') {
+              cleanupModalBackdrop();
+            } else {
+              // Fallback очистка с анимацией
+              const openModals = document.querySelectorAll('.modal.show');
+              if (openModals.length === 0) {
+                const backdrops = document.querySelectorAll('.modal-backdrop');
+                backdrops.forEach(backdrop => {
+                  backdrop.classList.remove('show');
+                  setTimeout(() => {
+                    if (backdrop.parentNode) {
+                      backdrop.remove();
+                    }
+                  }, 150);
+                });
+                document.body.classList.remove('modal-open');
+                document.body.style.removeProperty('padding-right');
+              }
+            }
+          }, 150);
+          // Небольшая задержка перед редиректом, чтобы UI успел обновиться
+          setTimeout(() => {
+            window.location.href = data.redirect_url;
+          }, 100);
+        }
+      } else {
+        alert('Ошибка: ' + data.error);
+        // Сбрасываем поля кода при ошибке
+        document.querySelectorAll('.verification-code').forEach(input => {
+          input.value = '';
+        });
+        document.getElementById('digit1').focus();
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Произошла ошибка при проверке кода');
+    });
+  });
+
+  // Функция для обработки ввода кода (автопереход между полями)
+  document.querySelectorAll('.verification-code').forEach((input, index, inputs) => {
+    input.addEventListener('input', function() {
+      // Разрешаем только цифры
+      this.value = this.value.replace(/\D/g, '');
+
+      if (this.value.length === 1 && index < inputs.length - 1) {
+        inputs[index + 1].focus();
+      }
+
+      // Автоматическая отправка формы при заполнении последнего поля
+      if (index === inputs.length - 1 && this.value.length === 1) {
+        const allFilled = Array.from(inputs).every(input => input.value.length === 1);
+        if (allFilled) {
+          verifyCodeForm.dispatchEvent(new Event('submit'));
+        }
+      }
+    });
+
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Backspace' && this.value.length === 0 && index > 0) {
+        inputs[index - 1].focus();
+      }
+
+      // Разрешаем только цифры и управляющие клавиши
+      if (!/[\d\b\t\n]/.test(e.key) && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+      }
+    });
+
+    input.addEventListener('paste', function(e) {
+      e.preventDefault();
+      const pasteData = e.clipboardData.getData('text').replace(/\D/g, '');
+      if (pasteData.length === 6) {
+        // Заполняем все поля из буфера обмена
+        const digits = pasteData.split('');
+        inputs.forEach((input, i) => {
+          if (i < digits.length) {
+            input.value = digits[i];
+          }
+        });
+        if (inputs[5]) {
+          inputs[5].focus();
+        }
+      }
+    });
+  });
+
+  // Функция для таймера повторной отправки кода
+  function startCountdown() {
+    const resendLink = document.getElementById('resendCode');
+    const countdownElement = document.getElementById('countdown');
+    let timeLeft = 60;
+
+    // Очищаем предыдущий таймер если есть
+    if (currentTimer) {
+      clearInterval(currentTimer);
+    }
+
+    resendLink.style.display = 'none';
+    countdownElement.textContent = `(00:${timeLeft < 10 ? '0' + timeLeft : timeLeft})`;
+
+    currentTimer = setInterval(() => {
+      timeLeft--;
+      countdownElement.textContent = `(00:${timeLeft < 10 ? '0' + timeLeft : timeLeft})`;
+
+      if (timeLeft <= 0) {
+        clearInterval(currentTimer);
+        currentTimer = null;
+        countdownElement.textContent = '';
+        resendLink.style.display = 'inline';
+      }
+    }, 1000);
+  }
+
+  // Обработчик повторной отправки кода (добавляем только один раз)
+  document.getElementById('resendCode').addEventListener('click', function(e) {
+    e.preventDefault();
+
+    // Проверяем, не отправляется ли уже запрос
+    if (isCodeSending) {
+      return;
+    }
+
+    isCodeSending = true;
+    this.style.pointerEvents = 'none'; // Блокируем кнопку
+
+    // Повторная отправка кода
+    fetch('{% url "accounts:send_verification_code" %}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': csrftoken,
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: new URLSearchParams({
+        'login': loginDataField.value
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Сбрасываем таймер
+        startCountdown();
+
+        // Показываем отладочную информацию если есть
+        if (data.debug_code) {
+          console.log('Новый код для тестирования:', data.debug_code);
+        }
+      } else {
+        alert('Ошибка при повторной отправке: ' + data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Произошла ошибка при повторной отправке кода');
+    })
+    .finally(() => {
+      isCodeSending = false;
+      this.style.pointerEvents = 'auto'; // Разблокируем кнопку
+    });
+  });
+
+  // Функция для показа формы регистрации
+  function showRegistrationForm(login) {
+    // Создаем форму регистрации
+    const registrationHTML = `
+      <div id="registrationFormContainer">
+        <h6 class="text-center mb-3">Завершите регистрацию</h6>
+        <form id="registrationForm">
+          {% csrf_token %}
+          <input type="hidden" name="login" value="${login}">
+          <input type="hidden" name="next" value="${authForm.querySelector('[name="next"]').value}">
+
+          <div class="form-floating mb-3">
+            <input type="text" class="form-control" id="firstName" name="first_name" placeholder="Имя" required>
+            <label for="firstName">Имя *</label>
+          </div>
+
+          <div class="form-floating mb-3">
+            <input type="text" class="form-control" id="lastName" name="last_name" placeholder="Фамилия">
+            <label for="lastName">Фамилия</label>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 py-2 shadow-sm">Завершить регистрацию</button>
+          <button type="button" class="btn btn-outline-secondary w-100 py-2 mt-2" onclick="location.reload()">Отмена</button>
+        </form>
+      </div>
+    `;
+
+    verifyCodeForm.style.display = 'none';
+    verifyCodeForm.insertAdjacentHTML('afterend', registrationHTML);
+
+    // Фокусируемся на первом поле
+    setTimeout(() => {
+      const firstNameInput = document.getElementById('firstName');
+      if (firstNameInput) firstNameInput.focus();
+    }, 100);
+
+    // Обработчик формы регистрации
+    document.getElementById('registrationForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      fetch('{% url "accounts:register_with_code" %}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': csrftoken,
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: new URLSearchParams(new FormData(this))
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Отправляем событие об успешной авторизации
+          document.dispatchEvent(new CustomEvent('userAuthenticated', {
+            detail: { address_created: data.address_created, address_id: data.address_id }
+          }));
+          authModal.hide();
+          // Очищаем backdrop
+          setTimeout(() => {
+            if (typeof cleanupModalBackdrop === 'function') {
+              cleanupModalBackdrop();
+            } else {
+              // Fallback очистка с анимацией
+              const openModals = document.querySelectorAll('.modal.show');
+              if (openModals.length === 0) {
+                const backdrops = document.querySelectorAll('.modal-backdrop');
+                backdrops.forEach(backdrop => {
+                  backdrop.classList.remove('show');
+                  setTimeout(() => {
+                    if (backdrop.parentNode) {
+                      backdrop.remove();
+                    }
+                  }, 150);
+                });
+                document.body.classList.remove('modal-open');
+                document.body.style.removeProperty('padding-right');
+              }
+            }
+          }, 150);
+          // Небольшая задержка перед редиректом, чтобы UI успел обновиться
+          setTimeout(() => {
+            window.location.href = data.redirect_url;
+          }, 100);
+        } else {
+          alert('Ошибка регистрации: ' + data.error);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Произошла ошибка при регистрации');
+      });
+    });
+  }
+
+  // Автофокус на первое поле кода при показе формы
+  const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+        if (verifyCodeForm.style.display === 'block') {
+          setTimeout(() => {
+            document.getElementById('digit1').focus();
+          }, 100);
+        }
+      }
+    });
+  });
+
+  observer.observe(verifyCodeForm, {
+    attributes: true,
+    attributeFilter: ['style']
+  });
+});
+</script>
+<style>
+  .modal-footer a {
+    color: #89BEE8 !important;
+}
+
+  /* Адаптация для мобильных устройств */
+  @media (max-width: 596px) {
+    #authModal .modal-dialog {
+      margin: 0;
+      max-width: none;
+      min-height: 100vh;
+    }
+
+    #authModal .modal-content {
+      border-radius: 0;
+      min-height: 100vh;
+      height: auto;
+    }
+
+    #authModal .modal-body {
+      flex: 1;
+      padding: 1rem;
+    }
+
+    /* Улучшение отображения полей ввода кода на мобильных */
+    .verification-code {
+      width: 40px !important;
+      height: 50px;
+      font-size: 1.2rem;
+      margin: 0 4px !important;
+    }
+
+    /* Убираем все отступы у модального окна */
+    #authModal {
+      padding: 0 !important;
+    }
+
+    #authModal .modal-header,
+    #authModal .modal-footer {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .btn-close-mobile {
+      display: block !important;
+      border: none;
+      background: none;
+      color: #6c757d;
+      padding: 0.5rem;
+      z-index: 1055;
+    }
+
+    .btn-close {
+      display: none !important;
+    }
+
+    .btn-close-mobile:hover {
+      color: #000;
+    }
+
+    /* Гарантируем полное заполнение экрана */
+    #authModal .modal-dialog {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+    }
+
+    #authModal .modal-content {
+      width: 100vw;
+      height: 100vh;
+      border: none;
+    }
+  }
+
+  /* Дополнительные стили для лучшего отображения на очень маленьких экранах */
+  @media (max-width: 375px) {
+    .verification-code {
+      width: 35px !important;
+      height: 45px;
+      margin: 0 2px !important;
+    }
+
+    #authModal .modal-header,
+    #authModal .modal-footer {
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

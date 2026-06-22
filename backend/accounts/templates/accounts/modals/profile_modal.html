@@ -1,0 +1,224 @@
+<!--Модальное окно редактировать профиль-->
+
+<div class="modal fade modern-modal" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-md-down" style="max-width: 420px;">
+    <div class="modal-content rounded-3 shadow-lg border-0">
+      <div class="modal-header border-0 pb-0 pt-4 px-4">
+        <h5 class="modal-title fs-6 fw-semibold text-dark" id="editProfileModalLabel">Редактировать профиль</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+
+      <form method="post" action="{% url 'accounts:profile' %}" enctype="multipart/form-data" novalidate id="profileForm">
+        {% csrf_token %}
+        <div class="modal-body pt-2 px-4 pb-0">
+
+          <div class="mb-3">
+            <label for="id_first_name" class="form-label small text-muted mb-1">Имя</label>
+            <input type="text" name="first_name" class="form-control rounded-2"
+                   id="id_first_name" value="{{ user.first_name }}" placeholder="Ваше имя">
+          </div>
+
+          <div class="mb-3">
+            <label for="id_last_name" class="form-label small text-muted mb-1">Фамилия</label>
+            <input type="text" name="last_name" class="form-control rounded-2"
+                   id="id_last_name" value="{{ user.last_name }}" placeholder="Ваша фамилия">
+          </div>
+
+          <div class="mb-3">
+            <label for="id_email" class="form-label small text-muted mb-1">Email</label>
+            <input type="email" name="email" class="form-control rounded-2"
+                   id="id_email" value="{{ user.email }}" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="id_phone" class="form-label small text-muted mb-1">Телефон</label>
+            <div class="input-group rounded-2">
+              <span class="input-group-text bg-transparent border-end-0 ps-3 pe-2 text-muted">+7</span>
+              <input type="tel" name="phone" class="form-control border-start-0"
+                     id="id_phone" value="{{ user.profile.phone|cut:'+7' }}"
+                     placeholder="(999) 999-99-99">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="id_photo" class="form-label small text-muted mb-1">Аватар</label>
+            <div class="d-flex align-items-center gap-3">
+              <div class="avatar-preview rounded-circle overflow-hidden border" style="width: 60px; height: 60px;">
+                {% if user.profile.photo %}
+                  <img src="{{ user.profile.photo.url }}" class="w-100 h-100 object-fit-cover" id="avatarPreview">
+                {% else %}
+                  <div class="w-100 h-100 bg-light d-flex align-items-center justify-content-center text-muted">
+                    <i class="fas fa-user"></i>
+                  </div>
+                {% endif %}
+              </div>
+              <div class="flex-grow-1">
+                <input type="file" name="photo" class="form-control rounded-2 d-none"
+                       id="id_photo" accept="image/*">
+                <label for="id_photo" class="btn btn-sm btn-outline-secondary rounded-2 mb-0 w-100">Выбрать файл</label>
+                {% if user.profile.photo %}
+                  <button type="button" class="btn btn-sm btn-link text-danger p-0 mt-1 small" id="delete-avatar-btn">
+                    Удалить
+                  </button>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer border-0 pt-0 pb-4 px-4">
+          <button type="button" class="btn btn-sm btn-outline-secondary rounded-2 px-3" data-bs-dismiss="modal">Отмена</button>
+          <button type="submit" class="btn btn-sm btn-primary rounded-2 px-4">
+            Сохранить
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+.modern-modal .modal-content {
+  border: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.modern-modal .form-control,
+.modern-modal .input-group-text {
+  border-color: #e0e0e0;
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+  background-color: #fafafa;
+  transition: all 0.2s ease;
+}
+
+.modern-modal .form-control:focus {
+  border-color: #999;
+  box-shadow: none;
+  background-color: #fff;
+}
+
+.modern-modal .input-group-text {
+  padding-right: 0.5rem;
+}
+
+.modern-modal .btn-close {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.modern-modal .btn-dark {
+  background-color: #333;
+  border: none;
+}
+
+.modern-modal .btn-dark:hover {
+  background-color: #222;
+}
+
+.modern-modal .btn-outline-secondary {
+  border-color: #e0e0e0;
+}
+
+.modern-modal .btn-outline-secondary:hover {
+  background-color: #f5f5f5;
+}
+
+.modern-modal .avatar-preview {
+  flex-shrink: 0;
+}
+
+#delete-avatar-btn {
+  text-decoration: none;
+  font-size: 0.75rem;
+}
+/* Адаптация модального окна для мобильных */
+@media (max-width: 768px) {
+  #editProfileModal .modal-dialog {
+    margin: 0;
+    max-width: none !important;
+  }
+
+  #editProfileModal .modal-content {
+    border-radius: 0;
+    min-height: 100vh;
+  }
+
+  #editProfileModal .modal-header,
+  #editProfileModal .modal-body,
+  #editProfileModal .modal-footer {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  #editProfileModal .modal-header {
+    padding-top: 1.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  #editProfileModal .modal-body {
+    padding-top: 0.5rem;
+    padding-bottom: 1rem;
+  }
+
+  #editProfileModal .modal-footer {
+    padding-bottom: 2rem;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Превью аватара перед загрузкой
+  const avatarInput = document.getElementById('id_photo');
+  const avatarPreview = document.getElementById('avatarPreview');
+  const avatarBlock = document.querySelector('.avatar-preview');
+
+  if (avatarInput) {
+    avatarInput.addEventListener('change', function(e) {
+      if (e.target.files.length) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          if (!avatarPreview) {
+            const img = document.createElement('img');
+            img.id = 'avatarPreview';
+            img.className = 'w-100 h-100 object-fit-cover';
+            img.src = event.target.result;
+            avatarBlock.innerHTML = '';
+            avatarBlock.appendChild(img);
+          } else {
+            avatarPreview.src = event.target.result;
+          }
+        };
+        reader.readAsDataURL(e.target.files[0]);
+      }
+    });
+  }
+
+  // Удаление аватара
+  const deleteBtn = document.getElementById('delete-avatar-btn');
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', function() {
+      fetch("{% url 'accounts:delete_avatar' %}", {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          avatarBlock.innerHTML = `
+            <div class="w-100 h-100 bg-light d-flex align-items-center justify-content-center text-muted">
+              <i class="fas fa-user"></i>
+            </div>
+          `;
+          deleteBtn.remove();
+        }
+      })
+      .catch(err => console.error(err));
+    });
+  }
+});
+</script>

@@ -1,0 +1,49 @@
+<div class="list-group-item list-group-item-action d-flex align-items-center">
+    <div class="form-check mb-0 w-100 d-flex align-items-center">
+        <input class="form-check-input me-3" type="checkbox" id="generationAll"
+               onchange="toggleAllGenerations(this)">
+        <label class="form-check-label fw-bold w-100" for="generationAll">
+            Все поколения
+        </label>
+    </div>
+</div>
+
+{% regroup generations by model as model_list %}
+
+{% for model in model_list %}
+<div class="model-section">
+    <div class="list-group-item bg-light fw-bold model-header"
+         data-model-slug="{{ model.grouper.slug }}"
+         data-model-name="{{ model.grouper.name|lower }}"
+         data-model-name-translit="{{ model.grouper.name|lower }}">
+        {{ model.grouper.name }}
+    </div>
+    {% for generation in model.list %}
+    <div class="list-group-item list-group-item-action d-flex align-items-center generation-item"
+         data-name="{{ generation.name|lower }}"
+         data-name-translit="{{ generation.name|lower }}"
+         data-model="{{ model.grouper.slug }}">
+        <div class="form-check mb-0 w-100 d-flex align-items-center">
+            <input class="form-check-input me-3 generation-checkbox" type="checkbox"
+                   id="generation{{ generation.id }}" value="{{ generation.slug }}"
+                   data-name="{{ generation.name }}"
+                   data-model="{{ model.grouper.slug }}"
+                   data-model-name="{{ model.grouper.name }}"
+                   onchange="updateSelectedGenerations()">
+            <label class="form-check-label w-100 d-flex align-items-center" for="generation{{ generation.id }}">
+                {% if generation.image %}
+                <img src="{{ generation.image.url }}" alt="{{ generation.name }}" class="generation-image me-3" style="width: 40px; height: 30px; object-fit: cover; border-radius: 4px;">
+                {% else %}
+                <div class="generation-placeholder me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 30px; background: #f8f9fa; border-radius: 4px;">
+                    <i class="fas fa-car text-muted" style="font-size: 14px;"></i>
+                </div>
+                {% endif %}
+                <span class="generation-name">{{ generation.name }}</span>
+            </label>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endfor %}
+
+

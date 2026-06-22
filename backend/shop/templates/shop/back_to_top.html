@@ -1,0 +1,121 @@
+<!-- Кнопка "Вверх" -->
+<div id="backToTop" class="back-to-top">
+    <button class="back-to-top-btn" aria-label="Вернуться наверх">
+        <i class="bi bi-chevron-up"></i>
+    </button>
+</div>
+
+<style>
+.back-to-top {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease-in-out;
+}
+
+.back-to-top.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.back-to-top-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background:  linear-gradient(135deg, #131313 , rgb(39, 39, 39));
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+    transition: all 0.3s ease;
+}
+
+.back-to-top-btn:hover {
+    background: linear-gradient(135deg, #b2dbfd , rgb(132, 241, 255));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(13, 110, 253, 0.4);
+}
+
+.back-to-top-btn:active {
+    transform: translateY(0);
+    background: linear-gradient(135deg, #89caff , rgb(132, 241, 255));
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 768px) {
+    .back-to-top {
+        bottom: 20px;
+        right: 20px;
+    }
+
+    .back-to-top-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 1.1rem;
+    }
+}
+
+/* Анимация появления */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.back-to-top.show {
+    animation: fadeInUp 0.3s ease-out;
+}
+    /* Скрываем кнопку "Вверх" на мобильных устройствах */
+    @media (max-width: 768px) {
+        .back-to-top {
+            display: none !important;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const backToTop = document.getElementById('backToTop');
+
+    // Показываем/скрываем кнопку при прокрутке
+    window.addEventListener('scroll', function() {
+        if (window.pageYOffset > 300) {
+            backToTop.classList.add('show');
+        } else {
+            backToTop.classList.remove('show');
+        }
+    });
+
+    // Плавная прокрутка вверх при клике
+    backToTop.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+
+    // Также добавляем обработчик для клавиатуры
+    backToTop.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+    });
+});
+</script>

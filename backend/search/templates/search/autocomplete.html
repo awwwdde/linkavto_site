@@ -1,0 +1,70 @@
+{% for suggestion in suggestions %}
+<div class="autocomplete-item mobile-autocomplete-item"
+     data-type="{{ suggestion.type }}"
+     data-id="{{ suggestion.id }}"
+     data-slug="{{ suggestion.slug }}"
+     data-value="{{ suggestion.value|default:suggestion.text }}">
+    {{ suggestion.text }}
+</div>
+{% empty %}
+<div class="autocomplete-empty mobile-autocomplete-empty">
+    Ничего не найдено
+</div>
+{% endfor %}
+
+<style>
+    .autocomplete-item {
+        padding: 10px 15px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+    }
+
+    .autocomplete-item:hover {
+        background-color: #f8f9fa;
+        transform: translateX(2px);
+    }
+
+    .autocomplete-item:last-child {
+        border-bottom: none;
+    }
+
+    .autocomplete-empty {
+        padding: 12px 15px;
+        color: #6c757d;
+        font-style: italic;
+        text-align: center;
+    }
+
+    .autocomplete-item[data-type="vin"] {
+        color: #0d6efd;
+        font-weight: 500;
+    }
+
+    .autocomplete-item[data-type="part_number"] {
+        color: #198754;
+        font-weight: 500;
+    }
+
+    .autocomplete-item[data-type="cross_reference"] {
+        color: #6f42c1;
+        font-weight: 500;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .autocomplete-container {
+        animation: slideDown 0.2s ease;
+    }
+</style>

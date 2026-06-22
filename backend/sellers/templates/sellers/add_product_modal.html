@@ -1,0 +1,165 @@
+<!-- Модальное окно добавления товара -->
+<div class="modal fade" id="addProductModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Добавить товар</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addProductForm" method="post" action="{% url 'sellers:product_add' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <!-- Основная информация -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">Информация о товаре</h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <input type="text" class="form-control" name="name" required placeholder="Введите название товара">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <input type="text" class="form-control" name="part_number" placeholder="Артикул производителя">
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Категория *</label>
+                            <select class="form-select" name="category" required>
+                                <option value="">Выберите категорию</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Тип товара</label>
+                            <select class="form-select" name="product_type">
+                                {% for type_code, type_name in product_types %}
+                                <option value="{{ type_code }}">{{ type_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Остальная часть формы без изменений -->
+                    <!-- Идентификаторы -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <input type="text" class="form-control" name="vin_number" placeholder="VIN номер автомобиля">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group">
+                                <input type="text" class="form-control" name="barcode" placeholder="Штрихкод товара" id="barcodeInput">
+                                <button type="button" class="btn btn-outline-secondary" onclick="generateBarcode()">
+                                    <i class="bi bi-upc-scan"></i> Сгенерировать
+                                </button>
+                            </div>
+                            <small class="form-text text-muted">Оставьте пустым для автоматической генерации</small>
+                        </div>
+                    </div>
+
+                    <!-- Цены и наличие -->
+                    <div class="row mb-4">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Цена *</label>
+                            <input type="number" class="form-control" name="price" step="0.01" min="0.01" required placeholder="0.00">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Цена до скидки</label>
+                            <input type="number" class="form-control" name="old_price" step="0.01" min="0.01" placeholder="0.00">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Количество *</label>
+                            <input type="number" class="form-control" name="quantity" value="1" min="1" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Остаток на складе</label>
+                            <input type="number" class="form-control" name="stock" value="0" min="0">
+                        </div>
+                    </div>
+
+                    <!-- Описание и характеристики -->
+                    <div class="row mb-4">
+                        <div class="col-12 mb-3">
+                            <textarea class="form-control" name="description" rows="4" placeholder="Подробное описание товара..."></textarea>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <textarea class="form-control" name="specifications" rows="4" placeholder="Технические характеристики:
+• Материал:
+• Размер:
+• Вес:
+• Цвет:
+• Производитель:"></textarea>
+                            <small class="form-text text-muted">Укажите характеристики через точку с запятой или каждый с новой строки</small>
+                        </div>
+                    </div>
+
+                    <!-- Дополнительные настройки -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_active" checked id="isActive">
+                                <label class="form-check-label" for="isActive">
+                                    Активный товар
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_available" checked id="isAvailable">
+                                <label class="form-check-label" for="isAvailable">
+                                    Доступен для заказа
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_guarantee" id="hasGuarantee">
+                                <label class="form-check-label" for="hasGuarantee">
+                                    Есть гарантия
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_original" id="isOriginal">
+                                <label class="form-check-label" for="isOriginal">
+                                    Оригинальная запчасть
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Фотографии товара -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">Фотографии товара</h6>
+                            <div class="image-upload-container">
+                                <input type="file" id="imageUpload" multiple accept="image/*" style="display: none;">
+                                <div class="image-preview-grid" id="imagePreviewGrid">
+                                    <!-- Плейсхолдер для загрузки -->
+                                    <div class="image-upload-placeholder" onclick="document.getElementById('imageUpload').click()">
+                                        <i class="bi bi-plus-lg fs-1"></i>
+                                        <div class="mt-2">Добавить фото</div>
+                                    </div>
+
+                                    <!-- 9 дополнительных пустых слотов -->
+                                    <div class="image-empty-slot"></div>
+                                    <div class="image-empty-slot"></div>
+                                    <div class="image-empty-slot"></div>
+                                    <div class="image-empty-slot"></div>
+                                    <div class="image-empty-slot"></div>
+                                    <div class="image-empty-slot"></div>
+                                    <div class="image-empty-slot"></div>
+                                    <div class="image-empty-slot"></div>
+                                    <div class="image-empty-slot"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="submit" form="addProductForm" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-2"></i>Сохранить товар
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

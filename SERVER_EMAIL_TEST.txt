@@ -1,0 +1,127 @@
+================================================================
+  INSTRUKCIYA DLYa TESTA EMAIL NA SERVERE
+================================================================
+
+1. ZAGRUZI FAYLY NA SERVER CHEREZ SCP:
+   - test_email_server.py
+   - avtolink/settings/production.py (obnovlennyy)
+   - avtolink/settings/development.py (obnovlennyy)
+
+2. PODKLYUCHIS K SERVERU PO SSH:
+   ssh root@89.23.97.97
+
+3. PEREIDI V PAPKU PROEKTA:
+   cd /root/  # ili kuda ty zagruzhaesh
+
+4. USTANOVI OKRUZHENIE PRODUCTION:
+   export DJANGO_ENV=production
+
+5. ZAPUSTI TEST EMAIL:
+   python3 test_email_server.py your@email.com
+   
+   Ili interaktivno:
+   python3 test_email_server.py
+
+================================================================
+ESLI NE RABOTAET:
+================================================================
+
+1. Proverte nastroyki:
+   python3 check_email_settings.py
+   
+   Dolzhno pokazat:
+   - Okruzhenie: PRODUCTION
+   - Host: localhost
+   - Port: 25
+
+2. Proverte dostupnost SMTP:
+   telnet localhost 25
+   
+   Dolzhno podklyuchitsya (Ctrl+C chtoby vyyti)
+
+3. Vernte starye nastroyki:
+   
+   Otkroy: avtolink/settings/production.py
+   
+   Izmeni:
+   EMAIL_HOST = '31.31.196.47'  # vmesto localhost
+   EMAIL_PORT = 25
+
+4. Proverte logi Django:
+   tail -f debug.log
+   
+   ili
+   
+   tail -f /var/log/linkavto/django.log
+
+5. Perezapusti Django:
+   systemctl restart linkavto
+   # ili kak ty obychno perezapuskaesh
+
+================================================================
+POSLE USPESHNOGO TESTA:
+================================================================
+
+1. Dobav v systemd service peremennuyu okruzheniya:
+   
+   nano /etc/systemd/system/linkavto.service
+   
+   Dobav v [Service]:
+   Environment="DJANGO_ENV=production"
+
+2. Ili v ~/.bashrc:
+   echo 'export DJANGO_ENV=production' >> ~/.bashrc
+   source ~/.bashrc
+
+3. Perezapusti servis:
+   systemctl daemon-reload
+   systemctl restart linkavto
+
+================================================================
+BYSTRYE KOMANDY:
+================================================================
+
+# Proverka nastroek
+python3 check_email_settings.py
+
+# Test email
+python3 test_email_server.py yozik.andreev@mail.ru
+
+# Proverka SMTP
+telnet localhost 25
+
+# Logi
+tail -f debug.log
+
+# Status servisa
+systemctl status linkavto
+
+# Perezapusk
+systemctl restart linkavto
+
+================================================================
+TEKUSHCHIE NASTROYKI PRODUCTION:
+================================================================
+
+Fail: avtolink/settings/production.py
+
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 25
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = False
+EMAIL_HOST_USER = 'linkavto@linkavto.ru'
+EMAIL_HOST_PASSWORD = 'qK4gF2vX3btF4jS3'
+
+================================================================
+ESLI LOCALHOST NE RABOTAET:
+================================================================
+
+Vernte starye rabochie nastroyki:
+
+EMAIL_HOST = '31.31.196.47'  # Eto byl lokalnyy IP servera
+EMAIL_PORT = 25
+
+Eti nastroyki u tebya uzhe rabotali ranshe!
+
+================================================================
+

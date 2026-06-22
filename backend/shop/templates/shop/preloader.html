@@ -1,0 +1,102 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkAvto - Магазин автозапчастей</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #preloader-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .loader-svg {
+            width: 70vw;
+            max-width: 400px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="preloader-container">
+        <svg id="svg-loader" width="300" height="220" viewBox="0 0 629 460" fill="none" xmlns="http://www.w3.org/2000/svg" class="loader-svg">
+            <path id="path1" d="M260.203 0H373.394C384.878 0 392.103 12.3778 386.455 22.3771L194.324 362.528C191.103 368.231 195.223 375.29 201.773 375.29C204.826 375.29 207.648 373.663 209.177 371.02L327.451 166.639C330.132 162.005 335.08 159.152 340.434 159.152H457.57C469.102 159.152 476.321 171.623 470.577 181.623L315.011 452.471C312.335 457.128 307.374 460 302.003 460H15.0221C3.51101 460 -3.71027 447.57 1.99148 437.57L247.172 7.57011C249.841 2.88963 254.815 0 260.203 0Z" fill="none" stroke="#272526" stroke-width="2"/>
+            <path id="path2" d="M549.128 317.79H433.42C421.916 317.79 414.694 330.206 420.381 340.205L484.193 452.415C486.86 457.104 491.838 460 497.232 460H613.337C624.858 460 632.078 447.55 626.356 437.55L562.147 325.34C559.475 320.671 554.508 317.79 549.128 317.79Z" fill="none" stroke="#272526" stroke-width="2"/>
+        </svg>
+    </div>
+
+    <script>
+        (function() {
+            const container = document.getElementById('preloader-container');
+            const preloaderShown = sessionStorage.getItem('preloaderShown');
+
+
+             if(preloaderShown){
+                document.body.style.overflow = 'auto';
+             }
+
+
+
+            setTimeout(() => {
+                container.style.visibility = 'visible';
+                container.style.opacity = '1';
+
+                const path1 = document.getElementById('path1');
+                const path2 = document.getElementById('path2');
+                const path1Length = path1.getTotalLength();
+                const path2Length = path2.getTotalLength();
+               
+                function removePreloader() {
+                    document.getElementById('preloader-wrapper')?.remove();
+                    
+                }
+
+                if (typeof gsap !== 'undefined') {
+                    gsap.set(path1, { strokeDasharray: path1Length, strokeDashoffset: path1Length });
+                    gsap.set(path2, { strokeDasharray: path2Length, strokeDashoffset: path2Length });
+
+                    const tl = gsap.timeline({
+                        onComplete: () => {
+                            gsap.to(container, {
+                                opacity: 0,
+                                duration: 0.8,
+                                onComplete: removePreloader
+                            });
+                        }
+                    });
+
+                    tl.to(path1, { strokeDashoffset: 0, duration: 1.5, ease: 'power2.inOut' })
+                      .to(path2, { strokeDashoffset: 0, duration: 1.5, ease: 'power2.inOut' }, '-=1')
+                      .to([path1, path2], { fill: '#272526', duration: 0.5 });
+                } else {
+                    setTimeout(() => {
+                        container.style.opacity = '0';
+                        setTimeout(removePreloader, 800);
+                    }, 3000);
+                }
+            }, 100);Я
+        })();
+    </script>
+</body>
+</html>

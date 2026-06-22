@@ -1,0 +1,39 @@
+<div class="multiselect-option">
+    <input type="checkbox" id="desktopGenerationAll"
+           class="form-check-input"
+           onchange="toggleDesktopAllGenerations(this)">
+    <label class="form-check-label w-100" for="desktopGenerationAll">
+        Все поколения
+    </label>
+</div>
+
+{% regroup generations by model as model_list %}
+{% for model in model_list %}
+<div class="model-section">
+    <div class="multiselect-model-header">
+        {{ model.grouper.name }}
+    </div>
+    {% for generation in model.list %}
+    <div class="multiselect-option generation-option" data-model="{{ model.grouper.slug }}">
+        <input type="checkbox" id="desktopGeneration{{ generation.id }}"
+               value="{{ generation.slug }}"
+               data-name="{{ generation.name }}"
+               data-model="{{ model.grouper.slug }}"
+               class="form-check-input desktop-generation-checkbox"
+               onchange="updateDesktopSelectedGenerations()">
+        <label class="form-check-label w-100 d-flex align-items-center" for="desktopGeneration{{ generation.id }}">
+            {% if generation.image %}
+            <img src="{{ generation.image.url }}" alt="{{ generation.name }}" class="generation-image me-2" style="width: 30px; height: 22px; object-fit: cover; border-radius: 3px;">
+            {% else %}
+            <div class="generation-placeholder me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 22px; background: #f8f9fa; border-radius: 3px;">
+                <i class="fas fa-car text-muted" style="font-size: 12px;"></i>
+            </div>
+            {% endif %}
+            <span>{{ generation.name }}</span>
+        </label>
+    </div>
+    {% endfor %}
+</div>
+{% endfor %}
+
+

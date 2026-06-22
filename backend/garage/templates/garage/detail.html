@@ -1,0 +1,133 @@
+{% extends 'shop/base.html' %}
+{% load static %}
+
+{% block title %}{{ vehicle.get_display_name }} — Гараж — LinkAvto{% endblock %}
+{% block meta_description %}{{ vehicle.get_display_name }} в вашем гараже на LinkAvto.{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div style="display: flex; width: 100%; margin-bottom: 0.8rem;">
+        <a href="{% url 'garage:list' %}" class="btn btn-outline-secondary rounded-3" style="width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: white;
+    border: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
+    color: #212529;
+    z-index: 10;
+"> <i class="fas fa-arrow-left"></i></a>
+    </div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item" ><a href="{% url 'garage:list' %}" style="color: var(--primary-hover) !important;"">Гараж</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ vehicle.get_display_name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-md-4 mb-4 garage-vechicle-image" >
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="bg-light d-flex align-items-center justify-content-center overflow-hidden" style="height: 220px;">
+                    {% if vehicle.get_image_url %}
+                    <img src="{{ vehicle.get_image_url }}" alt="{{ vehicle.get_display_name }}" class="img-fluid" style="max-height: 100%; object-fit: contain;">
+                    {% else %}
+                    <i class="bi bi-car-front text-muted" style="font-size: 4rem; opacity: 0.4;"></i>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <h2 class="mb-3">{{ vehicle.get_display_name }}</h2>
+
+            <dl class="row mb-4">
+                {% if vehicle.vin %}
+                <dt class="col-sm-4">VIN</dt>
+                <dd class="col-sm-8">{{ vehicle.vin }}</dd>
+                {% endif %}
+                {% if vehicle.license_plate %}
+                <dt class="col-sm-4">Госномер</dt>
+                <dd class="col-sm-8">{{ vehicle.license_plate }}</dd>
+                {% endif %}
+                {% if vehicle.year %}
+                <dt class="col-sm-4">Год выпуска</dt>
+                <dd class="col-sm-8">{{ vehicle.year }}</dd>
+                {% endif %}
+            </dl>
+
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{% url 'garage:vehicle_products' vehicle.id %}" class="btn btn-dark rounded-3 py-2">
+                    Запчасти для этого авто
+                </a>
+            </div>
+        </div>
+    </div>
+     <!-- Рекомендуемые товары -->
+    {% if recommended_products %}
+    <section class="recommended-products mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold mb-0">Рекомендуем</h3>
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap;">
+            {% for recommended_product in recommended_products|slice:":5" %}
+           
+                {% include 'shop/product_card.html' with product=recommended_product %}
+            
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+<style>
+    .garage-vechicle-image{
+        width: 25%;
+        min-width: 250px;
+    }
+    .row{
+        flex-wrap: nowrap !important;
+    }
+    .container{
+        max-width: none !important;
+    }
+    .mobile-header { display: none !important; }
+  #header-adress-render { display: none !important; }
+  .mobile-acc-detec { margin-top: 0; }
+  @media (max-width: 760px) {
+    .row{
+         flex-wrap: wrap !important;
+    }
+    main.container {
+        margin-top: 20px !important;
+    }
+    .container{
+        padding-top: 0 !important;
+    }
+    .garage-vechicle-image{
+        width: 100%;
+    }
+   
+}
+</style>
+
+<!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+    (function(m,e,t,r,i,k,a){
+        m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+        m[i].l=1*new Date();
+        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+    })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=105970773', 'ym');
+
+    ym(105970773, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/105970773" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
+
+
+
+{% endblock %}

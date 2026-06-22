@@ -1,0 +1,364 @@
+{% extends 'shop/base.html' %}
+{% load static %}
+
+{% block title %}Добавить транспорт — Гараж — LinkAvto{% endblock %}
+{% block meta_description %}Добавьте автомобиль или другой транспорт в свой гараж на LinkAvto.{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item" ><a href="{% url 'garage:list' %}" style="color: var(--primary-hover);">Гараж</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Добавить транспорт</li>
+        </ol>
+    </nav>
+
+    <h2 class="mb-4">Добавить транспорт</h2>
+
+    <form id="garage-add-form" method="post" action="{% url 'garage:add' %}" enctype="multipart/form-data" class="card border-0 shadow-sm rounded-4 p-4">
+        {% csrf_token %}
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label for="id_vehicle_type" class="form-label">Тип транспорта</label>
+                <select name="brand_type" id="id_vehicle_type" class="form-select rounded-3">
+                    <option value="cars">Легковые автомобили</option>
+                    <option value="trucks">Грузовые автомобили</option>
+                    <option value="moto">Мототехника</option>
+                    <option value="special">Спецтехника</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="id_brand" class="form-label">Марка</label>
+                <select name="brand_id" id="id_brand" class="form-select rounded-3">
+                    <option value="">---------</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="id_model" class="form-label">Модель</label>
+                <select name="model_id" id="id_model" class="form-select rounded-3">
+                    <option value="">---------</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="id_generation" class="form-label">Поколение</label>
+                <select name="generation_id" id="id_generation" class="form-select rounded-3">
+                    <option value="">---------</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="id_modification" class="form-label">Модификация</label>
+                <select name="modification_id" id="id_modification" class="form-select rounded-3">
+                    <option value="">---------</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="id_year" class="form-label">Год выпуска</label>
+                <input type="number" name="year" id="id_year" class="form-control rounded-3" placeholder="Например: 2020" min="1900" max="2030" step="1">
+            </div>
+            <div class="col-md-6">
+                <label for="id_vin" class="form-label">VIN</label>
+                <input type="text" name="vin" id="id_vin" class="form-control rounded-3" placeholder="17 символов" maxlength="32" autocomplete="off" autocapitalize="characters" spellcheck="false">
+                <div id="vin-feedback" class="form-text"></div>
+            </div>
+            <div class="col-md-6">
+                <label for="id_license_plate" class="form-label">Госномер</label>
+                <input type="text" name="license_plate" id="id_license_plate" class="form-control rounded-3" placeholder="Например: А123БВ777">
+            </div>
+            <div class="col-12">
+                <label for="id_custom_image" class="form-label">Фото</label>
+                <input type="file" name="custom_image" id="id_custom_image" class="form-control rounded-3" accept="image/*">
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-dark rounded-3">
+                    <i class="bi bi-plus-lg me-2"></i>Добавить
+                </button>
+                <a href="{% url 'garage:list' %}" class="btn btn-outline-secondary rounded-3 ms-2">Отмена</a>
+            </div>
+        </div>
+    </form>
+</div>
+<style>
+    .container{
+        max-width: none !important;
+    }
+    .mobile-header { display: none !important; }
+  #header-adress-render { display: none !important; }
+  .mobile-acc-detec { margin-top: 0; }
+  @media (max-width: 760px) {
+    main.container {
+        margin-top: 20px !important;
+    }
+}
+</style>
+<script>
+(function() {
+    var typeEl = document.getElementById('id_vehicle_type');
+    var brandEl = document.getElementById('id_brand');
+    var modelEl = document.getElementById('id_model');
+    var generationEl = document.getElementById('id_generation');
+    var modificationEl = document.getElementById('id_modification');
+    var formEl = document.getElementById('garage-add-form');
+    var vinEl = document.getElementById('id_vin');
+    var yearEl = document.getElementById('id_year');
+    var vinFeedbackEl = document.getElementById('vin-feedback');
+    var vinValidateTimer = null;
+
+    var vinCyrillicMap = {
+        'А': 'A',
+        'В': 'B',
+        'Е': 'E',
+        'К': 'K',
+        'М': 'M',
+        'Н': 'H',
+        'О': 'O',
+        'Р': 'P',
+        'С': 'C',
+        'Т': 'T',
+        'У': 'Y',
+        'Х': 'X'
+    };
+
+    function normalizeVin(value) {
+        return (value || '')
+            .toUpperCase()
+            .split('')
+            .map(function(char) { return vinCyrillicMap[char] || char; })
+            .join('')
+            .replace(/[^A-Z0-9]/g, '');
+    }
+
+    function setVinFeedback(message, state) {
+        if (!vinFeedbackEl) return;
+        vinFeedbackEl.textContent = message || '';
+        vinFeedbackEl.className = 'form-text';
+        if (state === 'success') {
+            vinFeedbackEl.classList.add('text-success');
+        } else if (state === 'error') {
+            vinFeedbackEl.classList.add('text-danger');
+        }
+    }
+
+    function validateVin() {
+        if (!vinEl) return;
+
+        var vin = normalizeVin(vinEl.value);
+        vinEl.value = vin;
+
+        if (!vin) {
+            setVinFeedback('', null);
+            return;
+        }
+
+        if (vin.length < 17) {
+            setVinFeedback('VIN должен содержать 17 символов. Сейчас: ' + vin.length + '.', 'error');
+            return;
+        }
+
+        if (vin.length > 17) {
+            setVinFeedback('VIN длиннее 17 символов. Проверьте номер.', 'error');
+            return;
+        }
+
+        fetch('/garage/api/validate-vin/', {
+            method: 'POST',
+            body: JSON.stringify({ vin: vin }),
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': formEl.querySelector('input[name=csrfmiddlewaretoken]').value
+            },
+            credentials: 'same-origin'
+        })
+        .then(function(r) {
+            return r.json().then(function(data) {
+                return { ok: r.ok, data: data };
+            });
+        })
+        .then(function(result) {
+            if (result.ok && result.data.success) {
+                vinEl.value = result.data.normalized_vin || result.data.vin || vin;
+                setVinFeedback('VIN корректный', 'success');
+                if (yearEl && !yearEl.value && result.data.year) {
+                    yearEl.value = result.data.year;
+                }
+            } else {
+                setVinFeedback((result.data && result.data.error) || 'VIN указан неверно', 'error');
+            }
+        })
+        .catch(function() {
+            setVinFeedback('Не удалось проверить VIN', 'error');
+        });
+    }
+
+    function clearSelect(el) {
+        if (!el) return;
+        el.innerHTML = '<option value="">---------</option>';
+    }
+
+    function loadBrands() {
+        var t = typeEl.value;
+        clearSelect(brandEl);
+        clearSelect(modelEl);
+        clearSelect(generationEl);
+        clearSelect(modificationEl);
+        if (!t) return;
+        fetch('/garage/api/brands/?type=' + encodeURIComponent(t))
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success && data.brands) {
+                    data.brands.forEach(function(b) {
+                        var opt = document.createElement('option');
+                        opt.value = b.id;
+                        opt.textContent = b.name;
+                        brandEl.appendChild(opt);
+                    });
+                }
+            });
+    }
+
+    function loadModels() {
+        var brandId = brandEl.value;
+        var t = typeEl.value;
+        clearSelect(modelEl);
+        clearSelect(generationEl);
+        clearSelect(modificationEl);
+        if (!brandId || !t) return;
+        fetch('/garage/api/models/?type=' + encodeURIComponent(t) + '&brand_id=' + encodeURIComponent(brandId))
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success && data.models) {
+                    data.models.forEach(function(m) {
+                        var opt = document.createElement('option');
+                        opt.value = m.id;
+                        opt.textContent = m.name;
+                        modelEl.appendChild(opt);
+                    });
+                }
+            });
+    }
+
+    function loadGenerations() {
+        var modelId = modelEl.value;
+        var t = typeEl.value;
+        clearSelect(generationEl);
+        clearSelect(modificationEl);
+        if (!modelId || !t) return;
+        fetch('/garage/api/generations/?type=' + encodeURIComponent(t) + '&model_id=' + encodeURIComponent(modelId))
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success && data.generations) {
+                    data.generations.forEach(function(g) {
+                        var opt = document.createElement('option');
+                        opt.value = g.id;
+                        var label = g.name;
+                        if (g.year_start != null || g.year_end != null) {
+                            label += ' (' + (g.year_start || '') + '-' + (g.year_end || 'н.в.') + ')';
+                        }
+                        opt.textContent = label;
+                        generationEl.appendChild(opt);
+                    });
+                }
+            });
+    }
+
+    function loadModifications() {
+        var genId = generationEl.value;
+        var t = typeEl.value;
+        clearSelect(modificationEl);
+        if (!genId || !t) return;
+        fetch('/garage/api/modifications/?type=' + encodeURIComponent(t) + '&generation_id=' + encodeURIComponent(genId))
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success && data.modifications) {
+                    data.modifications.forEach(function(m) {
+                        var opt = document.createElement('option');
+                        opt.value = m.id;
+                        opt.textContent = m.name;
+                        modificationEl.appendChild(opt);
+                    });
+                }
+            });
+    }
+
+    typeEl.addEventListener('change', loadBrands);
+    brandEl.addEventListener('change', loadModels);
+    modelEl.addEventListener('change', loadGenerations);
+    generationEl.addEventListener('change', loadModifications);
+
+    if (vinEl) {
+        vinEl.addEventListener('input', function() {
+            vinEl.value = normalizeVin(vinEl.value);
+            window.clearTimeout(vinValidateTimer);
+
+            if (!vinEl.value) {
+                setVinFeedback('', null);
+                return;
+            }
+
+            if (vinEl.value.length === 17) {
+                vinValidateTimer = window.setTimeout(validateVin, 250);
+            } else if (vinEl.value.length < 17) {
+                setVinFeedback('VIN должен содержать 17 символов. Сейчас: ' + vinEl.value.length + '.', 'error');
+            } else {
+                setVinFeedback('VIN длиннее 17 символов. Проверьте номер.', 'error');
+            }
+        });
+
+        vinEl.addEventListener('blur', validateVin);
+    }
+
+    formEl.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (vinEl && vinEl.value) {
+            vinEl.value = normalizeVin(vinEl.value);
+            if (vinEl.value.length !== 17) {
+                setVinFeedback('VIN должен содержать 17 символов.', 'error');
+                vinEl.focus();
+                return;
+            }
+        }
+
+        var fd = new FormData(formEl);
+        fetch(formEl.action, {
+            method: 'POST',
+            body: fd,
+            headers: { 'X-CSRFToken': formEl.querySelector('input[name=csrfmiddlewaretoken]').value },
+            credentials: 'same-origin'
+        })
+        .then(function(r) {
+            return r.json().then(function(data) {
+                return { ok: r.ok, data: data };
+            });
+        })
+        .then(function(result) {
+            if (result.ok && result.data.success && result.data.vehicle_id) {
+                window.location.href = '/garage/' + result.data.vehicle_id + '/';
+            } else {
+                alert((result.data && result.data.error) || 'Ошибка сохранения');
+            }
+        })
+        .catch(function() {
+            alert('Ошибка сохранения');
+        });
+    });
+
+    loadBrands();
+})();
+
+<!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+    (function(m,e,t,r,i,k,a){
+        m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+        m[i].l=1*new Date();
+        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+    })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=105970773', 'ym');
+
+    ym(105970773, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/105970773" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
+
+
+
+</script>
+{% endblock %}

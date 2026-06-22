@@ -1,0 +1,42 @@
+<div class="list-group-item list-group-item-action d-flex align-items-center">
+    <div class="form-check mb-0 w-100 d-flex align-items-center">
+        <input class="form-check-input me-3" type="checkbox" id="modelAll"
+               onchange="toggleAllModels(this)">
+        <label class="form-check-label fw-bold w-100" for="modelAll">
+            Все модели
+        </label>
+    </div>
+</div>
+
+{% regroup models by brand as brand_list %}
+
+{% for brand in brand_list %}
+<div class="brand-section">
+    <div class="list-group-item bg-light fw-bold brand-header"
+         data-brand-slug="{{ brand.grouper.slug }}"
+         data-brand-name="{{ brand.grouper.name|lower }}"
+         data-brand-name-translit="{{ brand.grouper.name|lower }}">
+        {{ brand.grouper.name }}
+    </div>
+    {% for model in brand.list %}
+    <div class="list-group-item list-group-item-action d-flex align-items-center model-item"
+         data-name="{{ model.name|lower }}"
+         data-name-translit="{{ model.name|lower }}"
+         data-brand="{{ brand.grouper.slug }}">
+        <div class="form-check mb-0 w-100 d-flex align-items-center">
+            <input class="form-check-input me-3 model-checkbox" type="checkbox"
+                   id="model{{ model.id }}" value="{{ model.slug }}"
+                   data-name="{{ model.name }}"
+                   data-brand="{{ brand.grouper.slug }}"
+                   data-brand-name="{{ brand.grouper.name }}"
+                   onchange="updateSelectedModels()">
+            <label class="form-check-label w-100" for="model{{ model.id }}">
+                <span class="model-name">{{ model.name }}</span>
+            </label>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endfor %}
+
+

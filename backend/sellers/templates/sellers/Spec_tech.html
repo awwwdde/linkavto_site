@@ -1,0 +1,539 @@
+<input type="hidden" name="sort" id="sortInput" value="{{ request.GET.sort }}">
+                        <input type="hidden" name="part_subcategory" value="{{ request.GET.part_subcategory }}">
+                        <input type="hidden" name="brand" value="{{ request.GET.brand }}">
+                        <input type="hidden" name="model" value="{{ request.GET.model }}">
+                        <input type="hidden" name="generation" value="{{ request.GET.generation }}">
+                        <input type="hidden" name="manufacturer" value="{{ request.GET.manufacturer }}">
+                        <input type="hidden" name="price_min" value="{{ request.GET.price_min }}">
+                        <input type="hidden" name="price_max" value="{{ request.GET.price_max }}">
+                        <input type="hidden" name="in_stock" value="{{ request.GET.in_stock }}">
+                        <input type="hidden" name="on_order" value="{{ request.GET.on_order }}">
+                        <input type="hidden" name="is_original" value="{{ request.GET.is_original }}">
+                        <input type="hidden" name="car_type" value="{{ request.GET.car_type }}">
+                        <input type="hidden" name="moto_type" value="{{ request.GET.moto_type }}">
+                        <input type="hidden" name="truck_type" value="{{ request.GET.truck_type }}">
+                        <input type="hidden" name="special_type" value="{{ request.GET.special_type }}">
+                        <input type="hidden" name="modification" value="{{ request.GET.modification }}">
+
+                            <!-- СКРЫТЫЕ ПОЛЯ ДЛЯ ШИН И ДИСКОВ -->
+                        <input type="hidden" name="tire_diameter" value="{{ request.GET.tire_diameter }}">
+                        <input type="hidden" name="tire_seasonality" value="{{ request.GET.tire_seasonality }}">
+                        <input type="hidden" name="tire_width" value="{{ request.GET.tire_width }}">
+                        <input type="hidden" name="tire_height" value="{{ request.GET.tire_height }}">
+                        <input type="hidden" name="tire_spikes" value="{{ request.GET.tire_spikes }}">
+                        <input type="hidden" name="wheel_diameter" value="{{ request.GET.wheel_diameter }}">
+                        <input type="hidden" name="wheel_width" value="{{ request.GET.wheel_width }}">
+                        <input type="hidden" name="wheel_offset_type" value="{{ request.GET.wheel_offset_type }}">
+                        <input type="hidden" name="wheel_type" value="{{ request.GET.wheel_type }}">
+                        <input type="hidden" name="wheel_pcd" value="{{ request.GET.wheel_pcd }}">
+                        <input type="hidden" name="manufacturer" value="{{ request.GET.manufacturer }}">
+                        <input type="hidden" name="vehicle_type" value="{{ request.GET.vehicle_type }}">
+
+                        <!-- Подкатегории (если есть) -->
+                        {% if subcategories %}
+                        <div class="filter-section">
+                            <h6 class="filter-title">Подкатегории</h6>
+                            <div class="custom-select-wrapper position-relative">
+                                <select name="part_subcategory" id="partSubcategorySelect" class="form-select form-select-sm custom-select" onchange="applyFilters(); updatePartSubcategoryIcon();">
+                                    <option value="">Все</option>
+                                    {% for subcategory in subcategories %}
+                                        <option value="{{ subcategory.slug }}" {% if subcategory.slug == request.GET.part_subcategory %}selected{% endif %}>
+                                            {{ subcategory.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                {% if request.GET.part_subcategory %}
+                                <i class="fas fa-times position-absolute end-0 top-50 translate-middle-y me-2 clear-filter-icon" 
+                                   onclick="clearPartSubcategoryFilter();" 
+                                   style="cursor: pointer; z-index: 10; transition: transform 0.3s ease; transform-origin: center center; transform: translateY(-50%);"></i>
+                                {% else %}
+                                <i class="fas fa-chevron-down position-absolute end-0 top-50 translate-middle-y me-2 subcategory-chevron" 
+                                   style="pointer-events: none; transition: transform 0.3s ease; transform-origin: center center; transform: translateY(-50%);"></i>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <style>
+                        .custom-select-wrapper {
+                            position: relative;
+                        }
+
+                        /* Убираем встроенную стрелку Bootstrap */
+                        .custom-select-wrapper .custom-select {
+                            background-image: none !important;
+                            padding-right: 2.5rem !important;
+                        }
+
+                        .custom-select-wrapper::after {
+                            display: none !important;
+                        }
+
+                        /* Анимация поворота стрелки при открытии селекта */
+                        .custom-select-wrapper .subcategory-chevron {
+                            transition: transform 0.3s ease;
+                            transform-origin: center center;
+                            transform: translateY(-50%);
+                        }
+
+                        .custom-select-wrapper select:focus ~ .subcategory-chevron,
+                        .custom-select-wrapper select:active ~ .subcategory-chevron {
+                            transform: translateY(-50%) rotate(180deg);
+                        }
+
+                        .custom-select {
+                            padding-right: 2rem;
+                            background-image: none;
+                            -webkit-appearance: none;
+                            -moz-appearance: none;
+                            appearance: none;
+                        }
+
+                        .input-check-checked:hover{
+                            background-color: #89BEE8;
+                            border-color: #89BEE8;
+                        }
+                        </style>
+                        {% endif %}
+
+                        <!-- Общие фильтры для всех категорий -->
+                        <div class="filter-section">
+                            <h6 class="filter-title">Цена</h6>
+                            <div class="price-range d-flex align-items-center mb-2">
+                                <input type="number" class="form-control form-control-sm me-2"
+                                       name="price_min" placeholder="от" value="{{ request.GET.price_min }}">
+                                <span class="mx-1">—</span>
+                                <input type="number" class="form-control form-control-sm"
+                                       name="price_max" placeholder="до" value="{{ request.GET.price_max }}">
+                            </div>
+                        </div>
+
+                        <div class="filter-section">
+                            <h6 class="filter-title">Марка</h6>
+                            <!-- Кастомный мультиселект для десктопной версии -->
+                            <div class="custom-multiselect">
+                                <button type="button" class="form-select form-select-sm text-start multiselect-toggle position-relative"
+                                        onclick="toggleBrandsDropdown()">
+                                    <span id="desktopSelectedBrandText">
+                                        {% if request.GET.brand %}
+                                            {% if ',' in request.GET.brand %}
+                                                {% for brand_slug in request.GET.brand|split_csv %}
+                                                    {% for brand in brands %}
+                                                        {% if brand.slug == brand_slug %}{{ brand.name }}{% if not forloop.last %}, {% endif %}{% endif %}
+                                                    {% endfor %}
+                                                {% endfor %}
+                                            {% else %}
+                                                {% for brand in brands %}
+                                                    {% if brand.slug == request.GET.brand %}{{ brand.name }}{% endif %}
+                                                {% endfor %}
+                                            {% endif %}
+                                        {% else %}
+                                            Все марки
+                                        {% endif %}
+                                    </span>
+                                    {% if request.GET.brand %}
+                                    <i class="fas fa-times position-absolute end-0 top-50 translate-middle-y me-2 clear-filter-icon" 
+                                       onclick="event.stopPropagation(); clearDesktopBrandFilter();" 
+                                       style="cursor: pointer; z-index: 10;"></i>
+                                    {% else %}
+                                    <i class="fas fa-chevron-down position-absolute end-0 top-50 translate-middle-y me-2" style="transition: transform 0.3s ease; transform-origin: center center;"></i>
+                                    {% endif %}
+                                </button>
+                                <div class="multiselect-dropdown" id="brandsDropdown">
+                                    <div class="multiselect-options">
+                                        <div class="multiselect-option">
+                                            <input type="checkbox" id="desktopBrandAll"
+                                                   class="form-check-input"
+                                                   onchange="toggleDesktopAllBrands(this)">
+                                            <label class="form-check-label w-100" for="desktopBrandAll">
+                                                Все марки
+                                            </label>
+                                        </div>
+                                        {% for brand in brands %}
+                                        <div class="multiselect-option">
+                                            <input type="checkbox" id="desktopBrand{{ brand.id }}"
+                                                   value="{{ brand.slug }}"
+                                                   data-name="{{ brand.name }}"
+                                                   class="form-check-input desktop-brand-checkbox input-check-checked"
+                                                   onchange="updateDesktopSelectedBrands()">
+                                            <label class="form-check-label w-100" for="desktopBrand{{ brand.id }}">
+                                                {% if brand.logo %}
+                                                <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" class="brand-logo me-2" style="width: 20px; height: 20px; object-fit: contain;">
+                                                {% endif %}
+                                                {{ brand.name }}
+                                            </label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="multiselect-actions p-2 border-top">
+                                        <button type="button" class="btn btn-dark btn-sm w-100" onclick="applyDesktopBrandFilter()">
+                                            Применить
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" name="brand" id="desktopBrandInput" value="{{ request.GET.brand }}">
+                        </div>
+
+                       <div class="filter-section">
+                            <h6 class="filter-title">Модель</h6>
+                            <!-- Кастомный мультиселект для моделей с группировкой по брендам -->
+                            <div class="custom-multiselect">
+                                <button type="button" class="form-select form-select-sm text-start multiselect-toggle position-relative"
+                                        onclick="toggleModelsDropdown()">
+                                    <span id="desktopSelectedModelText">
+                                        {% if request.GET.model %}
+                                            {% if ',' in request.GET.model %}
+                                                {% for model_slug in request.GET.model|split_csv %}
+                                                    {% for model in models %}
+                                                        {% if model.slug == model_slug %}{{ model.name }}{% if not forloop.last %}, {% endif %}{% endif %}
+                                                    {% endfor %}
+                                                {% endfor %}
+                                            {% else %}
+                                                {% for model in models %}
+                                                    {% if model.slug == request.GET.model %}{{ model.name }}{% endif %}
+                                                {% endfor %}
+                                            {% endif %}
+                                        {% else %}
+                                            Все модели
+                                        {% endif %}
+                                    </span>
+                                    {% if request.GET.model %}
+                                    <i class="fas fa-times position-absolute end-0 top-50 translate-middle-y me-2 clear-filter-icon" 
+                                       onclick="event.stopPropagation(); clearDesktopModelFilter();" 
+                                       style="cursor: pointer; z-index: 10;"></i>
+                                    {% else %}
+                                    <i class="fas fa-chevron-down position-absolute end-0 top-50 translate-middle-y me-2" style="transition: transform 0.3s ease; transform-origin: center center;"></i>
+                                    {% endif %}
+                                </button>
+                                <div class="multiselect-dropdown" id="modelsDropdown">
+                                    <div class="multiselect-options">
+                                        <div class="multiselect-option">
+                                            <input type="checkbox" id="desktopModelAll"
+                                                   class="form-check-input"
+                                                   onchange="toggleDesktopAllModels(this)">
+                                            <label class="form-check-label w-100" for="desktopModelAll">
+                                                Все модели
+                                            </label>
+                                        </div>
+
+                                        {% regroup models by brand as brand_list %}
+                                        {% for brand in brand_list %}
+                                        <div class="brand-section">
+                                            <div class="multiselect-brand-header">
+                                                {{ brand.grouper.name }}
+                                            </div>
+                                            {% for model in brand.list %}
+                                            <div class="multiselect-option model-option" data-brand="{{ brand.grouper.slug }}">
+                                                <input type="checkbox" id="desktopModel{{ model.id }}"
+                                                       value="{{ model.slug }}"
+                                                       data-name="{{ model.name }}"
+                                                       data-brand="{{ brand.grouper.slug }}"
+                                                       class="form-check-input desktop-model-checkbox"
+                                                       onchange="updateDesktopSelectedModels()">
+                                                <label class="form-check-label w-100" for="desktopModel{{ model.id }}">
+                                                    {{ model.name }}
+                                                </label>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="multiselect-actions p-2 border-top">
+                                        <button type="button" class="btn btn-dark btn-sm w-100" onclick="applyDesktopModelFilter()">
+                                            Применить
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" name="model" id="desktopModelInput" value="{{ request.GET.model }}">
+                       </div>
+
+                        <div class="filter-section">
+                            <h6 class="filter-title">Поколение</h6>
+                            <!-- Кастомный мультиселект для поколений с группировкой по моделям -->
+                            <div class="custom-multiselect">
+                                <button type="button" class="form-select form-select-sm text-start multiselect-toggle position-relative"
+                                        onclick="toggleGenerationsDropdown()">
+                                    <span id="desktopSelectedGenerationText">
+                                        {% if request.GET.generation %}
+                                            {% if ',' in request.GET.generation %}
+                                                {% for generation_slug in request.GET.generation|split_csv %}
+                                                    {% for generation in generations %}
+                                                        {% if generation.slug == generation_slug %}{{ generation.name }}{% if not forloop.last %}, {% endif %}{% endif %}
+                                                    {% endfor %}
+                                                {% endfor %}
+                                            {% else %}
+                                                {% for generation in generations %}
+                                                    {% if generation.slug == request.GET.generation %}{{ generation.name }}{% endif %}
+                                                {% endfor %}
+                                            {% endif %}
+                                        {% else %}
+                                            Все поколения
+                                        {% endif %}
+                                    </span>
+                                    {% if request.GET.generation %}
+                                    <i class="fas fa-times position-absolute end-0 top-50 translate-middle-y me-2 clear-filter-icon" 
+                                       onclick="event.stopPropagation(); clearDesktopGenerationFilter();" 
+                                       style="cursor: pointer; z-index: 10;"></i>
+                                    {% else %}
+                                    <i class="fas fa-chevron-down position-absolute end-0 top-50 translate-middle-y me-2" style="transition: transform 0.3s ease; transform-origin: center center;"></i>
+                                    {% endif %}
+                                </button>
+                                <div class="multiselect-dropdown" id="generationsDropdown">
+                                    <div class="multiselect-options">
+                                        <div class="multiselect-option">
+                                            <input type="checkbox" id="desktopGenerationAll"
+                                                   class="form-check-input"
+                                                   onchange="toggleDesktopAllGenerations(this)">
+                                            <label class="form-check-label w-100" for="desktopGenerationAll">
+                                                Все поколения
+                                            </label>
+                                        </div>
+
+                                        {% regroup generations by model as model_list %}
+                                        {% for model in model_list %}
+                                        <div class="model-section">
+                                            <div class="multiselect-model-header">
+                                                {{ model.grouper.name }}
+                                            </div>
+                                            {% for generation in model.list %}
+                                            <div class="multiselect-option generation-option" data-model="{{ model.grouper.slug }}">
+                                                <input type="checkbox" id="desktopGeneration{{ generation.id }}"
+                                                       value="{{ generation.slug }}"
+                                                       data-name="{{ generation.name }}"
+                                                       data-model="{{ model.grouper.slug }}"
+                                                       class="form-check-input desktop-generation-checkbox"
+                                                       onchange="updateDesktopSelectedGenerations()">
+                                                <label class="form-check-label w-100 d-flex align-items-center" for="desktopGeneration{{ generation.id }}">
+                                                    {% if generation.image %}
+                                                    <img src="{{ generation.image.url }}" alt="{{ generation.name }}" class="generation-image me-2" style="width: 30px; height: 22px; object-fit: cover; border-radius: 3px;">
+                                                    {% else %}
+                                                    <div class="generation-placeholder me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 22px; background: #f8f9fa; border-radius: 3px;">
+                                                        <i class="fas fa-car text-muted" style="font-size: 12px;"></i>
+                                                    </div>
+                                                    {% endif %}
+                                                    <span>{{ generation.name }}</span>
+                                                </label>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="multiselect-actions p-2 border-top">
+                                        <button type="button" class="btn btn-dark btn-sm w-100" onclick="applyDesktopGenerationFilter()">
+                                            Применить
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" name="generation" id="desktopGenerationInput" value="{{ request.GET.generation }}">
+                        </div>
+                        <div class="filter-section">
+                            <h6 class="filter-title">Модификация</h6>
+                            <!-- Кастомный мультиселект для модификаций -->
+                            <div class="custom-multiselect">
+                                <button type="button" class="form-select form-select-sm text-start multiselect-toggle position-relative"
+                                        onclick="toggleModificationsDropdown()">
+                                    <span id="desktopSelectedModificationText">
+                                        {% if request.GET.modification %}
+                                            {% if ',' in request.GET.modification %}
+                                                {% for mod_slug in request.GET.modification|split_csv %}
+                                                    {% for modification in modifications %}
+                                                        {% if modification.slug == mod_slug %}{{ modification.name }}{% if not forloop.last %}, {% endif %}{% endif %}
+                                                    {% endfor %}
+                                                {% endfor %}
+                                            {% else %}
+                                                {% for modification in modifications %}
+                                                    {% if modification.slug == request.GET.modification %}{{ modification.name }}{% endif %}
+                                                {% endfor %}
+                                            {% endif %}
+                                        {% else %}
+                                            Все модификации
+                                        {% endif %}
+                                    </span>
+                                    {% if request.GET.modification %}
+                                    <i class="fas fa-times position-absolute end-0 top-50 translate-middle-y me-2 clear-filter-icon"
+                                       onclick="event.stopPropagation(); clearDesktopModificationFilter();"
+                                       style="cursor: pointer; z-index: 10;"></i>
+                                    {% else %}
+                                    <i class="fas fa-chevron-down position-absolute end-0 top-50 translate-middle-y me-2" style="transition: transform 0.3s ease; transform-origin: center center;"></i>
+                                    {% endif %}
+                                </button>
+                                <div class="multiselect-dropdown" id="modificationsDropdown">
+                                    <div class="multiselect-options">
+                                        <div class="multiselect-option">
+                                            <input type="checkbox" id="desktopModificationAll"
+                                                   class="form-check-input"
+                                                   onchange="toggleDesktopAllModifications(this)">
+                                            <label class="form-check-label w-100" for="desktopModificationAll">
+                                                Все модификации
+                                            </label>
+                                        </div>
+                                        {% for modification in modifications %}
+                                        <div class="multiselect-option">
+                                            <input type="checkbox" id="desktopModification{{ modification.id }}"
+                                                   value="{{ modification.slug }}"
+                                                   data-name="{{ modification.name }}"
+                                                   class="form-check-input desktop-modification-checkbox"
+                                                   onchange="updateDesktopSelectedModifications()">
+                                            <label class="form-check-label w-100" for="desktopModification{{ modification.id }}">
+                                                {{ modification.name }}
+                                            </label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="multiselect-actions p-2 border-top">
+                                        <button type="button" class="btn btn-dark btn-sm w-100" onclick="applyDesktopModificationFilter()">
+                                            Применить
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" name="modification" id="desktopModificationInput" value="{{ request.GET.modification }}">
+                        </div>
+                        <div class="filter-section">
+                                <h6 class="filter-title">Тип спецтехники</h6>
+                                <div class="custom-multiselect">
+                                    <button type="button" class="form-select form-select-sm text-start multiselect-toggle"
+                                            onclick="toggleSpecialTypesDropdown()">
+                                        <span id="desktopSelectedSpecialTypeText">
+                                            {% if request.GET.special_type %}
+                                                {% if ',' in request.GET.special_type %}
+                                                    {% for type_slug in request.GET.special_type|split_csv %}
+                                                        {% for type in special_types %}
+                                                            {% if type.slug == type_slug %}{{ type.name }}{% if not forloop.last %}, {% endif %}{% endif %}
+                                                        {% endfor %}
+                                                    {% endfor %}
+                                                {% else %}
+                                                    {% for type in special_types %}
+                                                        {% if type.slug == request.GET.special_type %}{{ type.name }}{% endif %}
+                                                    {% endfor %}
+                                                {% endif %}
+                                            {% else %}
+                                                Все типы спецтехники
+                                            {% endif %}
+                                        </span>
+                                    </button>
+                                    <div class="multiselect-dropdown" id="specialTypesDropdown">
+                                        <div class="multiselect-options">
+                                            <div class="multiselect-option">
+                                                <input type="checkbox" id="desktopSpecialTypeAll"
+                                                       class="form-check-input"
+                                                       onchange="toggleDesktopAllSpecialTypes(this)">
+                                                <label class="form-check-label w-100" for="desktopSpecialTypeAll">
+                                                    Все типы спецтехники
+                                                </label>
+                                            </div>
+                                            {% for type in special_types %}
+                                            <div class="multiselect-option">
+                                                <input type="checkbox" id="desktopSpecialType{{ type.id }}"
+                                                       value="{{ type.slug }}"
+                                                       data-name="{{ type.name }}"
+                                                       class="form-check-input desktop-special-type-checkbox"
+                                                       onchange="updateDesktopSelectedSpecialTypes()">
+                                                <label class="form-check-label w-100" for="desktopSpecialType{{ type.id }}">
+                                                    {{ type.name }}
+                                                </label>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="multiselect-actions p-2 border-top">
+                                            <button type="button" class="btn btn-dark btn-sm w-100" onclick="applyDesktopSpecialTypeFilter()">
+                                                Применить
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="special_type" id="desktopSpecialTypeInput" value="{{ request.GET.special_type }}">
+                            </div>
+                            <!-- Производители (бренды) -->
+                        <div class="filter-section">
+                            <h6 class="filter-title">Бренд</h6>
+                            <!-- Кастомный мультиселект для производителей -->
+                            <div class="custom-multiselect">
+                                <button type="button" class="form-select form-select-sm text-start multiselect-toggle"
+                                        onclick="toggleManufacturersDropdown()">
+                                    <span id="desktopSelectedManufacturerText">
+                                        {% if request.GET.manufacturer %}
+                                                {% if ',' in request.GET.manufacturer %}
+                                                    {% for manufacturer_slug in request.GET.manufacturer|split_csv %}
+                                                        {% for manufacturer in manufacturers %}
+                                                            {% if manufacturer.slug == manufacturer_slug %}{{ manufacturer.name }}{% if not forloop.last %}, {% endif %}{% endif %}
+                                                        {% endfor %}
+                                                    {% endfor %}
+                                                {% else %}
+                                                    {% for manufacturer in manufacturers %}
+                                                        {% if manufacturer.slug == request.GET.manufacturer %}{{ manufacturer.name }}{% endif %}
+                                                    {% endfor %}
+                                                {% endif %}
+                                            {% else %}
+                                                Все производители
+                                            {% endif %}
+                                    </span>
+                                </button>
+                                <div class="multiselect-dropdown" id="manufacturersDropdown">
+                                        <div class="multiselect-options">
+                                            <div class="multiselect-option">
+                                                <input type="checkbox" id="desktopManufacturerAll"
+                                                       class="form-check-input"
+                                                       onchange="toggleDesktopAllManufacturers(this)">
+                                                <label class="form-check-label w-100" for="desktopManufacturerAll">
+                                                    Все производители
+                                                </label>
+                                            </div>
+                                            {% for manufacturer in manufacturers %}
+                                            <div class="multiselect-option">
+                                                <input type="checkbox" id="desktopManufacturer{{ manufacturer.id }}"
+                                                       value="{{ manufacturer.slug }}"
+                                                       data-name="{{ manufacturer.name }}"
+                                                       class="form-check-input desktop-manufacturer-checkbox"
+                                                       onchange="updateDesktopSelectedManufacturers()">
+                                                <label class="form-check-label w-100" for="desktopManufacturer{{ manufacturer.id }}">
+                                                    {% if manufacturer.logo %}
+                                                    <img src="{{ manufacturer.logo.url }}" alt="{{ manufacturer.name }}" class="brand-logo me-2" style="width: 20px; height: 20px; object-fit: contain;">
+                                                    {% endif %}
+                                                    {{ manufacturer.name }}
+                                                </label>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="multiselect-actions p-2 border-top">
+                                            <button type="button" class="btn btn-dark btn-sm w-100" onclick="applyDesktopManufacturerFilter()">
+                                                Применить
+                                            </button>
+                                        </div>
+                                    </div>
+                            </div>
+                            <input type="hidden" name="manufacturer" id="desktopManufacturerInput" value="{{ request.GET.manufacturer }}">
+                        </div>
+
+
+                        <!-- Фильтр по наличию -->
+                        <div class="filter-section">
+                            <h6 class="filter-title">Наличие</h6>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="in_stock"
+                                       id="in_stock" {% if request.GET.in_stock %}checked{% endif %}>
+                                <label class="form-check-label" for="in_stock">В наличии</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="on_order"
+                                       id="on_order" {% if request.GET.on_order %}checked{% endif %}>
+                                <label class="form-check-label" for="on_order">Под заказ</label>
+                            </div>
+                        </div>
+                        <!-- Стандартные фильтры для автомобилей и мототехники -->
+
+                            <!-- Фильтр Оригинал -->
+                            <div class="filter-section">
+                                <h6 class="filter-title">Тип товара</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="is_original"
+                                           id="original" {% if request.GET.is_original %}checked{% endif %}>
+                                    <label class="form-check-label" for="original">Оригинал</label>
+                                </div>
+                            </div>
+                            <!-- Кнопки фильтров -->
+                        <div class="d-grid gap-2 mt-3">
+                            <button type="button" class="btn btn-dark btn-sm apply-filter-hover" onclick="applyFilters()">Применить</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetTireWheelFilters(); applyFilters();">Сбросить</button>
+                        </div>

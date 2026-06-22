@@ -1,0 +1,136 @@
+{% extends 'shop/base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block meta_description %}{{ meta_description }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Помощь покупателю</h1>
+    
+    <div class="row">
+        <div class="col-lg-3 d-none d-lg-block">
+            <div class="sticky-top" style="top: 20px;">
+                <nav class="nav flex-column">
+                    <a class="nav-link" href="#ordering">Оформление заказа</a>
+                    <a class="nav-link" href="#payment">Оплата</a>
+                    <a class="nav-link" href="#delivery">Доставка</a>
+                    <a class="nav-link" href="#returns">Возврат</a>
+                    <a class="nav-link" href="#support">Поддержка</a>
+                </nav>
+            </div>
+        </div>
+        
+        <div class="col-lg-9">
+            <!-- Часто задаваемые вопросы -->
+            <section class="mb-5" id="faq">
+                <h2 class="h4 mb-4">Часто задаваемые вопросы</h2>
+                <div class="accordion" id="faqAccordion">
+                    {% for faq in faqs %}
+                    <div class="accordion-item">
+                        <h3 class="accordion-header" id="heading{{ forloop.counter }}">
+                            <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" 
+                                    type="button" 
+                                    data-bs-toggle="collapse" 
+                                    data-bs-target="#collapse{{ forloop.counter }}" 
+                                    aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" 
+                                    aria-controls="collapse{{ forloop.counter }}">
+                                {{ faq.question }}
+                            </button>
+                        </h3>
+                        <div id="collapse{{ forloop.counter }}" 
+                             class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" 
+                             aria-labelledby="heading{{ forloop.counter }}" 
+                             data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {{ faq.answer }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            
+            <!-- Разделы помощи -->
+            <section class="mb-5" id="ordering">
+                <h2 class="h4 mb-3">Оформление заказа</h2>
+                <p>Для оформления заказа выполните следующие шаги:</p>
+                <ol>
+                    <li>Выберите нужные товары и добавьте их в корзину</li>
+                    <li>Перейдите в корзину и проверьте состав заказа</li>
+                    <li>Заполните контактные данные и адрес доставки</li>
+                    <li>Выберите способ оплаты и доставки</li>
+                    <li>Подтвердите заказ</li>
+                </ol>
+            </section>
+            
+            <section class="mb-5" id="payment">
+                <h2 class="h4 mb-3">Способы оплаты</h2>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="fas fa-credit-card fa-2x text-primary mb-3"></i>
+                                <h5 class="card-title">Банковские карты</h5>
+                                <p class="card-text">Visa, MasterCard, Мир</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="fas fa-wallet fa-2x text-primary mb-3"></i>
+                                <h5 class="card-title">Электронные кошельки</h5>
+                                <p class="card-text">ЮMoney, Qiwi</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="fas fa-money-bill-wave fa-2x text-primary mb-3"></i>
+                                <h5 class="card-title">Наличные</h5>
+                                <p class="card-text">При получении заказа</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="mb-5" id="delivery">
+                <h2 class="h4 mb-3">Доставка</h2>
+                <p>Мы осуществляем доставку по всей России:</p>
+                <ul>
+                    <li><strong>Курьерская доставка:</strong> В крупных городах</li>
+                    <li><strong>Почта России:</strong> По всем регионам</li>
+                    <li><strong>Транспортные компании:</strong> Для крупногабаритных товаров</li>
+                    <li><strong>Самовывоз:</strong> Из наших пунктов выдачи</li>
+                </ul>
+            </section>
+            
+            <section class="mb-5" id="returns">
+                <h2 class="h4 mb-3">Возврат товара</h2>
+                <p>Вы можете вернуть товар в течение 14 дней с момента получения при соблюдении условий:</p>
+                <ul>
+                    <li>Товар не был в употреблении</li>
+                    <li>Сохранен товарный вид</li>
+                    <li>Имеются все фабричные ярлыки и упаковка</li>
+                    <li>Нет механических повреждений</li>
+                </ul>
+            </section>
+            
+            <section class="mb-5" id="support">
+                <h2 class="h4 mb-3">Служба поддержки</h2>
+                <p>Мы всегда готовы помочь вам:</p>
+                <div class="d-flex flex-column flex-md-row gap-3">
+                    <a href="mailto:linkavto@linkavto.ru" class="btn btn-outline-primary">
+                        <i class="fas fa-envelope me-2"></i>Написать на email
+                    </a>
+                    <a href="tel:+79999999999" class="btn btn-outline-primary">
+                        <i class="fas fa-phone me-2"></i>Позвонить
+                    </a>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}

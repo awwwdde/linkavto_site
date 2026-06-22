@@ -1,0 +1,54 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <h1>{{ title }}</h1>
+
+    <div class="module">
+        <h2>{% trans 'Статистика по статусам' %}</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>{% trans 'Статус' %}</th>
+                    <th>{% trans 'Количество заказов' %}</th>
+                    <th>{% trans 'Сумма' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in status_stats %}
+                <tr>
+                    <td>{{ stat.status_name }}</td>
+                    <td>{{ stat.count }}</td>
+                    <td>{{ stat.total|default:0 }} ₽</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="module">
+        <h2>{% trans 'Ежемесячная статистика' %}</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>{% trans 'Месяц' %}</th>
+                    <th>{% trans 'Заказов' %}</th>
+                    <th>{% trans 'Выручка' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in monthly_stats %}
+                <tr>
+                    <td>{{ stat.month|date:"F Y" }}</td>
+                    <td>{{ stat.orders }}</td>
+                    <td>{{ stat.revenue|default:0 }} ₽</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

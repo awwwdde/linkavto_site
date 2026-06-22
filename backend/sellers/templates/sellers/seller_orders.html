@@ -1,0 +1,1929 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заказы – Личный кабинет продавца – AvtoLink</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .dashboard-sidebar { background: #2c3e50; color: white; min-height: 100vh; padding: 0; }
+        .sidebar-header { padding: 1.5rem; border-bottom: 1px solid #34495e; text-align: center; }
+        .sidebar-menu { list-style: none; padding: 0; margin: 0; }
+        .sidebar-menu li { border-bottom: 1px solid #34495e; }
+        .sidebar-menu a { color: #bdc3c7; text-decoration: none; padding: 1rem 1.5rem; display: block; transition: all 0.3s ease; }
+        .sidebar-menu a:hover, .sidebar-menu a.active { background: #34495e; color: white; }
+        .sidebar-menu i { width: 20px; margin-right: 10px; }
+
+        .order-status {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-weight: 500;
+        }
+        .status-processing { background: #fff3cd; color: #856404; }
+        .status-shipped { background: #cce7ff; color: #004085; }
+        .status-delivered { background: #d4edda; color: #155724; }
+        .status-canceled { background: #f8d7da; color: #721c24; }
+
+        .payment-status { font-size: 0.7rem; padding: 0.2rem 0.4rem; border-radius: 10px; }
+        .payment-paid { background: #d1e7dd; color: #0f5132; }
+        .payment-unpaid { background: #f8d7da; color: #721c24; }
+
+        .quick-stats { background: white; border-radius: 10px; padding: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 1rem; }
+        .filter-section { background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 1.5rem; }
+        .stat-number { font-size: 1.5rem; font-weight: 700; color: #2c3e50; }
+        .stat-label { color: #7f8c8d; font-size: 0.9rem; }
+
+        .bulk-actions { background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: none; }
+
+        .customer-badge { background: #e9ecef; color: #495057; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.75rem; }
+    </style>
+    <style>
+    .dashboard-sidebar {
+        background: #2c3e50;
+        color: white;
+        min-height: 100vh;
+        padding: 0;
+        position: sticky; /* или fixed */
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+    }
+
+    .sidebar-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid #34495e;
+        text-align: center;
+        position: sticky;
+        top: 0;
+        background: #2c3e50;
+        z-index: 10;
+    }
+
+    .sidebar-menu {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .sidebar-menu li {
+        border-bottom: 1px solid #34495e;
+    }
+
+    .sidebar-menu a {
+        color: #bdc3c7;
+        text-decoration: none;
+        padding: 1rem 1.5rem;
+        display: block;
+        transition: all 0.3s ease;
+    }
+
+    .sidebar-menu a:hover,
+    .sidebar-menu a.active {
+        background: #34495e;
+        color: white;
+    }
+
+    .sidebar-menu i {
+        width: 20px;
+        margin-right: 10px;
+    }
+</style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 dashboard-sidebar">
+            <div class="sidebar-header">
+                <h5 class="mb-0">AvtoLink Продавец</h5>
+                <small>Кабинет продавца</small>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="{% url 'sellers:dashboard' %}"><i class="bi bi-speedometer2"></i> Главная</a></li>
+                <li><a href="{% url 'sellers:products' %}"><i class="bi bi-box-seam"></i> Товары</a></li>
+                <li><a href="{% url 'sellers:orders' %}" class="active"><i class="bi bi-cart-check"></i> Заказы</a></li>
+                <li><a href="{% url 'sellers:analytics' %}"><i class="bi bi-graph-up"></i> Аналитика</a></li>
+                <!--<li><a href="{% url 'sellers:delivery' %}"><i class="bi bi-truck"></i> Доставка</a></li>-->
+                <li><a href="{% url 'sellers:finances' %}"><i class="bi bi-currency-dollar"></i> Финансы</a></li>
+                <li><a href="{% url 'sellers:reviews' %}"><i class="bi bi-chat-left-text"></i> Отзывы</a></li>
+                <li><a href="{% url 'sellers:settings' %}"><i class="bi bi-gear"></i> Настройки</a></li>
+                <li><a href="{% url 'sellers:help' %}"><i class="bi bi-question-circle"></i> Помощь</a></li>
+            </ul>
+        </div>
+
+        <!-- Main content -->
+        <div class="col-md-9 col-lg-10">
+            <!-- Header -->
+            <div class="dashboard-header">
+                <div class="container-fluid">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">Управление заказами</h4>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="dropdown">
+                                <button class="btn  dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-bell"></i>
+                                    <span class="notification-badge">3</span>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#">Новый заказ #12345</a></li>
+                                    <li><a class="dropdown-item" href="#">Требуется подтверждение</a></li>
+                                    <li><a class="dropdown-item" href="#">Обновление системы</a></li>
+                                </ul>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-person-circle"></i> {{ seller.company_name }}
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{% url 'sellers:profile' %}"><i class="bi bi-person me-2"></i>Профиль</a></li>
+                                    <li><a class="dropdown-item" href="#"><i class="bi bi-box-arrow-right me-2"></i>Выйти</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Основной контент -->
+            <div class="container-fluid py-4">
+                <!-- Быстрая статистика -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="quick-stats">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="stat-number">{{ total_orders }}</div>
+                                    <div class="stat-label">Всего заказов</div>
+                                </div>
+                                <i class="bi bi-cart text-primary fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="quick-stats">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="stat-number">{{ processing_orders }}</div>
+                                    <div class="stat-label">В обработке</div>
+                                </div>
+                                <i class="bi bi-clock text-warning fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="quick-stats">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="stat-number">{{ shipped_orders }}</div>
+                                    <div class="stat-label">Отправлено</div>
+                                </div>
+                                <i class="bi bi-truck text-info fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="quick-stats">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="stat-number">{{ delivered_orders }}</div>
+                                    <div class="stat-label">Доставлено</div>
+                                </div>
+                                <i class="bi bi-check-circle text-success fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Общая статистика продаж -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6 class="card-title">Общая статистика</h6>
+                                        <div class="d-flex gap-4">
+                                            <div>
+                                                <div class="text-muted small">Отмененные заказы</div>
+                                                <div class="h5 text-danger">{{ canceled_orders }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-muted small">Общая сумма продаж</div>
+                                                <div class="h5 text-success">{{ total_sales }} ₽</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 text-end">
+                                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ordersAnalyticsModal">
+                                            <i class="bi bi-graph-up me-2"></i>Подробная аналитика
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Панель действий -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">Список заказов</h5>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#exportOrdersModal">
+                                    <i class="bi bi-download me-2"></i>Экспорт
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Фильтры -->
+                <div class="filter-section">
+                    <form method="get" id="orderFilterForm">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Поиск</label>
+                                <input type="text" class="form-control" name="search" placeholder="№ заказа, имя, email..." value="{{ request.GET.search }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Статус</label>
+                                <select class="form-select" name="status">
+                                    <option value="">Все статусы</option>
+                                    {% for status_code, status_name in statuses %}
+                                    <option value="{{ status_code }}" {% if request.GET.status == status_code %}selected{% endif %}>
+                                        {{ status_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Оплата</label>
+                                <select class="form-select" name="paid">
+                                    <option value="">Все</option>
+                                    <option value="paid" {% if request.GET.paid == 'paid' %}selected{% endif %}>Оплаченные</option>
+                                    <option value="unpaid" {% if request.GET.paid == 'unpaid' %}selected{% endif %}>Неоплаченные</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Дата от</label>
+                                <input type="date" class="form-control" name="date_from" value="{{ request.GET.date_from }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Дата до</label>
+                                <input type="date" class="form-control" name="date_to" value="{{ request.GET.date_to }}">
+                            </div>
+                            <div class="col-md-1">
+                                <label class="form-label">&nbsp;</label>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="bi bi-funnel me-1"></i>
+                                    </button>
+                                    <a href="{% url 'sellers:orders' %}" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Массовые действия -->
+                <div class="bulk-actions" id="bulkActions">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span id="selectedCount">Выбрано: 0 заказов</span>
+                        <div class="d-flex gap-2">
+                            <select class="form-select form-select-sm" id="bulkActionSelect" style="width: auto;">
+                                <option value="">Действие с выбранными</option>
+                                <option value="mark_processing">В обработку</option>
+                                <option value="mark_shipped">Отправлено</option>
+                                <option value="mark_delivered">Доставлено</option>
+                                <option value="mark_canceled">Отменить</option>
+                            </select>
+                            <button class="btn btn-primary btn-sm" id="applyBulkAction">Применить</button>
+                            <button class="btn btn-outline-secondary btn-sm" id="clearSelection">Снять выделение</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Таблица заказов -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th width="30">
+                                            <input type="checkbox" class="form-check-input" id="selectAll">
+                                        </th>
+                                        <th width="100">№ Заказа</th>
+                                        <th>Клиент</th>
+                                        <th>Товары</th>
+                                        <th>Сумма</th>
+                                        <th>Статус</th>
+                                        <th>Оплата</th>
+                                        <th>Дата</th>
+                                        <th width="140">Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in orders %}
+                                    <tr>
+                                        <td>
+                                            <input type="checkbox" class="form-check-input order-checkbox" value="{{ order.id }}">
+                                        </td>
+                                        <td>
+                                            <strong>#{{ order.id }}</strong>
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold">{{ order.name }}</div>
+                                            <div class="small text-muted">{{ order.email }}</div>
+                                            <div class="small text-muted">{{ order.phone }}</div>
+                                            {% if order.user %}
+                                            <span class="customer-badge">Постоянный клиент</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold">{{ order.seller_items_count }} товар(ов)</div>
+                                            <small class="text-muted">
+                                                {% for item in order.items.all %}
+                                                    {% if item.product.seller == seller %}
+                                                        {{ item.product.name }}{% if not forloop.last %}, {% endif %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold">{{ order.seller_total|default:0 }} ₽</div>
+                                            <small class="text-muted">Продавец</small>
+                                        </td>
+                                        <td>
+                                            <span class="order-status status-{{ order.status }}">
+                                                {{ order.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if order.paid %}
+                                            <span class="payment-status payment-paid">Оплачен</span>
+                                            {% else %}
+                                            <span class="payment-status payment-unpaid">Не оплачен</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ order.created_at|date:"d.m.Y H:i" }}</small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{% url 'sellers:order_detail' order.id %}" class="btn btn-link text-primary p-1" title="Просмотр">
+                                                    <i class="bi bi-eye fs-5"></i>
+                                                </a>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-link text-secondary p-1 dropdown-toggle" type="button" data-bs-toggle="dropdown" title="Изменить статус">
+                                                        <i class="bi bi-gear fs-5"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <li><a class="dropdown-item status-change" href="#" data-status="processing">В обработку</a></li>
+                                                        <li><a class="dropdown-item status-change" href="#" data-status="shipped">Отправлен</a></li>
+                                                        <li><a class="dropdown-item status-change" href="#" data-status="delivered">Доставлен</a></li>
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li><a class="dropdown-item status-change text-danger" href="#" data-status="canceled">Отменить</a></li>
+                                                    </ul>
+                                                </div>
+                                                <button class="btn btn-link text-success p-1" title="Печать" onclick="printOrder({{ order.id }})">
+                                                    <i class="bi bi-printer fs-5"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="9" class="text-center py-4">
+                                            <img src="{% static 'img/empty-orders.png' %}" alt="Нет заказов" width="150" height="150" class="mb-3">
+                                            <p class="mt-2">Заказы не найдены</p>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Пагинация -->
+                        {% if orders.has_other_pages %}
+                        <nav aria-label="Page navigation" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                {% if orders.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ orders.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Назад</a>
+                                </li>
+                                {% endif %}
+
+                                {% for i in orders.paginator.page_range %}
+                                    {% if orders.number == i %}
+                                    <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                                    {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                                    </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if orders.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ orders.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Вперед</a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно изменения статуса -->
+<div class="modal fade" id="statusChangeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Изменение статуса заказа</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="statusChangeText">Вы уверены, что хотите изменить статус заказа?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="confirmStatusChange">
+                    <i class="bi bi-check-lg me-2"></i>Изменить статус
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Модальное окно экспорта заказов -->
+<div class="modal fade" id="exportOrdersModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Экспорт заказов</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-4">
+                    <label class="form-label">Формат экспорта</label>
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <div class="form-check card-option">
+                                <input class="form-check-input" type="radio" name="exportFormat" id="ordersFormatCSV" value="csv" checked>
+                                <label class="form-check-label card" for="ordersFormatCSV">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-file-earmark-text fs-2 text-primary"></i>
+                                        <div class="mt-2">CSV</div>
+                                        <small class="text-muted">Универсальный</small>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="form-check card-option">
+                                <input class="form-check-input" type="radio" name="exportFormat" id="ordersFormatXLSX" value="xlsx">
+                                <label class="form-check-label card" for="ordersFormatXLSX">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-file-earmark-spreadsheet fs-2 text-success"></i>
+                                        <div class="mt-2">Excel</div>
+                                        <small class="text-muted">Для анализа</small>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="form-check card-option">
+                                <input class="form-check-input" type="radio" name="exportFormat" id="ordersFormatPDF" value="pdf">
+                                <label class="form-check-label card" for="ordersFormatPDF">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-file-pdf fs-2 text-danger"></i>
+                                        <div class="mt-2">PDF</div>
+                                        <small class="text-muted">Для отчетов</small>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Какие заказы экспортировать</label>
+                    <select class="form-select" id="ordersExportScope">
+                        <option value="all">Все заказы</option>
+                        <option value="filtered">Только отфильтрованные</option>
+                        <option value="selected">Только выбранные</option>
+                        <option value="processing">Только в обработке</option>
+                        <option value="shipped">Только отправленные</option>
+                        <option value="delivered">Только доставленные</option>
+                        <option value="canceled">Только отмененные</option>
+                        <option value="paid">Только оплаченные</option>
+                        <option value="unpaid">Только неоплаченные</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Период</label>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <input type="date" class="form-control" id="exportDateFrom" placeholder="Дата от">
+                        </div>
+                        <div class="col-6">
+                            <input type="date" class="form-control" id="exportDateTo" placeholder="Дата до">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Поля для экспорта</label>
+                    <div class="export-fields">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="ordersExportAllFields" checked>
+                            <label class="form-check-label" for="ordersExportAllFields">
+                                Все поля
+                            </label>
+                        </div>
+                        <div class="fields-list mt-2" style="max-height: 200px; overflow-y: auto; border: 1px solid #e9ecef; border-radius: 6px; padding: 1rem;">
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input orders-field-checkbox" type="checkbox" value="id" checked disabled>
+                                        <label class="form-check-label">№ Заказа</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input orders-field-checkbox" type="checkbox" value="created_at" checked>
+                                        <label class="form-check-label">Дата заказа</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input orders-field-checkbox" type="checkbox" value="customer_name" checked>
+                                        <label class="form-check-label">Имя клиента</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input orders-field-checkbox" type="checkbox" value="email" checked>
+                                        <label class="form-check-label">Email</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input orders-field-checkbox" type="checkbox" value="phone" checked>
+                                        <label class="form-check-label">Телефон</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input orders-field-checkbox" type="checkbox" value="address">
+                                        <label class="form-check-label">Адрес</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input orders-field-checkbox" type="checkbox" value="items_count" checked>
+                                        <label class="form-check-label">Кол-во товаров</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input orders-field-checkbox" type="checkbox" value="total_amount" checked>
+                                        <label class="form-check-label">Сумма</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input orders-field-checkbox" type="checkbox" value="status" checked>
+                                        <label class="form-check-label">Статус</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input orders-field-checkbox" type="checkbox" value="paid" checked>
+                                        <label class="form-check-label">Оплата</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input orders-field-checkbox" type="checkbox" value="payment_method">
+                                        <label class="form-check-label">Способ оплаты</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input orders-field-checkbox" type="checkbox" value="comment">
+                                        <label class="form-check-label">Комментарий</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input orders-field-checkbox" type="checkbox" value="products">
+                                        <label class="form-check-label">Список товаров</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="export-progress" style="display: none;">
+                    <div class="progress mb-2">
+                        <div class="progress-bar" role="progressbar" style="width: 0%" id="ordersExportProgressBar"></div>
+                    </div>
+                    <small class="text-muted" id="ordersExportProgressText">Подготовка к экспорту...</small>
+                </div>
+
+                <div class="alert alert-info mt-3">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <small>Экспорт будет содержать только заказы с вашими товарами. При экспорте в PDF создается единый файл со всеми выбранными заказами.</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="ordersExportStartBtn">
+                    <i class="bi bi-download me-2"></i>Экспортировать
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно аналитики заказов -->
+<div class="modal fade" id="ordersAnalyticsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi  me-2"></i>Аналитика продаж
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Панель фильтров и периодов -->
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="period" id="period7d" autocomplete="off" checked>
+                            <label class="btn btn-outline-primary" for="period7d">7 дней</label>
+
+                            <input type="radio" class="btn-check" name="period" id="period30d" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="period30d">30 дней</label>
+
+                            <input type="radio" class="btn-check" name="period" id="period90d" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="period90d">90 дней</label>
+
+                            <input type="radio" class="btn-check" name="period" id="period1y" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="period1y">Год</label>
+
+                            <input type="radio" class="btn-check" name="period" id="periodCustom" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="periodCustom">Произв.</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row g-2 custom-period" style="display: none;">
+                            <div class="col-6">
+                                <input type="date" class="form-control form-control-sm" id="dateFrom">
+                            </div>
+                            <div class="col-6">
+                                <input type="date" class="form-control form-control-sm" id="dateTo">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ключевые метрики -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value" id="totalRevenue">0 ₽</div>
+                            <div class="metric-label">Общая выручка</div>
+                            <div class="metric-change positive" id="revenueChange">
+                                <i class="bi bi-arrow-up-right"></i> 0%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value" id="totalOrders">0</div>
+                            <div class="metric-label">Всего заказов</div>
+                            <div class="metric-change positive" id="ordersChange">
+                                <i class="bi bi-arrow-up-right"></i> 0%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value" id="avgOrderValue">0 ₽</div>
+                            <div class="metric-label">Средний чек</div>
+                            <div class="metric-change negative" id="aovChange">
+                                <i class="bi bi-arrow-down-right"></i> 0%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value" id="conversionRate">0%</div>
+                            <div class="metric-label">Конверсия</div>
+                            <div class="metric-change positive" id="conversionChange">
+                                <i class="bi bi-arrow-up-right"></i> 0%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Графики -->
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h6>Динамика продаж</h6>
+                                <div class="chart-legend">
+                                    <span class="legend-item">
+                                        <span class="legend-color revenue"></span>
+                                        Выручка
+                                    </span>
+                                    <span class="legend-item">
+                                        <span class="legend-color orders"></span>
+                                        Заказы
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="salesChart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h6>Статусы заказов</h6>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="statusChart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Дополнительные графики -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h6>Топ товары по выручке</h6>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="productsChart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h6>Распределение по времени</h6>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="timeChart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Детальная статистика -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="stats-card">
+                            <div class="stats-header">
+                                <h6>Детальная статистика</h6>
+                                <div class="stats-actions">
+                                    <button class="btn btn-sm btn-outline-secondary" id="refreshStats">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <div class="stat-value" id="completedOrders">0</div>
+                                    <div class="stat-label">Завершено</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value" id="canceledOrders">0</div>
+                                    <div class="stat-label">Отменено</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value" id="refundRate">0%</div>
+                                    <div class="stat-label">Возвраты</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value" id="repeatCustomers">0</div>
+                                    <div class="stat-label">Повторные</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-outline-primary">
+                    <i class="bi bi-download me-2"></i>Экспорт отчета
+                </button>
+                <button type="button" class="btn btn-primary" id="refreshAnalytics">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Обновить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Анимации для изменения статусов */
+.order-status {
+    transition: all 0.3s ease;
+}
+
+.status-updating {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* Стили для уведомлений */
+.notification-badge {
+    background: #e74c3c;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+}
+
+/* Стили для dropdown меню статусов */
+.dropdown-menu .status-change {
+    cursor: pointer;
+}
+
+.dropdown-menu .status-change.text-danger {
+    color: #dc3545 !important;
+}
+
+.dropdown-menu .status-change:hover {
+    background-color: #f8f9fa;
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 768px) {
+    .btn-group-sm .btn {
+        padding: 0.1rem 0.3rem;
+    }
+
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+
+    .order-status, .payment-status {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.4rem;
+    }
+}
+</style>
+<style>
+/* Стили для аналитики */
+.metric-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+}
+
+.metric-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+.metric-label {
+    font-size: 14px;
+    color: #6c757d;
+    margin-bottom: 8px;
+}
+
+.metric-change {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    display: inline-block;
+}
+
+.metric-change.positive {
+    background: #d1e7dd;
+    color: #0f5132;
+}
+
+.metric-change.negative {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
+    height: 100%;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.chart-header h6 {
+    margin: 0;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.chart-legend {
+    display: flex;
+    gap: 15px;
+    font-size: 12px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+.legend-color.revenue {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.legend-color.orders {
+    background: linear-gradient(135deg, #f093fb, #f5576c);
+}
+
+.chart-container {
+    position: relative;
+    height: 250px;
+}
+
+.stats-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
+}
+
+.stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.stats-header h6 {
+    margin: 0;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Анимации */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.metric-card, .chart-card, .stats-card {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .chart-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .metric-value {
+        font-size: 20px;
+    }
+}
+</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    let currentOrderId = null;
+    let newStatus = null;
+
+    // Выделение всех заказов
+    document.getElementById('selectAll').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.order-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateBulkActions();
+    });
+
+    // Обновление массовых действий
+    document.querySelectorAll('.order-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateBulkActions);
+    });
+
+    // Применение массовых действий
+    document.getElementById('applyBulkAction').addEventListener('click', function() {
+        const action = document.getElementById('bulkActionSelect').value;
+        const selectedOrders = getSelectedOrders();
+
+        if (selectedOrders.length === 0) {
+            alert('Выберите заказы для действия');
+            return;
+        }
+
+        if (action === 'mark_canceled') {
+            if (!confirm(`Вы уверены, что хотите отменить ${selectedOrders.length} заказов?`)) {
+                return;
+            }
+        }
+
+        performBulkAction(action, selectedOrders);
+    });
+
+    // Очистка выделения
+    document.getElementById('clearSelection').addEventListener('click', function() {
+        document.querySelectorAll('.order-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        document.getElementById('selectAll').checked = false;
+        updateBulkActions();
+    });
+
+    // Обработчики изменения статуса
+    document.querySelectorAll('.status-change').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const row = this.closest('tr');
+            const orderId = row.querySelector('.order-checkbox').value;
+            const orderNumber = row.querySelector('td:nth-child(2) strong').textContent;
+            const currentStatus = row.querySelector('.order-status').textContent.trim();
+            newStatus = this.getAttribute('data-status');
+
+            openStatusChangeModal(orderId, orderNumber, currentStatus, newStatus);
+        });
+    });
+
+    // Подтверждение изменения статуса
+    document.getElementById('confirmStatusChange').addEventListener('click', function() {
+        if (currentOrderId && newStatus) {
+            updateOrderStatus(currentOrderId, newStatus);
+        }
+    });
+
+    // Инициализация обработчиков после загрузки таблицы через AJAX
+    function rebindEventHandlers() {
+        document.querySelectorAll('.order-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', updateBulkActions);
+        });
+
+        document.querySelectorAll('.status-change').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const row = this.closest('tr');
+                const orderId = row.querySelector('.order-checkbox').value;
+                const orderNumber = row.querySelector('td:nth-child(2) strong').textContent;
+                const currentStatus = row.querySelector('.order-status').textContent.trim();
+                newStatus = this.getAttribute('data-status');
+
+                openStatusChangeModal(orderId, orderNumber, currentStatus, newStatus);
+            });
+        });
+
+        // Перепривязываем обработчик "Выделить все"
+        const selectAll = document.getElementById('selectAll');
+        if (selectAll) {
+            selectAll.addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('.order-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+                updateBulkActions();
+            });
+        }
+    }
+
+    function updateBulkActions() {
+        const selectedCount = document.querySelectorAll('.order-checkbox:checked').length;
+        const bulkActions = document.getElementById('bulkActions');
+
+        if (selectedCount > 0) {
+            bulkActions.style.display = 'block';
+            document.getElementById('selectedCount').textContent = 'Выбрано: ' + selectedCount + ' заказов';
+        } else {
+            bulkActions.style.display = 'none';
+        }
+    }
+
+    function getSelectedOrders() {
+        const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+        return Array.from(checkboxes).map(checkbox => checkbox.value);
+    }
+
+    function performBulkAction(action, orderIds) {
+        fetch('{% url "sellers:order_bulk_action" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                action: action,
+                order_ids: orderIds
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                loadOrdersTable();
+                showNotification(data.message, 'success');
+            } else {
+                alert('Ошибка: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Ошибка при выполнении действия');
+        });
+    }
+
+    function openStatusChangeModal(orderId, orderNumber, currentStatus, status) {
+        currentOrderId = orderId;
+        newStatus = status;
+
+        const statusNames = {
+            'processing': 'В обработке',
+            'shipped': 'Отправлен',
+            'delivered': 'Доставлен',
+            'canceled': 'Отменен'
+        };
+
+        const newStatusName = statusNames[status];
+
+        document.getElementById('statusChangeText').textContent =
+            `Вы уверены, что хотите изменить статус заказа ${orderNumber}?\n\n` +
+            `Текущий статус: ${currentStatus}\n` +
+            `Новый статус: ${newStatusName}`;
+
+        const modal = new bootstrap.Modal(document.getElementById('statusChangeModal'));
+        modal.show();
+    }
+
+    function updateOrderStatus(orderId, status) {
+        const formData = new FormData();
+        formData.append('status', status);
+
+        fetch(`/sellers/orders/${orderId}/update-status/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Закрываем модальное окно
+                bootstrap.Modal.getInstance(document.getElementById('statusChangeModal')).hide();
+
+                // Обновляем строку в таблице
+                updateOrderRow(orderId, data.new_status, data.status_class);
+
+                showNotification(data.message, 'success');
+
+                // Сбрасываем переменные
+                currentOrderId = null;
+                newStatus = null;
+            } else {
+                alert('Ошибка: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Ошибка при изменении статуса');
+        });
+    }
+
+    function updateOrderRow(orderId, newStatusText, statusClass) {
+        const row = document.querySelector(`.order-checkbox[value="${orderId}"]`).closest('tr');
+        const statusCell = row.querySelector('.order-status');
+
+        // Обновляем текст и классы статуса
+        statusCell.textContent = newStatusText;
+        statusCell.className = `order-status status-${statusClass}`;
+    }
+
+    function loadOrdersTable() {
+        const currentUrl = new URL(window.location);
+        currentUrl.searchParams.set('ajax', 'true');
+
+        fetch(currentUrl.toString(), {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            // Создаем временный элемент для парсинга HTML
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+
+            // Обновляем таблицу
+            const tableContent = tempDiv.querySelector('.table-responsive');
+            if (tableContent) {
+                document.querySelector('.table-responsive').innerHTML = tableContent.innerHTML;
+            }
+
+            // Обновляем пагинацию если есть
+            const pagination = tempDiv.querySelector('.pagination');
+            if (pagination) {
+                const existingPagination = document.querySelector('.pagination');
+                if (existingPagination) {
+                    existingPagination.innerHTML = pagination.innerHTML;
+                }
+            }
+
+            // Перепривязываем обработчики
+            rebindEventHandlers();
+            updateBulkActions();
+        })
+        .catch(error => {
+            console.error('Ошибка при загрузке таблицы:', error);
+        });
+    }
+
+    // Функция для показа уведомлений
+    function showNotification(message, type = 'success') {
+        // Создаем простое уведомление
+        const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        const alertHtml = `
+            <div class="alert ${alertClass} alert-dismissible fade show position-fixed top-0 end-0 m-3" style="z-index: 9999;">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', alertHtml);
+
+        // Автоматически скрываем через 5 секунд
+        setTimeout(() => {
+            const alert = document.querySelector('.alert:last-child');
+            if (alert) {
+                alert.remove();
+            }
+        }, 5000);
+    }
+
+    // Обработчик для кнопки печати
+    document.querySelectorAll('.btn-link.text-success').forEach(button => {
+        button.addEventListener('click', function() {
+            const row = this.closest('tr');
+            const orderId = row.querySelector('.order-checkbox').value;
+            const orderNumber = row.querySelector('td:nth-child(2) strong').textContent;
+
+            // Открываем страницу печати в новом окне
+            window.open(`/sellers/orders/${orderId}/print/`, '_blank');
+        });
+    });
+
+    // Автоматическое обновление статусов каждые 30 секунд (опционально)
+    // setInterval(loadOrdersTable, 30000);
+
+    // Инициализация после загрузки
+    rebindEventHandlers();
+});
+
+
+
+// Инициализация экспорта заказов
+function initOrdersExport() {
+    const exportAllFields = document.getElementById('ordersExportAllFields');
+    const fieldCheckboxes = document.querySelectorAll('.orders-field-checkbox');
+    const exportStartBtn = document.getElementById('ordersExportStartBtn');
+
+    // Переключение всех полей экспорта
+    exportAllFields.addEventListener('change', function() {
+        fieldCheckboxes.forEach(checkbox => {
+            if (!checkbox.disabled) {
+                checkbox.checked = this.checked;
+            }
+        });
+    });
+
+    // Запуск экспорта
+    exportStartBtn.addEventListener('click', startOrdersExport);
+
+    // Установка дат по умолчанию (последние 30 дней)
+    const today = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+
+    document.getElementById('exportDateFrom').value = thirtyDaysAgo.toISOString().split('T')[0];
+    document.getElementById('exportDateTo').value = today.toISOString().split('T')[0];
+}
+
+// Функция запуска экспорта заказов
+function startOrdersExport() {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const format = document.querySelector('input[name="exportFormat"]:checked').value;
+    const scope = document.getElementById('ordersExportScope').value;
+    const dateFrom = document.getElementById('exportDateFrom').value;
+    const dateTo = document.getElementById('exportDateTo').value;
+
+    // Собираем выбранные поля
+    const selectedFields = Array.from(document.querySelectorAll('.orders-field-checkbox:checked'))
+        .map(checkbox => checkbox.value);
+
+    const exportData = {
+        format: format,
+        scope: scope,
+        fields: selectedFields,
+        date_from: dateFrom,
+        date_to: dateTo
+    };
+
+    // Показываем прогресс
+    const progressSection = document.querySelector('.export-progress');
+    const progressBar = document.getElementById('ordersExportProgressBar');
+    const progressText = document.getElementById('ordersExportProgressText');
+
+    progressSection.style.display = 'block';
+    progressBar.style.width = '0%';
+    progressText.textContent = 'Подготовка к экспорту...';
+
+    // Отключаем кнопку
+    const exportBtn = document.getElementById('ordersExportStartBtn');
+    exportBtn.disabled = true;
+    exportBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Экспорт...';
+
+    // Имитация прогресса для лучшего UX
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        progress += 2;
+        progressBar.style.width = progress + '%';
+
+        if (progress <= 30) {
+            progressText.textContent = 'Сбор данных о заказах...';
+        } else if (progress <= 60) {
+            progressText.textContent = 'Формирование отчета...';
+        } else if (progress <= 90) {
+            progressText.textContent = 'Подготовка файла...';
+        } else {
+            progressText.textContent = 'Завершение...';
+        }
+
+        if (progress >= 100) {
+            clearInterval(progressInterval);
+            completeOrdersExport(exportData);
+        }
+    }, 50);
+}
+
+function completeOrdersExport(exportData) {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    // Создаем URL для экспорта с параметрами
+    const url = new URL('{% url "sellers:orders_export" %}', window.location.origin);
+
+    // Добавляем параметры в URL
+    Object.keys(exportData).forEach(key => {
+        if (exportData[key] !== null && exportData[key] !== '') {
+            if (Array.isArray(exportData[key])) {
+                url.searchParams.append(key, exportData[key].join(','));
+            } else {
+                url.searchParams.append(key, exportData[key]);
+            }
+        }
+    });
+
+    // Добавляем текущие параметры фильтрации если scope = filtered
+    if (exportData.scope === 'filtered') {
+        const currentParams = new URLSearchParams(window.location.search);
+        currentParams.forEach((value, key) => {
+            if (key !== 'page' && key !== 'ajax') {
+                url.searchParams.append(`filter_${key}`, value);
+            }
+        });
+    }
+
+    // Создаем скрытую форму для отправки данных
+    const form = document.createElement('form');
+    form.method = 'GET';
+    form.action = url.toString();
+    form.style.display = 'none';
+
+    // Добавляем CSRF токен
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+
+    // Восстанавливаем кнопку
+    setTimeout(() => {
+        const exportBtn = document.getElementById('ordersExportStartBtn');
+        exportBtn.disabled = false;
+        exportBtn.innerHTML = '<i class="bi bi-download me-2"></i>Экспортировать';
+
+        const progressSection = document.querySelector('.export-progress');
+        progressSection.style.display = 'none';
+
+        // Закрываем модальное окно
+        bootstrap.Modal.getInstance(document.getElementById('exportOrdersModal')).hide();
+
+        showNotification('Экспорт завершен успешно', 'success');
+    }, 1000);
+}
+
+// Функция для быстрого экспорта выбранных заказов
+function quickExportSelectedOrders(format = 'xlsx') {
+    const selectedOrders = getSelectedOrders();
+
+    if (selectedOrders.length === 0) {
+        alert('Выберите заказы для экспорта');
+        return;
+    }
+
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const url = new URL('{% url "sellers:orders_export" %}', window.location.origin);
+
+    url.searchParams.append('format', format);
+    url.searchParams.append('scope', 'selected');
+    url.searchParams.append('order_ids', selectedOrders.join(','));
+
+    // Создаем скрытую форму для отправки
+    const form = document.createElement('form');
+    form.method = 'GET';
+    form.action = url.toString();
+    form.style.display = 'none';
+
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+
+    showNotification(`Экспорт ${selectedOrders.length} заказов в ${format.toUpperCase()}`, 'success');
+}
+
+
+
+
+</script>
+<script>
+    // Аналитика заказов
+let analyticsCharts = {};
+
+function initOrdersAnalytics() {
+    const analyticsBtn = document.querySelector('.btn-outline-primary[onclick*="analytics"]');
+    const refreshBtn = document.getElementById('refreshAnalytics');
+    const refreshStatsBtn = document.getElementById('refreshStats');
+
+    // Обработчики периодов
+    document.querySelectorAll('input[name="period"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.id === 'periodCustom') {
+                document.querySelector('.custom-period').style.display = 'flex';
+            } else {
+                document.querySelector('.custom-period').style.display = 'none';
+                loadAnalyticsData(getPeriodDays(this.id));
+            }
+        });
+    });
+
+    // Обработчики обновления
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            loadAnalyticsData(getCurrentPeriod());
+            showNotification('Данные обновлены', 'success');
+        });
+    }
+
+    if (refreshStatsBtn) {
+        refreshStatsBtn.addEventListener('click', function() {
+            loadAnalyticsData(getCurrentPeriod());
+        });
+    }
+
+    // Инициализация дат
+    initDatePickers();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeOrderHandlers();
+    initOrdersExport();
+    initOrdersAnalytics();
+});
+
+function getPeriodDays(periodId) {
+    const periods = {
+        'period7d': 7,
+        'period30d': 30,
+        'period90d': 90,
+        'period1y': 365
+    };
+    return periods[periodId] || 30;
+}
+
+function getCurrentPeriod() {
+    const checkedRadio = document.querySelector('input[name="period"]:checked');
+    if (checkedRadio && checkedRadio.id !== 'periodCustom') {
+        return getPeriodDays(checkedRadio.id);
+    }
+    return 30; // По умолчанию 30 дней
+}
+
+function initDatePickers() {
+    const today = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+
+    document.getElementById('dateFrom').value = thirtyDaysAgo.toISOString().split('T')[0];
+    document.getElementById('dateTo').value = today.toISOString().split('T')[0];
+
+    // Обработчики для кастомного периода
+    document.getElementById('dateFrom').addEventListener('change', updateCustomPeriod);
+    document.getElementById('dateTo').addEventListener('change', updateCustomPeriod);
+}
+
+function updateCustomPeriod() {
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+
+    if (dateFrom && dateTo) {
+        loadAnalyticsData(null, dateFrom, dateTo);
+    }
+}
+
+function loadAnalyticsData(days = 30, dateFrom = null, dateTo = null) {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    // Показываем индикатор загрузки
+    showLoadingState();
+
+    const params = new URLSearchParams();
+    if (days) {
+        params.append('days', days);
+    }
+    if (dateFrom) {
+        params.append('date_from', dateFrom);
+    }
+    if (dateTo) {
+        params.append('date_to', dateTo);
+    }
+
+    fetch(`{% url "sellers:orders_analytics" %}?${params.toString()}`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateMetrics(data.metrics);
+            updateCharts(data.charts);
+            updateStats(data.stats);
+        } else {
+            showNotification('Ошибка загрузки аналитики', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Analytics error:', error);
+        showNotification('Ошибка загрузки данных', 'danger');
+    })
+    .finally(() => {
+        hideLoadingState();
+    });
+}
+
+function updateMetrics(metrics) {
+    // Обновляем ключевые метрики
+    document.getElementById('totalRevenue').textContent = formatCurrency(metrics.total_revenue);
+    document.getElementById('totalOrders').textContent = metrics.total_orders.toLocaleString();
+    document.getElementById('avgOrderValue').textContent = formatCurrency(metrics.avg_order_value);
+    document.getElementById('conversionRate').textContent = metrics.conversion_rate + '%';
+
+    // Обновляем изменения
+    updateMetricChange('revenueChange', metrics.revenue_change);
+    updateMetricChange('ordersChange', metrics.orders_change);
+    updateMetricChange('aovChange', metrics.aov_change);
+    updateMetricChange('conversionChange', metrics.conversion_change);
+}
+
+function updateMetricChange(elementId, change) {
+    const element = document.getElementById(elementId);
+    const isPositive = change >= 0;
+
+    element.className = `metric-change ${isPositive ? 'positive' : 'negative'}`;
+    element.innerHTML = `<i class="bi bi-arrow-${isPositive ? 'up' : 'down'}-right"></i> ${Math.abs(change)}%`;
+}
+
+function updateCharts(chartsData) {
+    // Уничтожаем старые графики
+    Object.values(analyticsCharts).forEach(chart => {
+        if (chart) chart.destroy();
+    });
+
+    // Создаем новые графики
+    analyticsCharts.sales = createSalesChart(chartsData.sales);
+    analyticsCharts.status = createStatusChart(chartsData.status);
+    analyticsCharts.products = createProductsChart(chartsData.products);
+    analyticsCharts.time = createTimeChart(chartsData.time_distribution);
+}
+
+function updateStats(stats) {
+    document.getElementById('completedOrders').textContent = stats.completed_orders.toLocaleString();
+    document.getElementById('canceledOrders').textContent = stats.canceled_orders.toLocaleString();
+    document.getElementById('refundRate').textContent = stats.refund_rate + '%';
+    document.getElementById('repeatCustomers').textContent = stats.repeat_customers.toLocaleString();
+}
+
+function createSalesChart(data) {
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    return new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.labels,
+            datasets: [
+                {
+                    label: 'Выручка',
+                    data: data.revenue,
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Заказы',
+                    data: data.orders,
+                    borderColor: '#f5576c',
+                    backgroundColor: 'rgba(245, 87, 108, 0.1)',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Выручка (₽)'
+                    },
+                    grid: {
+                        drawOnChartArea: true,
+                    },
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Кол-во заказов'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                },
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false
+                }
+            }
+        }
+    });
+}
+
+function createStatusChart(data) {
+    const ctx = document.getElementById('statusChart').getContext('2d');
+    return new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: data.labels,
+            datasets: [{
+                data: data.data,
+                backgroundColor: [
+                    '#ffc107', // processing
+                    '#17a2b8', // shipped
+                    '#28a745', // delivered
+                    '#dc3545'  // canceled
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            cutout: '70%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createProductsChart(data) {
+    const ctx = document.getElementById('productsChart').getContext('2d');
+    return new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.labels,
+            datasets: [{
+                label: 'Выручка',
+                data: data.revenue,
+                backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                borderColor: '#667eea',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            indexAxis: 'y',
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Выручка (₽)'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createTimeChart(data) {
+    const ctx = document.getElementById('timeChart').getContext('2d');
+    return new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.labels,
+            datasets: [{
+                label: 'Заказы',
+                data: data.data,
+                backgroundColor: 'rgba(40, 167, 69, 0.8)',
+                borderColor: '#28a745',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Кол-во заказов'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function showLoadingState() {
+    // Можно добавить индикатор загрузки
+    const refreshBtn = document.getElementById('refreshAnalytics');
+    if (refreshBtn) {
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Загрузка...';
+    }
+}
+
+function hideLoadingState() {
+    const refreshBtn = document.getElementById('refreshAnalytics');
+    if (refreshBtn) {
+        refreshBtn.disabled = false;
+        refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise me-2"></i>Обновить';
+    }
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('ru-RU', {
+        style: 'currency',
+        currency: 'RUB',
+        minimumFractionDigits: 0
+    }).format(amount);
+}
+
+// Инициализация при открытии модального окна
+document.getElementById('ordersAnalyticsModal').addEventListener('show.bs.modal', function() {
+    setTimeout(() => {
+        loadAnalyticsData(30);
+    }, 100);
+});
+</script>
+</body>
+</html>

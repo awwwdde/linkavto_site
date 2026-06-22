@@ -1,0 +1,2627 @@
+<!DOCTYPE html>
+{% load static %}
+{% load custom_tags %}
+
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Товары – Личный кабинет продавца – AvtoLink</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .dashboard-sidebar {
+            background: #2c3e50;
+            color: white;
+            min-height: 100vh;
+            padding: 0;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #34495e;
+            text-align: center;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li {
+            border-bottom: 1px solid #34495e;
+        }
+
+        .sidebar-menu a {
+            color: #bdc3c7;
+            text-decoration: none;
+            padding: 1rem 1.5rem;
+            display: block;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            background: #34495e;
+            color: white;
+        }
+
+        .sidebar-menu i {
+            width: 20px;
+            margin-right: 10px;
+        }
+
+        .dashboard-header {
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            padding: 1rem 0;
+        }
+
+        .notification-badge {
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 8px;
+            right: 8px;
+        }
+
+        .product-card {
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .product-card:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .product-image {
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .product-status {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+        }
+
+        .status-active {
+            background: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-low-stock {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .quick-stats {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+
+        .filter-section {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .bulk-actions {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+    </style>
+    <style>
+    .dashboard-sidebar {
+        background: #2c3e50;
+        color: white;
+        min-height: 100vh;
+        padding: 0;
+        position: sticky; /* или fixed */
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+    }
+
+    .sidebar-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid #34495e;
+        text-align: center;
+        position: sticky;
+        top: 0;
+        background: #2c3e50;
+        z-index: 10;
+    }
+
+    .sidebar-menu {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .sidebar-menu li {
+        border-bottom: 1px solid #34495e;
+    }
+
+    .sidebar-menu a {
+        color: #bdc3c7;
+        text-decoration: none;
+        padding: 1rem 1.5rem;
+        display: block;
+        transition: all 0.3s ease;
+    }
+
+    .sidebar-menu a:hover,
+    .sidebar-menu a.active {
+        background: #34495e;
+        color: white;
+    }
+
+    .sidebar-menu i {
+        width: 20px;
+        margin-right: 10px;
+    }
+</style>
+
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 dashboard-sidebar">
+            <div class="sidebar-header">
+                <h5 class="mb-0">AvtoLink Продавец</h5>
+                <small>Кабинет продавца</small>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li><a href="{% url 'sellers:dashboard' %}"><i class="bi bi-speedometer2"></i> Главная</a></li>
+                <li><a href="{% url 'sellers:products' %}" class="active"><i class="bi bi-box-seam"></i> Товары</a></li>
+                <li><a href="{% url 'sellers:orders' %}"><i class="bi bi-cart-check"></i> Заказы</a></li>
+                <li><a href="{% url 'sellers:analytics' %}"><i class="bi bi-graph-up"></i> Аналитика</a></li>
+                <!--<li><a href="{% url 'sellers:delivery' %}"><i class="bi bi-truck"></i> Доставка</a></li>-->
+                <li><a href="{% url 'sellers:finances' %}"><i class="bi bi-currency-dollar"></i> Финансы</a></li>
+                <li><a href="{% url 'sellers:reviews' %}"><i class="bi bi-chat-left-text"></i> Отзывы</a></li>
+                <li><a href="{% url 'sellers:settings' %}"><i class="bi bi-gear"></i> Настройки</a></li>
+                <li><a href="{% url 'sellers:help' %}"><i class="bi bi-question-circle"></i> Помощь</a></li>
+            </ul>
+        </div>
+
+        <!-- Main content -->
+        <div class="col-md-9 col-lg-10">
+            <!-- Header -->
+            <div class="dashboard-header">
+                <div class="container-fluid">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">Управление товарами</h4>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="dropdown">
+                                <button class="btn  dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-bell"></i>
+                                    <span class="notification-badge">3</span>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#">Новый заказ #12345</a></li>
+                                    <li><a class="dropdown-item" href="#">Требуется подтверждение</a></li>
+                                    <li><a class="dropdown-item" href="#">Обновление системы</a></li>
+                                </ul>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-person-circle"></i> {{ seller.company_name }}
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{% url 'sellers:profile' %}"><i class="bi bi-person me-2"></i>Профиль</a></li>
+                                    <li><a class="dropdown-item" href="#"><i class="bi bi-box-arrow-right me-2"></i>Выйти</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Основной контент -->
+            <div class="container-fluid py-4">
+                <!-- Быстрая статистика -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="quick-stats">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="stat-number">{{ total_products }}</div>
+                                    <div class="stat-label">Всего товаров</div>
+                                </div>
+                                <i class="bi bi-box-seam text-primary fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="quick-stats">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="stat-number">{{ active_products }}</div>
+                                    <div class="stat-label">Активных</div>
+                                </div>
+                                <i class="bi bi-check-circle text-success fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="quick-stats">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="stat-number">{{ low_stock_products }}</div>
+                                    <div class="stat-label">Мало на складе</div>
+                                </div>
+                                <i class="bi bi-exclamation-triangle text-warning fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="quick-stats">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="stat-number">{{ out_of_stock_products }}</div>
+                                    <div class="stat-label">Нет в наличии</div>
+                                </div>
+                                <i class="bi bi-x-circle text-danger fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Панель действий -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">Список товаров</h5>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'sellers:product_add' %}" class="btn btn-primary">
+                                    <i class="bi bi-plus-circle me-2"></i>Добавить товар
+                                </a>
+                                <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#importProductsModal">
+                                    <i class="bi bi-upload me-2"></i>Импорт
+                                </button>
+                                <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#exportProductsModal">
+                                    <i class="bi bi-download me-2"></i>Экспорт
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Фильтры -->
+                <div class="filter-section">
+                    <form method="get" id="productFilterForm">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Поиск</label>
+                                <input type="text" class="form-control" name="search" placeholder="Название или артикул..." value="{{ request.GET.search }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Категория</label>
+                                <select class="form-select" name="category">
+                                    <option value="">Все категории</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"i" %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Статус</label>
+                                <select class="form-select" name="status">
+                                    <option value="">Все</option>
+                                    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Активные</option>
+                                    <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Неактивные</option>
+                                    <option value="low_stock" {% if request.GET.status == 'low_stock' %}selected{% endif %}>Мало на складе</option>
+                                    <option value="out_of_stock" {% if request.GET.status == 'out_of_stock' %}selected{% endif %}>Нет в наличии</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Тип товара</label>
+                                <select class="form-select" name="product_type">
+                                    <option value="">Все типы</option>
+                                    {% for type_code, type_name in product_types %}
+                                    <option value="{{ type_code }}" {% if request.GET.product_type == type_code %}selected{% endif %}>
+                                        {{ type_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">&nbsp;</label>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="bi bi-funnel me-2"></i>Применить
+                                    </button>
+                                    <a href="{% url 'sellers:products' %}" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Массовые действия -->
+                <div class="bulk-actions" id="bulkActions" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span id="selectedCount">Выбрано: 0 товаров</span>
+                        <div class="d-flex gap-2">
+                            <select class="form-select form-select-sm" id="bulkActionSelect" style="width: auto;">
+                                <option value="">Действие с выбранными</option>
+                                <option value="activate">Активировать</option>
+                                <option value="deactivate">Деактивировать</option>
+                                <option value="delete">Удалить</option>
+                            </select>
+                            <button class="btn btn-primary btn-sm" id="applyBulkAction">Применить</button>
+                            <button class="btn btn-outline-secondary btn-sm" id="clearSelection">Снять выделение</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Таблица товаров -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th width="30">
+                                            <input type="checkbox" class="form-check-input" id="selectAll">
+                                        </th>
+                                        <th width="80">Фото</th>
+                                        <th>Товар</th>
+                                        <th>Категория</th>
+                                        <th>Артикул</th>
+                                        <th>Цена</th>
+                                        <th>Остаток</th>
+                                        <th>Статус</th>
+                                        <th>Модерация</th>
+                                        <th>Дата</th>
+                                        <th width="120">Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for product in products %}
+                                    <tr>
+                                        <td>
+                                            <input type="checkbox" class="form-check-input product-checkbox" value="{{ product.id }}">
+                                        </td>
+                                        <td>
+                                            {% if product.image|has_image %}
+                                            <img src="{{ product.image|safe_image_url }}" alt="{{ product.name }}" class="product-image" style="width: 50px; height: 50px; object-fit: cover;">
+                                            {% else %}
+                                            <div class="bg-light d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                <i class="bi bi-image text-muted"></i>
+                                            </div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold">{{ product.name }}</div>
+                                            <small class="text-muted">{{ product.get_product_type_display }}</small>
+                                        </td>
+                                        <td>{{ product.category.name }}</td>
+                                        <td>
+                                            {% if product.part_number %}
+                                            <code>{{ product.part_number }}</code>
+                                            {% else %}
+                                            <span class="text-muted">—</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold">{{ product.price }} ₽</div>
+                                            {% if product.old_price %}
+                                            <small class="text-muted text-decoration-line-through">{{ product.old_price }} ₽</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if product.stock > 10 %}
+                                            <span class="text-success">{{ product.stock }} шт.</span>
+                                            {% elif product.stock > 0 %}
+                                            <span class="text-warning">{{ product.stock }} шт.</span>
+                                            {% else %}
+                                            <span class="text-danger">0 шт.</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if product.is_active %}
+                                                {% if product.stock > 10 %}
+                                                <span class="product-status status-active">Активен</span>
+                                                {% elif product.stock > 0 %}
+                                                <span class="product-status status-low-stock">Мало</span>
+                                                {% else %}
+                                                <span class="product-status status-inactive">Нет в наличии</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="product-status status-inactive">Неактивен</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ product.created_at|date:"d.m.Y" }}</small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" style="border: none;">
+                                                <a href="{% url 'sellers:product_edit' product.id %}" class="btn btn-link text-primary p-1" title="Редактировать">
+                                                    <i class="bi bi-pencil fs-5"></i>
+                                                </a>
+                                                <button class="btn btn-link text-secondary p-1" title="Дублировать"
+                                                        onclick="openDuplicateModal({{ product.id }}, '{{ product.name|escapejs }}', '{{ product.part_number|default:""|escapejs }}', {{ product.category.id }}, '{{ product.product_type }}', '{{ product.vin_number|default:""|escapejs }}', '{{ product.barcode|default:""|escapejs }}', {{ product.price }}, {{ product.old_price|default:"0" }}, {{ product.quantity|default:"1" }}, {{ product.stock }}, '{{ product.description|default:""|escapejs }}', '{{ product.specifications|default:""|escapejs }}', {{ product.is_active|yesno:"true,false" }}, {{ product.is_available|yesno:"true,false" }}, {{ product.has_guarantee|yesno:"true,false" }}, {{ product.is_original|yesno:"true,false" }})">
+                                                    <i class="bi bi-files fs-5"></i>
+                                                </button>
+                                                <button class="btn btn-link text-danger p-1" title="Удалить"
+                                                        onclick="confirmDelete({{ product.id }}, '{{ product.name|escapejs }}')">
+                                                    <i class="bi bi-trash fs-5"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                       <td colspan="10" class="text-center py-4">
+                                            <img src="{% static 'img/empty-box.png' %}" alt="Нет завершенных заказов" width="250" height="200" class="mb-4">
+                                            <p class="mt-2">Товары не найдены</p>
+                                            <a href="{% url 'sellers:product_add' %}" class="btn btn-primary">
+                                                Добавить товар
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Пагинация -->
+                        {% if products.has_other_pages %}
+                        <nav aria-label="Page navigation" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                {% if products.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ products.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Назад</a>
+                                </li>
+                                {% endif %}
+
+                                {% for i in products.paginator.page_range %}
+                                    {% if products.number == i %}
+                                    <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                                    {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                                    </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if products.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ products.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Вперед</a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно редактирования товара -->
+<div class="modal fade" id="editProductModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактировать товар</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editProductForm" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <!-- Основная информация -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">Информация о товаре</h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <input type="text" class="form-control" name="name" id="editName" required placeholder="Введите название товара">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <input type="text" class="form-control" name="part_number" id="editPartNumber" placeholder="Артикул производителя">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <select class="form-select" name="category" id="editCategory" required>
+                                <option value="">Выберите категорию</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <select class="form-select" name="product_type" id="editProductType">
+                                {% for type_code, type_name in product_types %}
+                                <option value="{{ type_code }}">{{ type_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Идентификаторы -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <input type="text" class="form-control" name="vin_number" id="editVinNumber" placeholder="VIN номер автомобиля">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group">
+                                <input type="text" class="form-control" name="barcode" id="editBarcode" placeholder="Штрихкод товара">
+                                <button type="button" class="btn btn-outline-secondary" onclick="generateBarcodeEdit()">
+                                    <i class="bi bi-upc-scan"></i> Сгенерировать
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Цены и наличие -->
+                    <div class="row mb-4">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Цена *</label>
+                            <input type="number" class="form-control" name="price" id="editPrice" step="0.01" min="0.01" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Цена до скидки</label>
+                            <input type="number" class="form-control" name="old_price" id="editOldPrice" step="0.01" min="0.01">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Количество *</label>
+                            <input type="number" class="form-control" name="quantity" id="editQuantity" min="1" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Остаток на складе</label>
+                            <input type="number" class="form-control" name="stock" id="editStock" min="0">
+                        </div>
+                    </div>
+
+                    <!-- Описание и характеристики -->
+                    <div class="row mb-4">
+                        <div class="col-12 mb-3">
+                            <textarea class="form-control" name="description" id="editDescription" rows="4" placeholder="Подробное описание товара..."></textarea>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <textarea class="form-control" name="specifications" id="editSpecifications" rows="4" placeholder="Технические характеристики:
+• Материал:
+• Размер:
+• Вес:
+• Цвет:
+• Производитель:"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Дополнительные настройки -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_active" id="editIsActive">
+                                <label class="form-check-label" for="editIsActive">
+                                    Активный товар
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_available" id="editIsAvailable">
+                                <label class="form-check-label" for="editIsAvailable">
+                                    Доступен для заказа
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_guarantee" id="editHasGuarantee">
+                                <label class="form-check-label" for="editHasGuarantee">
+                                    Есть гарантия
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_original" id="editIsOriginal">
+                                <label class="form-check-label" for="editIsOriginal">
+                                    Оригинальная запчасть
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" id="saveEditProductBtn" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-2"></i>Сохранить изменения
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно дублирования товара -->
+<div class="modal fade" id="duplicateProductModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Дублировать товар</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="duplicateProductForm" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <!-- Основная информация -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">Информация о товаре</h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Название товара *</label>
+                            <input type="text" class="form-control" name="name" id="duplicateName" required placeholder="Введите название товара">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Артикул производителя</label>
+                            <input type="text" class="form-control" name="part_number" id="duplicatePartNumber" placeholder="Артикул производителя">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Категория *</label>
+                            <select class="form-select" name="category" id="duplicateCategory" required>
+                                <option value="">Выберите категорию</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Тип товара</label>
+                            <select class="form-select" name="product_type" id="duplicateProductType">
+                                {% for type_code, type_name in product_types %}
+                                <option value="{{ type_code }}">{{ type_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Идентификаторы -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">VIN номер автомобиля</label>
+                            <input type="text" class="form-control" name="vin_number" id="duplicateVinNumber" placeholder="VIN номер автомобиля">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Штрихкод товара</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" name="barcode" id="duplicateBarcode" placeholder="Штрихкод товара">
+                                <button type="button" class="btn btn-outline-secondary" onclick="generateBarcodeDuplicate()">
+                                    <i class="bi bi-upc-scan"></i> Сгенерировать
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Цены и наличие -->
+                    <div class="row mb-4">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Цена *</label>
+                            <input type="number" class="form-control" name="price" id="duplicatePrice" step="0.01" min="0.01" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Цена до скидки</label>
+                            <input type="number" class="form-control" name="old_price" id="duplicateOldPrice" step="0.01" min="0.01">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Количество *</label>
+                            <input type="number" class="form-control" name="quantity" id="duplicateQuantity" min="1" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Остаток на складе</label>
+                            <input type="number" class="form-control" name="stock" id="duplicateStock" min="0">
+                        </div>
+                    </div>
+
+                    <!-- Описание и характеристики -->
+                    <div class="row mb-4">
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Описание товара</label>
+                            <textarea class="form-control" name="description" id="duplicateDescription" rows="4" placeholder="Подробное описание товара..."></textarea>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Технические характеристики</label>
+                            <textarea class="form-control" name="specifications" id="duplicateSpecifications" rows="4" placeholder="Технические характеристики:
+• Материал:
+• Размер:
+• Вес:
+• Цвет:
+• Производитель:"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Дополнительные настройки -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_active" id="duplicateIsActive" checked>
+                                <label class="form-check-label" for="duplicateIsActive">
+                                    Активный товар
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_available" id="duplicateIsAvailable" checked>
+                                <label class="form-check-label" for="duplicateIsAvailable">
+                                    Доступен для заказа
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_guarantee" id="duplicateHasGuarantee">
+                                <label class="form-check-label" for="duplicateHasGuarantee">
+                                    Есть гарантия
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_original" id="duplicateIsOriginal">
+                                <label class="form-check-label" for="duplicateIsOriginal">
+                                    Оригинальная запчасть
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Фотографии товара -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">Фотографии товара</h6>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="duplicateCopyImages" checked>
+                                <label class="form-check-label" for="duplicateCopyImages">
+                                    Копировать изображения из оригинала
+                                </label>
+                            </div>
+                            <div class="image-upload-container">
+                                <input type="file" id="duplicateImageUpload" multiple accept="image/*" style="display: none;">
+                                <div class="image-preview-grid" id="duplicateImagePreviewGrid">
+                                    <!-- Плейсхолдер для загрузки -->
+                                    <div class="image-upload-placeholder" onclick="document.getElementById('duplicateImageUpload').click()">
+                                        <i class="bi bi-plus-lg fs-1"></i>
+                                        <div class="mt-2">Добавить фото</div>
+                                    </div>
+
+                                    <!-- 9 дополнительных пустых слотов -->
+                                    <div class="image-empty-slot"></div>
+                                    <div class="image-empty-slot"></div>
+                                    <div class="image-empty-slot"></div>
+                                    <div class="image-empty-slot"></div>
+                                    <div class="image-empty-slot"></div>
+                                    <div class="image-empty-slot"></div>
+                                    <div class="image-empty-slot"></div>
+                                    <div class="image-empty-slot"></div>
+                                    <div class="image-empty-slot"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="submit" form="duplicateProductForm" class="btn btn-primary">
+                    <i class="bi bi-files me-2"></i>Создать копию
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно импорта товаров -->
+<div class="modal fade" id="importProductsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Импорт товаров</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-12">
+                        <!-- Шаги импорта -->
+                        <div class="import-steps mb-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="step active" data-step="1">
+                                    <span class="step-number">1</span>
+                                    <span class="step-label">Загрузка файла</span>
+                                </div>
+                                <div class="step-line"></div>
+                                <div class="step" data-step="2">
+                                    <span class="step-number">2</span>
+                                    <span class="step-label">Настройка полей</span>
+                                </div>
+                                <div class="step-line"></div>
+                                <div class="step" data-step="3">
+                                    <span class="step-number">3</span>
+                                    <span class="step-label">Проверка данных</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Шаг 1: Загрузка файла -->
+                        <div class="import-step step-1 active">
+                            <div class="file-upload-area p-4 border rounded text-center mb-3">
+                                <i class="bi bi-cloud-upload fs-1 text-muted mb-3"></i>
+                                <h5>Перетащите файл сюда</h5>
+                                <p class="text-muted">Поддерживаемые форматы: CSV, XLSX, XLS</p>
+                                <input type="file" id="importFile" accept=".csv,.xlsx,.xls" style="display: none;">
+                                <button type="button" class="btn btn-primary mt-2" onclick="document.getElementById('importFile').click()">
+                                    <i class="bi bi-folder2-open me-2"></i>Выбрать файл
+                                </button>
+                            </div>
+                            <div class="file-info" id="fileInfo" style="display: none;">
+                                <div class="alert alert-info">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <i class="bi bi-file-earmark-text me-2"></i>
+                                            <span id="fileName"></span>
+                                            <small class="text-muted" id="fileSize"></small>
+                                        </div>
+                                        <button type="button" class="btn-close" onclick="clearImportFile()"></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Шаг 2: Настройка полей -->
+                        <div class="import-step step-2" style="display: none;">
+                            <div class="field-mapping mb-3">
+                                <h6 class="mb-3">Сопоставление полей</h6>
+                                <div id="fieldMapping" class="row g-2">
+                                    <!-- Поля будут заполнены динамически -->
+                                </div>
+                            </div>
+                            <div class="import-settings">
+                                <h6 class="mb-3">Настройки импорта</h6>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="updateExisting" checked>
+                                    <label class="form-check-label" for="updateExisting">
+                                        Обновлять существующие товары
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="deactivateMissing" checked>
+                                    <label class="form-check-label" for="deactivateMissing">
+                                        Деактивировать отсутствующие в файле товары
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Шаг 3: Проверка данных -->
+                        <div class="import-step step-3" style="display: none;">
+                            <div class="import-preview">
+                                <h6 class="mb-3">Предпросмотр данных</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered">
+                                        <thead id="previewHeaders">
+                                            <!-- Заголовки будут заполнены динамически -->
+                                        </thead>
+                                        <tbody id="previewBody">
+                                            <!-- Данные будут заполнены динамически -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="import-summary mt-3">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="card bg-light">
+                                                <div class="card-body text-center">
+                                                    <div class="h4 mb-0" id="totalRows">0</div>
+                                                    <small class="text-muted">Всего строк</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card bg-light">
+                                                <div class="card-body text-center">
+                                                    <div class="h4 mb-0 text-success" id="validRows">0</div>
+                                                    <small class="text-muted">Валидных</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card bg-light">
+                                                <div class="card-body text-center">
+                                                    <div class="h4 mb-0 text-warning" id="warningRows">0</div>
+                                                    <small class="text-muted">С предупреждениями</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-outline-secondary" id="importPrevBtn" style="display: none;">
+                    <i class="bi bi-arrow-left me-2"></i>Назад
+                </button>
+                <button type="button" class="btn btn-primary" id="importNextBtn">
+                    Далее <i class="bi bi-arrow-right ms-2"></i>
+                </button>
+                <button type="button" class="btn btn-success" id="importStartBtn" style="display: none;">
+                    <i class="bi bi-play-circle me-2"></i>Начать импорт
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно экспорта товаров -->
+<div class="modal fade" id="exportProductsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Экспорт товаров</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-4">
+                    <label class="form-label">Формат экспорта</label>
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <div class="form-check card-option">
+                                <input class="form-check-input" type="radio" name="exportFormat" id="formatCSV" value="csv" checked>
+                                <label class="form-check-label card" for="formatCSV">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-file-earmark-text fs-2 text-primary"></i>
+                                        <div class="mt-2">CSV</div>
+                                        <small class="text-muted">Универсальный</small>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="form-check card-option">
+                                <input class="form-check-input" type="radio" name="exportFormat" id="formatXLSX" value="xlsx">
+                                <label class="form-check-label card" for="formatXLSX">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-file-earmark-spreadsheet fs-2 text-success"></i>
+                                        <div class="mt-2">Excel</div>
+                                        <small class="text-muted">Для редактирования</small>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="form-check card-option">
+                                <input class="form-check-input" type="radio" name="exportFormat" id="formatJSON" value="json">
+                                <label class="form-check-label card" for="formatJSON">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-code-slash fs-2 text-warning"></i>
+                                        <div class="mt-2">JSON</div>
+                                        <small class="text-muted">Для разработки</small>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Какие товары экспортировать</label>
+                    <select class="form-select" id="exportScope">
+                        <option value="all">Все товары</option>
+                        <option value="filtered">Только отфильтрованные</option>
+                        <option value="selected">Только выбранные</option>
+                        <option value="active">Только активные</option>
+                        <option value="inactive">Только неактивные</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Поля для экспорта</label>
+                    <div class="export-fields">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="exportAllFields" checked>
+                            <label class="form-check-label" for="exportAllFields">
+                                Все поля
+                            </label>
+                        </div>
+                        <div class="fields-list mt-2" style="max-height: 200px; overflow-y: auto;">
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input field-checkbox" type="checkbox" value="name" checked disabled>
+                                        <label class="form-check-label">Название</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input field-checkbox" type="checkbox" value="part_number" checked>
+                                        <label class="form-check-label">Артикул</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input field-checkbox" type="checkbox" value="category" checked>
+                                        <label class="form-check-label">Категория</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input field-checkbox" type="checkbox" value="price" checked>
+                                        <label class="form-check-label">Цена</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input field-checkbox" type="checkbox" value="stock" checked>
+                                        <label class="form-check-label">Остаток</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input field-checkbox" type="checkbox" value="description">
+                                        <label class="form-check-label">Описание</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="export-progress" style="display: none;">
+                    <div class="progress mb-2">
+                        <div class="progress-bar" role="progressbar" style="width: 0%" id="exportProgressBar"></div>
+                    </div>
+                    <small class="text-muted" id="exportProgressText">Подготовка к экспорту...</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="exportStartBtn">
+                    <i class="bi bi-download me-2"></i>Экспортировать
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.image-upload-container {
+    margin-top: 1rem;
+}
+
+.image-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+    margin-top: 1rem;
+}
+
+.image-upload-placeholder {
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+    color: #6c757d;
+    padding: 10px;
+    text-align: center;
+}
+
+.image-upload-placeholder:hover {
+    border-color: #007bff;
+    background: #e7f3ff;
+    color: #007bff;
+    transform: translateY(-2px);
+}
+
+.image-empty-slot {
+    border: 2px dashed #f8f9fa;
+    border-radius: 8px;
+    height: 100px;
+    background: #f8f9fa;
+    opacity: 0.5;
+}
+
+.image-preview-item {
+    position: relative;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    height: 100px;
+    overflow: hidden;
+    background: #fff;
+    transition: all 0.3s ease;
+}
+
+.image-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-remove-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #dc3545;
+    color: #dc3545;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 10px;
+    transition: all 0.3s ease;
+    opacity: 0;
+}
+
+.image-preview-item:hover .image-remove-btn {
+    opacity: 1;
+}
+
+.image-remove-btn:hover {
+    background: #dc3545;
+    color: white;
+    transform: scale(1.1);
+}
+
+.image-preview-item:hover {
+    border-color: #007bff;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+}
+
+/* Скрываем пустые слоты когда есть изображения */
+.image-preview-grid.has-images .image-empty-slot {
+    display: none;
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 768px) {
+    .image-preview-grid {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 8px;
+    }
+
+    .image-upload-placeholder,
+    .image-preview-item,
+    .image-empty-slot {
+        height: 80px;
+    }
+}
+</style>
+<style>
+/* Стили для шагов импорта */
+.import-steps {
+    position: relative;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+}
+
+.step-number {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #e9ecef;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.step-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-align: center;
+}
+
+.step.active .step-number {
+    background: #007bff;
+    color: white;
+}
+
+.step.active .step-label {
+    color: #007bff;
+    font-weight: 600;
+}
+
+.step-line {
+    flex: 1;
+    height: 2px;
+    background: #e9ecef;
+    margin: 0 10px;
+    position: relative;
+    top: -15px;
+}
+
+/* Область загрузки файла */
+.file-upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.file-upload-area:hover {
+    border-color: #007bff;
+    background: #f8f9fa;
+}
+
+.file-upload-area.dragover {
+    border-color: #007bff;
+    background: #e7f3ff;
+}
+
+/* Карточки выбора формата */
+.card-option .card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.card-option input:checked + .card {
+    border-color: #007bff;
+    background: #f8f9ff;
+}
+
+.card-option .card:hover {
+    border-color: #007bff;
+}
+
+/* Прогресс бар */
+.progress {
+    height: 8px;
+}
+
+.export-fields .fields-list {
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 1rem;
+}
+
+.import-step {
+    transition: all 0.3s ease;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+console.log('=== Seller Product Script Loading ===');
+
+// Функция для получения CSRF токена
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function getCsrfToken(formElement) {
+    // Приоритет: сначала cookie, потом форма
+    // Это гарантирует, что мы используем актуальный токен из cookie
+    const cookieToken = getCookie('csrftoken');
+    if (cookieToken) {
+        return cookieToken;
+    }
+    
+    // Если cookie нет, пытаемся получить из формы
+    if (formElement) {
+        const formToken = formElement.querySelector('[name=csrfmiddlewaretoken]');
+        if (formToken && formToken.value) {
+            return formToken.value;
+        }
+    }
+    
+    // Пытаемся получить из любой формы на странице
+    const formToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (formToken && formToken.value) {
+        return formToken.value;
+    }
+    
+    return '';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    // Выделение всех товаров
+    document.getElementById('selectAll').addEventListener('change', function() {
+        var checkboxes = document.querySelectorAll('.product-checkbox');
+        checkboxes.forEach(function(checkbox) {
+            checkbox.checked = this.checked;
+        }.bind(this));
+        updateBulkActions();
+    });
+
+    // Обновление массовых действий
+    document.querySelectorAll('.product-checkbox').forEach(function(checkbox) {
+        checkbox.addEventListener('change', updateBulkActions);
+    });
+
+    // Применение массовых действий
+    document.getElementById('applyBulkAction').addEventListener('click', function() {
+        const action = document.getElementById('bulkActionSelect').value;
+        const selectedProducts = getSelectedProducts();
+
+        if (selectedProducts.length === 0) {
+            alert('Выберите товары для действия');
+            return;
+        }
+
+        if (action === 'delete') {
+            if (!confirm(`Вы уверены, что хотите удалить ${selectedProducts.length} товаров?`)) {
+                return;
+            }
+        }
+
+        // Отправка AJAX запроса
+        performBulkAction(action, selectedProducts);
+    });
+
+    // Очистка выделения
+    document.getElementById('clearSelection').addEventListener('click', function() {
+        document.querySelectorAll('.product-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        document.getElementById('selectAll').checked = false;
+        updateBulkActions();
+    });
+
+    // Обработчик формы удаления товара
+    document.getElementById('deleteProductForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const form = this;
+
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCsrfToken(form)
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Закрываем модальное и обновляем данные
+                bootstrap.Modal.getInstance(document.getElementById('deleteProductModal')).hide();
+                loadProductsTable();
+                if (data.stats) {
+                    updateStatistics(data.stats);
+                }
+                showNotification('Товар успешно удален', 'success');
+            } else {
+                alert('Ошибка: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Ошибка при удалении товара');
+        });
+    });
+
+    // Обработчик формы добавления товара
+    // Используем делегирование событий, так как форма может быть в модальном окне
+    function setupAddProductForm() {
+        const addProductForm = document.getElementById('addProductForm');
+        if (!addProductForm) {
+            console.log('Form addProductForm not found, will retry...');
+            return false;
+        }
+        
+        // Удаляем старый обработчик, если есть
+        const newForm = addProductForm.cloneNode(true);
+        addProductForm.parentNode.replaceChild(newForm, addProductForm);
+        
+        const form = document.getElementById('addProductForm');
+        console.log('Form addProductForm found, adding event listener');
+        
+        form.addEventListener('submit', function(e) {
+            console.log('=== Form submit event triggered ===');
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            const form = this;
+        const formData = new FormData(form);
+        
+        const csrfToken = getCsrfToken(form);
+
+        if (!csrfToken) {
+            alert('Ошибка: не удалось получить CSRF токен. Пожалуйста, обновите страницу.');
+            return;
+        }
+
+        if (formData.has('csrfmiddlewaretoken')) {
+            formData.delete('csrfmiddlewaretoken');
+        }
+        formData.append('csrfmiddlewaretoken', csrfToken);
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            // НЕ устанавливаем Content-Type - браузер установит его автоматически с boundary для FormData
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin' // Важно для передачи cookies
+        })
+        .then(response => {
+            console.log('=== Response Info ===');
+            console.log('Response status:', response.status);
+            console.log('Response statusText:', response.statusText);
+            if (!response.ok) {
+                return response.text().then(text => {
+                    console.error('=== Error Response ===');
+                    console.error('Status:', response.status);
+                    console.error('Response text:', text);
+                    throw new Error('Server error: ' + response.status + ' - ' + text.substring(0, 200));
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('=== Success Response ===');
+            console.log('Data:', data);
+            if (data.success) {
+                // Закрываем модальное и обновляем данные
+                bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
+                form.reset();
+                // Сбрасываем превью изображений
+                resetImagePreviews();
+                loadProductsTable();
+                if (data.stats) {
+                    updateStatistics(data.stats);
+                }
+                showNotification('Товар успешно добавлен', 'success');
+            } else {
+                console.error('Server returned success=false:', data);
+                alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+            }
+        })
+        .catch(error => {
+            console.error('=== Fetch Error ===');
+            console.error('Error:', error);
+            console.error('Error message:', error.message);
+            console.error('Error stack:', error.stack);
+            alert('Ошибка при добавлении товара: ' + error.message);
+        });
+        });
+        
+        return true;
+    }
+    
+    // Пытаемся прикрепить обработчик сразу
+    console.log('=== Trying to setup form handler ===');
+    if (!setupAddProductForm()) {
+        console.log('Form not found, setting up modal listener');
+        // Если форма еще не загружена, ждем открытия модального окна
+        const addProductModal = document.getElementById('addProductModal');
+        if (addProductModal) {
+            console.log('Modal element found, adding listener');
+            addProductModal.addEventListener('shown.bs.modal', function() {
+                console.log('Modal opened, setting up form handler');
+                setupAddProductForm();
+            });
+        } else {
+            console.log('Modal element not found, will retry');
+            // Если модальное окно еще не загружено, ждем немного и пробуем снова
+            setTimeout(function() {
+                console.log('Retrying form setup after timeout');
+                if (!setupAddProductForm()) {
+                    const modal = document.getElementById('addProductModal');
+                    if (modal) {
+                        console.log('Modal found after timeout, adding listener');
+                        modal.addEventListener('shown.bs.modal', function() {
+                            console.log('Modal opened, setting up form handler');
+                            setupAddProductForm();
+                        });
+                    } else {
+                        console.error('Modal still not found after timeout');
+                    }
+                }
+            }, 500);
+        }
+    } else {
+        console.log('Form handler setup successful');
+    }
+
+    // Обработчик формы редактирования товара
+    const editProductForm = document.getElementById('editProductForm');
+    const saveEditBtn = document.getElementById('saveEditProductBtn');
+    
+    if (editProductForm && saveEditBtn) {
+        // Обработчик кнопки сохранения
+        saveEditBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const form = document.getElementById('editProductForm');
+            if (!form) {
+                alert('Форма не найдена');
+                return;
+            }
+            
+            const formData = new FormData(form);
+            const csrfToken = getCsrfToken(form);
+            
+            if (!csrfToken) {
+                alert('Ошибка: не удалось получить CSRF токен. Пожалуйста, обновите страницу.');
+                return;
+            }
+            
+            // Убеждаемся, что токен есть в FormData
+            if (formData.has('csrfmiddlewaretoken')) {
+                formData.delete('csrfmiddlewaretoken');
+            }
+            formData.append('csrfmiddlewaretoken', csrfToken);
+            
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error('Server error: ' + response.status);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Закрываем модальное и обновляем данные
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
+                    if (modal) {
+                        modal.hide();
+                    }
+                    if (typeof loadProductsTable === 'function') {
+                        loadProductsTable();
+                    }
+                    if (typeof showNotification === 'function') {
+                        showNotification('Товар успешно обновлен', 'success');
+                    } else {
+                        alert('Товар успешно обновлен');
+                    }
+                } else {
+                    alert('Ошибка: ' + (data.error || data.message || 'Неизвестная ошибка'));
+                }
+            })
+            .catch(error => {
+                console.error('Error updating product:', error);
+                alert('Ошибка при обновлении товара: ' + error.message);
+            });
+        });
+        
+        // Также предотвращаем обычную отправку формы
+        editProductForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            // Триггерим клик на кнопке
+            document.getElementById('saveEditProductBtn').click();
+        });
+    }
+
+    // Инициализация обработчиков
+    rebindEventHandlers();
+});
+
+function updateBulkActions() {
+    var selectedCount = document.querySelectorAll('.product-checkbox:checked').length;
+    var bulkActions = document.getElementById('bulkActions');
+
+    if (selectedCount > 0) {
+        bulkActions.style.display = 'block';
+        document.getElementById('selectedCount').textContent = 'Выбрано: ' + selectedCount + ' товаров';
+    } else {
+        bulkActions.style.display = 'none';
+    }
+}
+
+function getSelectedProducts() {
+    const checkboxes = document.querySelectorAll('.product-checkbox:checked');
+    return Array.from(checkboxes).map(checkbox => checkbox.value);
+}
+
+function performBulkAction(action, productIds) {
+    fetch('{% url "sellers:product_bulk_action" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken(form)
+        },
+        body: JSON.stringify({
+            action: action,
+            product_ids: productIds
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadProductsTable();
+            showNotification(`Действие выполнено для ${productIds.length} товаров`, 'success');
+        } else {
+            alert('Ошибка: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Ошибка при выполнении действия');
+    });
+}
+
+function confirmDelete(productId, productName) {
+    // Устанавливаем текст подтверждения
+    document.getElementById('deleteProductText').textContent =
+        `Вы уверены, что хотите удалить товар "${productName}"?`;
+
+    // Устанавливаем action формы
+    document.getElementById('deleteProductForm').action = `/sellers/products/${productId}/delete/`;
+
+    // Показываем модальное окно
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteProductModal'));
+    deleteModal.show();
+}
+
+// Функция для открытия модального окна редактирования
+function openEditModal(productId, name, partNumber, categoryId, productType, vinNumber, barcode, price, oldPrice, quantity, stock, description, specifications, isActive, isAvailable, hasGuarantee, isOriginal) {
+    // Устанавливаем action формы
+    document.getElementById('editProductForm').action = `/sellers/products/${productId}/edit/`;
+
+    // Заполняем поля формы
+    document.getElementById('editName').value = name;
+    document.getElementById('editPartNumber').value = partNumber || '';
+    document.getElementById('editCategory').value = categoryId;
+    document.getElementById('editProductType').value = productType;
+    document.getElementById('editVinNumber').value = vinNumber || '';
+    document.getElementById('editBarcode').value = barcode || '';
+    document.getElementById('editPrice').value = price;
+    document.getElementById('editOldPrice').value = oldPrice || '';
+    document.getElementById('editQuantity').value = quantity || 1;
+    document.getElementById('editStock').value = stock || 0;
+    document.getElementById('editDescription').value = description || '';
+    document.getElementById('editSpecifications').value = specifications || '';
+    document.getElementById('editIsActive').checked = isActive;
+    document.getElementById('editIsAvailable').checked = isAvailable;
+    document.getElementById('editHasGuarantee').checked = hasGuarantee;
+    document.getElementById('editIsOriginal').checked = isOriginal;
+
+    // Показываем модальное окно
+    const editModal = new bootstrap.Modal(document.getElementById('editProductModal'));
+    editModal.show();
+}
+
+// Функция для генерации штрихкода в форме редактирования
+function generateBarcodeEdit() {
+    let barcode = '2';
+    for (let i = 0; i < 11; i++) {
+        barcode += Math.floor(Math.random() * 10);
+    }
+
+    let sum = 0;
+    for (let i = 0; i < 12; i++) {
+        let digit = parseInt(barcode[i]);
+        sum += (i % 2 === 0) ? digit : digit * 3;
+    }
+    let checksum = (10 - (sum % 10)) % 10;
+    barcode += checksum;
+
+    document.getElementById('editBarcode').value = barcode;
+}
+
+// Функция для загрузки таблицы товаров через AJAX
+function loadProductsTable() {
+    const currentUrl = new URL(window.location);
+    currentUrl.searchParams.set('ajax', 'true');
+
+    fetch(currentUrl.toString(), {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.text())
+    .then(html => {
+        // Создаем временный элемент для парсинга HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+
+        // Обновляем таблицу
+        const tableContent = tempDiv.querySelector('.table-responsive');
+        if (tableContent) {
+            document.querySelector('.table-responsive').innerHTML = tableContent.innerHTML;
+        }
+
+        // Обновляем пагинацию если есть
+        const pagination = tempDiv.querySelector('.pagination');
+        if (pagination) {
+            const existingPagination = document.querySelector('.pagination');
+            if (existingPagination) {
+                existingPagination.innerHTML = pagination.innerHTML;
+            }
+        }
+
+        // Перепривязываем обработчики
+        rebindEventHandlers();
+        updateBulkActions();
+    })
+    .catch(error => {
+        console.error('Ошибка при загрузке таблицы:', error);
+    });
+}
+
+// Функция для обновления статистики
+function updateStatistics(stats) {
+    if (stats) {
+        const statNumbers = document.querySelectorAll('.stat-number');
+        if (statNumbers.length >= 4) {
+            statNumbers[0].textContent = stats.total_products;
+            statNumbers[1].textContent = stats.active_products;
+            statNumbers[2].textContent = stats.low_stock_products;
+            statNumbers[3].textContent = stats.out_of_stock_products;
+        }
+    }
+}
+
+// Функция для перепривязки обработчиков событий
+function rebindEventHandlers() {
+    // Перепривязываем обработчики чекбоксов
+    document.querySelectorAll('.product-checkbox').forEach(function(checkbox) {
+        checkbox.addEventListener('change', updateBulkActions);
+    });
+
+    // Перепривязываем обработчики удаления
+    document.querySelectorAll('.btn-link.text-danger').forEach(function(button) {
+        const row = button.closest('tr');
+        if (row) {
+            const productCheckbox = row.querySelector('.product-checkbox');
+            const productName = row.querySelector('.fw-bold');
+            if (productCheckbox && productName) {
+                const productId = productCheckbox.value;
+                const productNameText = productName.textContent.trim();
+                button.onclick = () => confirmDelete(productId, productNameText);
+            }
+        }
+    });
+
+     // Перепривязываем обработчики дублирования
+    document.querySelectorAll('.btn-link.text-secondary').forEach(function(button) {
+        const row = button.closest('tr');
+        if (row) {
+            const productCheckbox = row.querySelector('.product-checkbox');
+            const productName = row.querySelector('.fw-bold');
+            if (productCheckbox && productName) {
+                const productId = productCheckbox.value;
+                const productNameText = productName.textContent.trim();
+                // Здесь нужно получить остальные данные для передачи в функцию
+                button.onclick = () => openDuplicateModal(productId, productNameText, /* остальные параметры */);
+            }
+        }
+    });
+
+    // Перепривязываем обработчики редактирования
+    document.querySelectorAll('.btn-link.text-primary').forEach(function(button) {
+        const row = button.closest('tr');
+        if (row) {
+            const cells = row.querySelectorAll('td');
+            const productCheckbox = row.querySelector('.product-checkbox');
+
+            if (productCheckbox && cells.length >= 9) {
+                const productId = productCheckbox.value;
+                const productName = cells[2].querySelector('.fw-bold').textContent.trim();
+                const productPartNumber = cells[4].querySelector('code') ? cells[4].querySelector('code').textContent.trim() : '';
+                const productCategory = cells[3].textContent.trim();
+                const productType = cells[2].querySelector('small').textContent.trim();
+                const productPrice = parseFloat(cells[5].querySelector('.fw-bold').textContent.replace('₽', '').trim());
+                const productStockText = cells[6].querySelector('span').textContent;
+                const productStock = parseInt(productStockText) || 0;
+
+                // Получаем данные из data-атрибутов если они есть
+                const productData = row.dataset;
+
+                button.onclick = () => {
+                    // Здесь нужно передать реальные данные товара
+                    // Временные значения для демонстрации
+                    openEditModal(
+                        productId,
+                        productName,
+                        productPartNumber,
+                        '', // categoryId - нужно получить из данных
+                        'spare_part', // productType - нужно получить из данных
+                        '', // vinNumber
+                        '', // barcode
+                        productPrice,
+                        0, // oldPrice
+                        1, // quantity
+                        productStock,
+                        '', // description
+                        '', // specifications
+                        true, // isActive
+                        true, // isAvailable
+                        false, // hasGuarantee
+                        false // isOriginal
+                    );
+                };
+            }
+        }
+    });
+
+    // Перепривязываем обработчик "Выделить все"
+    const selectAll = document.getElementById('selectAll');
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            var checkboxes = document.querySelectorAll('.product-checkbox');
+            checkboxes.forEach(function(checkbox) {
+                checkbox.checked = this.checked;
+            }.bind(this));
+            updateBulkActions();
+        });
+    }
+}
+
+// Функция для показа уведомлений
+function showNotification(message, type = 'success') {
+    // Создаем простое уведомление
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show position-fixed top-0 end-0 m-3" style="z-index: 9999;">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', alertHtml);
+
+    // Автоматически скрываем через 3 секунды
+    setTimeout(() => {
+        const alert = document.querySelector('.alert:last-child');
+        if (alert) {
+            alert.remove();
+        }
+    }, 3000);
+}
+
+// Функция для сброса превью изображений
+function resetImagePreviews() {
+    const previewGrid = document.getElementById('imagePreviewGrid');
+    if (previewGrid) {
+        // Удаляем все превью изображений
+        const previewItems = previewGrid.querySelectorAll('.image-preview-item');
+        previewItems.forEach(item => item.remove());
+
+        // Показываем плейсхолдер
+        const placeholder = previewGrid.querySelector('.image-upload-placeholder');
+        if (placeholder) {
+            placeholder.style.display = 'flex';
+        }
+
+        // Показываем пустые слоты
+        const emptySlots = previewGrid.querySelectorAll('.image-empty-slot');
+        emptySlots.forEach(slot => slot.style.display = 'block');
+
+        previewGrid.classList.remove('has-images');
+    }
+}
+
+// Генерация случайного штрихкода
+function generateBarcode() {
+    let barcode = '2';
+    for (let i = 0; i < 11; i++) {
+        barcode += Math.floor(Math.random() * 10);
+    }
+
+    let sum = 0;
+    for (let i = 0; i < 12; i++) {
+        let digit = parseInt(barcode[i]);
+        sum += (i % 2 === 0) ? digit : digit * 3;
+    }
+    let checksum = (10 - (sum % 10)) % 10;
+    barcode += checksum;
+
+    document.getElementById('barcodeInput').value = barcode;
+}
+
+let currentDuplicateProductId = null;
+
+// Функция для открытия модального окна дублирования
+function openDuplicateModal(productId, name, partNumber, categoryId, productType, vinNumber, barcode, price, oldPrice, quantity, stock, description, specifications, isActive, isAvailable, hasGuarantee, isOriginal) {
+    currentDuplicateProductId = productId;
+
+    // Заполняем поля формы данными оригинала
+    document.getElementById('duplicateName').value = `${name} (копия)`;
+    document.getElementById('duplicatePartNumber').value = partNumber || '';
+    document.getElementById('duplicateCategory').value = categoryId;
+    document.getElementById('duplicateProductType').value = productType;
+    document.getElementById('duplicateVinNumber').value = vinNumber || '';
+    document.getElementById('duplicateBarcode').value = barcode || '';
+    document.getElementById('duplicatePrice').value = price;
+    document.getElementById('duplicateOldPrice').value = oldPrice || '';
+    document.getElementById('duplicateQuantity').value = quantity || 1;
+    document.getElementById('duplicateStock').value = stock || 0;
+    document.getElementById('duplicateDescription').value = description || '';
+    document.getElementById('duplicateSpecifications').value = specifications || '';
+    document.getElementById('duplicateIsActive').checked = false; // По умолчанию неактивен
+    document.getElementById('duplicateIsAvailable').checked = isAvailable;
+    document.getElementById('duplicateHasGuarantee').checked = hasGuarantee;
+    document.getElementById('duplicateIsOriginal').checked = isOriginal;
+    document.getElementById('duplicateCopyImages').checked = true;
+
+    // Сбрасываем превью изображений
+    resetDuplicateImagePreviews();
+
+    // Показываем модальное окно
+    const duplicateModal = new bootstrap.Modal(document.getElementById('duplicateProductModal'));
+    duplicateModal.show();
+}
+
+// Функция для генерации штрихкода в форме дублирования
+function generateBarcodeDuplicate() {
+    let barcode = '2';
+    for (let i = 0; i < 11; i++) {
+        barcode += Math.floor(Math.random() * 10);
+    }
+
+    let sum = 0;
+    for (let i = 0; i < 12; i++) {
+        let digit = parseInt(barcode[i]);
+        sum += (i % 2 === 0) ? digit : digit * 3;
+    }
+    let checksum = (10 - (sum % 10)) % 10;
+    barcode += checksum;
+
+    document.getElementById('duplicateBarcode').value = barcode;
+}
+
+// Функция для сброса превью изображений в форме дублирования
+function resetDuplicateImagePreviews() {
+    const previewGrid = document.getElementById('duplicateImagePreviewGrid');
+    if (previewGrid) {
+        // Удаляем все превью изображений
+        const previewItems = previewGrid.querySelectorAll('.image-preview-item');
+        previewItems.forEach(item => item.remove());
+
+        // Показываем плейсхолдер
+        const placeholder = previewGrid.querySelector('.image-upload-placeholder');
+        if (placeholder) {
+            placeholder.style.display = 'flex';
+        }
+
+        // Показываем пустые слоты
+        const emptySlots = previewGrid.querySelectorAll('.image-empty-slot');
+        emptySlots.forEach(slot => slot.style.display = 'block');
+
+        previewGrid.classList.remove('has-images');
+    }
+}
+
+// Обработчик формы дублирования товара
+document.getElementById('duplicateProductForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    if (!currentDuplicateProductId) return;
+
+    const form = this;
+    const formData = new FormData(form);
+
+    // Добавляем флаг копирования изображений
+    formData.append('copy_images', document.getElementById('duplicateCopyImages').checked);
+
+    // Устанавливаем правильный URL
+    form.action = `/sellers/products/${currentDuplicateProductId}/duplicate/`;
+
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCsrfToken(form)
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Закрываем модальное и обновляем данные
+            bootstrap.Modal.getInstance(document.getElementById('duplicateProductModal')).hide();
+            loadProductsTable();
+            if (data.stats) {
+                updateStatistics(data.stats);
+            }
+            showNotification('Товар успешно продублирован', 'success');
+            currentDuplicateProductId = null;
+        } else {
+            alert('Ошибка: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Ошибка при дублировании товара');
+    });
+});
+
+// Обработчик загрузки изображений для формы дублирования
+document.getElementById('duplicateImageUpload').addEventListener('change', function(e) {
+    const files = e.target.files;
+    const previewGrid = document.getElementById('duplicateImagePreviewGrid');
+    const placeholder = previewGrid.querySelector('.image-upload-placeholder');
+    const emptySlots = previewGrid.querySelectorAll('.image-empty-slot');
+
+    // Добавляем класс для скрытия пустых слотов
+    previewGrid.classList.add('has-images');
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        // Проверяем лимит файлов (макс. 10)
+        const currentItems = previewGrid.querySelectorAll('.image-preview-item').length;
+        if (currentItems >= 10) {
+            alert('Максимальное количество фотографий - 10');
+            break;
+        }
+
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                // Находим первый пустой слот
+                let targetSlot = null;
+                if (emptySlots.length > 0) {
+                    targetSlot = emptySlots[0];
+                } else if (placeholder) {
+                    targetSlot = placeholder;
+                }
+
+                if (targetSlot) {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'image-preview-item';
+                    previewItem.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview">
+                        <button type="button" class="image-remove-btn" onclick="removeDuplicateImage(this)">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    `;
+
+                    // Заменяем пустой слот на превью
+                    targetSlot.replaceWith(previewItem);
+
+                    // Обновляем список пустых слотов
+                    const updatedEmptySlots = previewGrid.querySelectorAll('.image-empty-slot');
+
+                    // Скрываем плейсхолдер если нет пустых слотов
+                    if (updatedEmptySlots.length === 0 && placeholder) {
+                        placeholder.style.display = 'none';
+                    }
+                }
+            };
+
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // Очищаем input чтобы можно было загружать те же файлы снова
+    e.target.value = '';
+});
+
+// Удаление изображения в форме дублирования
+function removeDuplicateImage(button) {
+    const previewItem = button.closest('.image-preview-item');
+    const previewGrid = document.getElementById('duplicateImagePreviewGrid');
+
+    // Создаем пустой слот вместо изображения
+    const emptySlot = document.createElement('div');
+    emptySlot.className = 'image-empty-slot';
+
+    previewItem.replaceWith(emptySlot);
+
+    // Проверяем остались ли изображения
+    const remainingImages = previewGrid.querySelectorAll('.image-preview-item').length;
+
+    if (remainingImages === 0) {
+        previewGrid.classList.remove('has-images');
+        const placeholder = previewGrid.querySelector('.image-upload-placeholder');
+        if (placeholder) {
+            placeholder.style.display = 'flex';
+        }
+    }
+}
+
+// Drag and Drop функциональность для формы дублирования
+const duplicatePreviewGrid = document.getElementById('duplicateImagePreviewGrid');
+
+if (duplicatePreviewGrid) {
+    duplicatePreviewGrid.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.style.background = '#f0f8ff';
+    });
+
+    duplicatePreviewGrid.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.style.background = '';
+    });
+
+    duplicatePreviewGrid.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.style.background = '';
+
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            document.getElementById('duplicateImageUpload').files = files;
+            const event = new Event('change');
+            document.getElementById('duplicateImageUpload').dispatchEvent(event);
+        }
+    });
+}
+</script>
+<script>
+// Генерация случайного штрихкода
+function generateBarcode() {
+    let barcode = '2';
+    for (let i = 0; i < 11; i++) {
+        barcode += Math.floor(Math.random() * 10);
+    }
+
+    let sum = 0;
+    for (let i = 0; i < 12; i++) {
+        let digit = parseInt(barcode[i]);
+        sum += (i % 2 === 0) ? digit : digit * 3;
+    }
+    let checksum = (10 - (sum % 10)) % 10;
+    barcode += checksum;
+
+    document.getElementById('barcodeInput').value = barcode;
+}
+
+// Обработка загрузки изображений
+document.getElementById('imageUpload').addEventListener('change', function(e) {
+    const files = e.target.files;
+    const previewGrid = document.getElementById('imagePreviewGrid');
+    const placeholder = previewGrid.querySelector('.image-upload-placeholder');
+    const emptySlots = previewGrid.querySelectorAll('.image-empty-slot');
+
+    // Добавляем класс для скрытия пустых слотов
+    previewGrid.classList.add('has-images');
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        // Проверяем лимит файлов (макс. 10)
+        const currentItems = previewGrid.querySelectorAll('.image-preview-item').length;
+        if (currentItems >= 10) {
+            alert('Максимальное количество фотографий - 10');
+            break;
+        }
+
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                // Находим первый пустой слот
+                let targetSlot = null;
+                if (emptySlots.length > 0) {
+                    targetSlot = emptySlots[0];
+                } else if (placeholder) {
+                    targetSlot = placeholder;
+                }
+
+                if (targetSlot) {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'image-preview-item';
+                    previewItem.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview">
+                        <button type="button" class="image-remove-btn" onclick="removeImage(this)">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    `;
+
+                    // Заменяем пустой слот на превью
+                    targetSlot.replaceWith(previewItem);
+
+                    // Обновляем список пустых слотов
+                    const updatedEmptySlots = previewGrid.querySelectorAll('.image-empty-slot');
+
+                    // Скрываем плейсхолдер если нет пустых слотов
+                    if (updatedEmptySlots.length === 0 && placeholder) {
+                        placeholder.style.display = 'none';
+                    }
+                }
+            };
+
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // Очищаем input чтобы можно было загружать те же файлы снова
+    e.target.value = '';
+});
+
+// Удаление изображения
+function removeImage(button) {
+    const previewItem = button.closest('.image-preview-item');
+    const previewGrid = document.getElementById('imagePreviewGrid');
+
+    // Создаем пустой слот вместо изображения
+    const emptySlot = document.createElement('div');
+    emptySlot.className = 'image-empty-slot';
+
+    previewItem.replaceWith(emptySlot);
+
+    // Проверяем остались ли изображения
+    const remainingImages = previewGrid.querySelectorAll('.image-preview-item').length;
+
+    if (remainingImages === 0) {
+        previewGrid.classList.remove('has-images');
+        const placeholder = previewGrid.querySelector('.image-upload-placeholder');
+        if (placeholder) {
+            placeholder.style.display = 'flex';
+        }
+    }
+}
+
+// Drag and Drop функциональность
+const previewGrid = document.getElementById('imagePreviewGrid');
+
+previewGrid.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    this.style.background = '#f0f8ff';
+});
+
+previewGrid.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    this.style.background = '';
+});
+
+previewGrid.addEventListener('drop', function(e) {
+    e.preventDefault();
+    this.style.background = '';
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        document.getElementById('imageUpload').files = files;
+        const event = new Event('change');
+        document.getElementById('imageUpload').dispatchEvent(event);
+    }
+});
+</script>
+<script>
+    // Логика импорта и экспорта
+document.addEventListener('DOMContentLoaded', function() {
+    initializeImportExport();
+});
+
+function initializeImportExport() {
+    // Инициализация импорта
+    initImportLogic();
+
+    // Инициализация экспорта
+    initExportLogic();
+}
+
+function initImportLogic() {
+    const importFile = document.getElementById('importFile');
+    const importPrevBtn = document.getElementById('importPrevBtn');
+    const importNextBtn = document.getElementById('importNextBtn');
+    const importStartBtn = document.getElementById('importStartBtn');
+    let currentStep = 1;
+
+    // Обработчик выбора файла
+    importFile.addEventListener('change', handleFileSelect);
+
+    // Навигация по шагам импорта
+    importNextBtn.addEventListener('click', function() {
+        if (currentStep < 3) {
+            currentStep++;
+            updateImportStep();
+        }
+    });
+
+    importPrevBtn.addEventListener('click', function() {
+        if (currentStep > 1) {
+            currentStep--;
+            updateImportStep();
+        }
+    });
+
+    // Запуск импорта
+    importStartBtn.addEventListener('click', startImport);
+
+    // Drag and drop для загрузки файла
+    const uploadArea = document.querySelector('.file-upload-area');
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            importFile.files = files;
+            handleFileSelect({ target: importFile });
+        }
+    });
+}
+
+function initExportLogic() {
+    const exportStartBtn = document.getElementById('exportStartBtn');
+    const exportAllFields = document.getElementById('exportAllFields');
+    const fieldCheckboxes = document.querySelectorAll('.field-checkbox');
+
+    // Переключение всех полей экспорта
+    exportAllFields.addEventListener('change', function() {
+        fieldCheckboxes.forEach(checkbox => {
+            if (!checkbox.disabled) {
+                checkbox.checked = this.checked;
+            }
+        });
+    });
+
+    // Запуск экспорта
+    exportStartBtn.addEventListener('click', startExport);
+}
+
+function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+
+    // Проверка типа файла
+    const validTypes = ['text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+    if (!validTypes.includes(file.type) && !file.name.match(/\.(csv|xlsx|xls)$/)) {
+        showNotification('Неверный формат файла. Поддерживаются CSV, XLSX, XLS', 'danger');
+        return;
+    }
+
+    // Показываем информацию о файле
+    fileName.textContent = file.name;
+    fileSize.textContent = ` (${formatFileSize(file.size)})`;
+    fileInfo.style.display = 'block';
+
+    // Анализируем файл
+    analyzeFile(file);
+}
+
+function analyzeFile(file) {
+    // Здесь будет логика анализа файла
+    // Пока просто имитируем успешный анализ
+    setTimeout(() => {
+        showNotification('Файл успешно загружен и проанализирован', 'success');
+        document.getElementById('importNextBtn').disabled = false;
+    }, 1000);
+}
+
+function updateImportStep() {
+    // Скрываем все шаги
+    document.querySelectorAll('.import-step').forEach(step => {
+        step.style.display = 'none';
+    });
+
+    // Показываем текущий шаг
+    document.querySelector(`.import-step.step-${currentStep}`).style.display = 'block';
+
+    // Обновляем шаги
+    document.querySelectorAll('.step').forEach((step, index) => {
+        if (index + 1 <= currentStep) {
+            step.classList.add('active');
+        } else {
+            step.classList.remove('active');
+        }
+    });
+
+    // Обновляем кнопки навигации
+    document.getElementById('importPrevBtn').style.display = currentStep > 1 ? 'block' : 'none';
+    document.getElementById('importNextBtn').style.display = currentStep < 3 ? 'block' : 'none';
+    document.getElementById('importStartBtn').style.display = currentStep === 3 ? 'block' : 'none';
+}
+
+function startImport() {
+    const fileInput = document.getElementById('importFile');
+    const formData = new FormData();
+
+    formData.append('file', fileInput.files[0]);
+    formData.append('update_existing', document.getElementById('updateExisting').checked);
+    formData.append('deactivate_missing', document.getElementById('deactivateMissing').checked);
+
+    // Показываем индикатор загрузки
+    importStartBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Импорт...';
+    importStartBtn.disabled = true;
+
+    fetch('{% url "sellers:product_import" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCsrfToken(form)
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(`Импорт завершен. Обработано ${data.processed} товаров`, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('importProductsModal')).hide();
+            loadProductsTable();
+        } else {
+            showNotification('Ошибка импорта: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        showNotification('Ошибка при импорте товаров', 'danger');
+    })
+    .finally(() => {
+        importStartBtn.innerHTML = '<i class="bi bi-play-circle me-2"></i>Начать импорт';
+        importStartBtn.disabled = false;
+    });
+}
+
+function startExport() {
+    const format = document.querySelector('input[name="exportFormat"]:checked').value;
+    const scope = document.getElementById('exportScope').value;
+
+    // Собираем выбранные поля
+    const selectedFields = Array.from(document.querySelectorAll('.field-checkbox:checked'))
+        .map(checkbox => checkbox.value);
+
+    const exportData = {
+        format: format,
+        scope: scope,
+        fields: selectedFields
+    };
+
+    // Показываем прогресс
+    const progressSection = document.querySelector('.export-progress');
+    const progressBar = document.getElementById('exportProgressBar');
+    const progressText = document.getElementById('exportProgressText');
+
+    progressSection.style.display = 'block';
+    progressBar.style.width = '0%';
+    progressText.textContent = 'Подготовка к экспорту...';
+
+    // Имитация прогресса
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        progress += 5;
+        progressBar.style.width = progress + '%';
+
+        if (progress <= 30) {
+            progressText.textContent = 'Сбор данных...';
+        } else if (progress <= 70) {
+            progressText.textContent = 'Формирование файла...';
+        } else {
+            progressText.textContent = 'Завершение...';
+        }
+
+        if (progress >= 100) {
+            clearInterval(progressInterval);
+            completeExport(exportData);
+        }
+    }, 100);
+}
+
+function completeExport(exportData) {
+    // Создаем URL для экспорта с параметрами
+    const url = new URL('{% url "sellers:product_export" %}', window.location.origin);
+    url.searchParams.append('format', exportData.format);
+    url.searchParams.append('scope', exportData.scope);
+    url.searchParams.append('fields', exportData.fields.join(','));
+
+    // Скачиваем файл
+    const a = document.createElement('a');
+    a.href = url.toString();
+    a.download = `products_export_${new Date().toISOString().split('T')[0]}.${exportData.format}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Закрываем модальное окно
+    setTimeout(() => {
+        bootstrap.Modal.getInstance(document.getElementById('exportProductsModal')).hide();
+        showNotification('Экспорт завершен успешно', 'success');
+    }, 500);
+}
+
+function clearImportFile() {
+    document.getElementById('importFile').value = '';
+    document.getElementById('fileInfo').style.display = 'none';
+    document.getElementById('importNextBtn').disabled = true;
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Функция для показа уведомлений
+function showNotification(message, type = 'success') {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show position-fixed top-0 end-0 m-3" style="z-index: 9999;">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', alertHtml);
+
+    setTimeout(() => {
+        const alert = document.querySelector('.alert:last-child');
+        if (alert) {
+            alert.remove();
+        }
+    }, 5000);
+}
+</script>
+</body>
+</html>
