@@ -1,0 +1,154 @@
+@import 'tailwindcss';
+
+/* ============================================================
+   Дизайн-токены LINKAVTO (§3 ТЗ).
+   Ни одного hex-значения и px-размера вне этого файла.
+   ============================================================ */
+
+@theme {
+  /* --- База --- */
+  --color-ink: #171b20;
+  --color-ink-muted: #5c6670;
+  --color-paper: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-line: #e1e5e9;
+
+  /* --- Действие ---
+     На #89BEE8 белый текст даёт контраст 1.97:1 и не проходит §13 (≥4.5:1),
+     поэтому текст на CTA — --color-cta-ink (8.8:1). */
+  --color-cta: #89bee8;
+  --color-cta-hover: #6ba7d6;
+  --color-cta-ink: #12293b;
+
+  /* --- Семантика --- */
+  --color-ok: #1e6b3a;
+  --color-ok-bg: #e5f4ea;
+  --color-danger: #c42b3a;
+  --color-danger-bg: #fbeaec;
+  --color-discount: #c42b3a;
+
+  /* --- Транспорт --- */
+  --color-t-car: #2757ff;
+  --color-t-truck: #b36000;
+  --color-t-moto: #a21622;
+  --color-t-special: #8a6d00;
+  --color-t-tires: #0e8c7f;
+  --color-t-service: #6c3fc4;
+
+  /* --- Среда --- */
+  --color-env: #edf1f6;
+  --color-env-car: #ebf0f8;
+  --color-env-truck: #f4f0ea;
+  --color-env-moto: #f6eeef;
+  --color-env-special: #f4f2e9;
+  --color-env-tires: #eaf3f1;
+  --color-env-service: #f1edf8;
+  --color-env-shadow: #dce6f0;
+
+  /* --- Типографика --- */
+  --font-sans: 'Golos Text', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+  --font-display: 'Unbounded', 'Golos Text', sans-serif;
+
+  --text-xs: 0.75rem; /* 12 */
+  --text-xs--line-height: 1.5;
+  --text-sm: 0.8125rem; /* 13 */
+  --text-sm--line-height: 1.5;
+  --text-base: 0.875rem; /* 14 — базовый */
+  --text-base--line-height: 1.5;
+  --text-md: 1rem; /* 16 */
+  --text-md--line-height: 1.5;
+  --text-lg: 1.25rem; /* 20 */
+  --text-lg--line-height: 1.2;
+  --text-xl: 1.5rem; /* 24 */
+  --text-xl--line-height: 1.2;
+  --text-2xl: 2rem; /* 32 */
+  --text-2xl--line-height: 1.2;
+
+  /* --- Геометрия --- */
+  --radius-control: 10px;
+  --radius-card: 16px;
+  --radius-pill: 999px;
+
+  --spacing: 4px; /* шкала 4/8/12/16/24/32/48 */
+
+  --shadow-float: 0 1px 2px rgb(0 0 0 / 0.05), 0 4px 12px rgb(0 0 0 / 0.04);
+  --shadow-lift: 0 2px 6px rgb(0 0 0 / 0.06), 0 12px 32px rgb(0 0 0 / 0.08);
+
+  --container-page: 1360px;
+
+  /* --- Моушен --- */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+}
+
+/* Минимальная зона нажатия и прочие базовые правила (§3.3, §13). */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: 1.5;
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Все динамические числа — табличные цифры (§3.2). */
+  :where(output, .tabular, [data-numeric]) {
+    font-variant-numeric: tabular-nums;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-t-car);
+    outline-offset: 2px;
+    border-radius: var(--radius-control);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    line-height: 1.2;
+    font-weight: 600;
+  }
+
+  /* Скрываем скроллбар у горизонтальных лент, оставляя скролл. */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer components {
+  /* Стекло — РОВНО два места: шапка-пилюля и мобильный таб-бар (§3.1). */
+  .glass-chrome {
+    background-color: var(--color-surface);
+  }
+
+  @supports (backdrop-filter: blur(12px)) {
+    .glass-chrome {
+      background-color: color-mix(in srgb, var(--color-surface) 70%, transparent);
+      backdrop-filter: blur(12px);
+    }
+  }
+}
+
+/* §11: prefers-reduced-motion глобально гасит всё. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
