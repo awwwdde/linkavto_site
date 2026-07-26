@@ -1,41 +1,33 @@
+import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { cn } from '@/shared/lib/cn'
-import { formatPlural } from '@/shared/lib/format'
-import type { VehicleTypeMeta } from '@/shared/lib/vehicle-types'
-import { IconGarage } from '@/shared/ui/Icon'
 
-/** §3.1: иконка + подложка 10% цвета транспорта — навигационная айдентика. */
+/**
+ * §3.1, §4б зона 2: плитка выбора техники. Иконка нейтральная (--color-icon),
+ * без цветной подложки; название снизу. Квадратная плитка бенто.
+ */
 export function CategoryTile({
   to,
   name,
-  productsCount,
-  meta,
+  icon,
   className,
 }: {
   to: string
   name: string
-  productsCount: number
-  meta: VehicleTypeMeta | null
+  icon: ReactNode
   className?: string
 }) {
   return (
     <Link
       to={to}
       className={cn(
-        'flex flex-col gap-3 rounded-card bg-surface p-4 shadow-float',
-        'transition-[transform,box-shadow] duration-[--duration-base] hover:shadow-lift',
+        'flex aspect-square flex-col justify-between rounded-card border border-line bg-surface p-4',
+        'transition-[border-color,box-shadow] duration-[--duration-base] hover:border-ink-muted hover:shadow-float',
         className,
       )}
     >
-      <span className={cn('flex h-12 w-12 items-center justify-center rounded-control', meta?.tile ?? 'bg-paper')}>
-        <IconGarage width={24} height={24} className={meta?.text ?? 'text-ink-muted'} />
-      </span>
-      <span className="flex flex-col gap-1">
-        <span className="text-md font-semibold">{name}</span>
-        <span className="text-sm text-ink-muted tabular-nums">
-          {formatPlural(productsCount, { one: 'товар', few: 'товара', many: 'товаров' })}
-        </span>
-      </span>
+      <span className="text-icon">{icon}</span>
+      <span className="text-md font-medium text-ink">{name}</span>
     </Link>
   )
 }

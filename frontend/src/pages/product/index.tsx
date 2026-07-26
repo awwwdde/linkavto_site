@@ -24,9 +24,9 @@ import {
   PageMeta,
   Price,
   Rating,
-  Section,
   Skeleton,
 } from '@/shared/ui'
+import { SectionHeading } from '@/app/layouts/SectionHeading'
 import { AddToCart } from '@/features/cart/AddToCart'
 import { FavoriteButton } from '@/features/favorites/FavoriteButton'
 import { ShareButtons } from '@/features/share/ShareButtons'
@@ -149,13 +149,14 @@ export function Component() {
         <AttributesTable attributes={item.attributes} />
 
         {item.description_html ? (
-          <Section title={t('product.description')}>
+          <section className="flex flex-col gap-4">
+            <SectionHeading lead={t('product.description')} ghost={t('product.descriptionGhost')} />
             <div
               className="flex flex-col gap-3 rounded-card bg-surface p-4 text-base leading-relaxed text-ink-muted shadow-float lg:p-6 [&_li]:ml-4 [&_li]:list-disc [&_p]:mb-2"
               // §10.5: единственное разрешённое место — описание, санитизировано бэком.
               dangerouslySetInnerHTML={{ __html: item.description_html }}
             />
-          </Section>
+          </section>
         ) : null}
 
         {reviews.data ? <ReviewList reviews={reviews.data} /> : null}
@@ -163,13 +164,14 @@ export function Component() {
         <ReviewForm productSlug={item.slug} />
 
         {similar.data && similar.data.length > 0 ? (
-          <Section title={t('product.similar')}>
+          <section className="flex flex-col gap-4">
+            <SectionHeading lead={t('product.similar')} ghost={t('product.similarGhost')} />
             <ProductGrid>
               {similar.data.slice(0, 8).map((similarItem) => (
                 <ProductCard key={similarItem.id} product={similarItem} />
               ))}
             </ProductGrid>
-          </Section>
+          </section>
         ) : null}
 
         <div className="lg:hidden">

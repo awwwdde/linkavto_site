@@ -23,7 +23,7 @@ export function SearchOverlay() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 8 }}
           transition={{ type: 'spring', duration: 0.3, bounce: 0 }}
-          className="fixed inset-0 z-50 flex flex-col gap-4 bg-env p-4"
+          className="fixed inset-0 z-50 flex flex-col gap-4 bg-paper p-4"
         >
           <div className="flex items-center gap-2">
             <div className="min-w-0 flex-1">

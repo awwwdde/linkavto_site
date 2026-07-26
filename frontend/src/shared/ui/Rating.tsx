@@ -18,7 +18,7 @@ export function Rating({ value, reviewsCount, showCount = true, className }: Rat
       className={cn('inline-flex items-center gap-1.5 text-sm text-ink-muted tabular-nums', className)}
       aria-label={`${t('common.rating')} ${rounded} ${t('common.from')} 5`}
     >
-      <IconStar width={16} height={16} className="fill-current text-t-special" />
+      <IconStar width={16} height={16} className="fill-current text-ink" />
       <span className="font-medium text-ink">{rounded.toFixed(1)}</span>
       {showCount ? (
         <span>{formatPlural(reviewsCount, { one: 'отзыв', few: 'отзыва', many: 'отзывов' })}</span>
@@ -29,7 +29,7 @@ export function Rating({ value, reviewsCount, showCount = true, className }: Rat
 
 export function RatingStars({ value, className }: { value: number; className?: string }) {
   return (
-    <span className={cn('inline-flex gap-0.5 text-t-special', className)} aria-hidden="true">
+    <span className={cn('inline-flex gap-0.5 text-ink', className)} aria-hidden="true">
       {[1, 2, 3, 4, 5].map((star) => (
         <IconStar key={star} width={16} height={16} className={star <= Math.round(value) ? 'fill-current' : 'opacity-30'} />
       ))}

@@ -55,7 +55,7 @@ export function TabBar() {
         <span className="relative">
           <IconCart width={22} height={22} />
           {count > 0 ? (
-            <span className="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-pill bg-cta px-1 text-[10px] font-medium text-cta-ink tabular-nums">
+            <span className="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-pill bg-accent px-1 text-2xs font-medium text-white tabular-nums">
               {count}
             </span>
           ) : null}

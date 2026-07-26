@@ -2,12 +2,12 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { cn } from '@/shared/lib/cn'
 
-export type BadgeTone = 'neutral' | 'ok' | 'discount' | 'accent'
+// §3.1: скидка — зачёркнутой ценой, не красным бейджем. Красный только для ошибок.
+export type BadgeTone = 'neutral' | 'ok' | 'accent'
 
 const TONES: Record<BadgeTone, string> = {
   neutral: 'bg-paper text-ink-muted',
   ok: 'bg-ok-bg text-ok',
-  discount: 'bg-discount text-white',
   accent: 'bg-ink text-white',
 }
 

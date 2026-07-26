@@ -5,6 +5,7 @@ import { queryKeys } from '@/shared/api/query-keys'
 import { t } from '@/shared/i18n'
 import { formatPlural } from '@/shared/lib/format'
 import { Badge, ButtonLink, ChipLink, Container, EmptyState, ErrorState, PageMeta, Pagination } from '@/shared/ui'
+import { SectionHeading } from '@/app/layouts/SectionHeading'
 import { fetchSearch } from '@/features/search/api'
 import { detectSearchMode } from '@/features/search/detect'
 import { useActiveVehicle } from '@/features/garage/store'
@@ -56,18 +57,19 @@ export function Component() {
       />
 
       <Container className="flex flex-col gap-6 py-4 lg:py-8">
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-xl font-semibold lg:text-2xl">
-              {t('search.resultsFor')} «{query}»
-            </h1>
-            <Badge>{MODE_LABEL[mode]}</Badge>
-          </div>
-          {results.data ? (
-            <p className="text-base text-ink-muted tabular-nums">
-              {formatPlural(results.data.count, { one: 'товар', few: 'товара', many: 'товаров' })}
-            </p>
-          ) : null}
+        {/* §3.2 двухтоновый заголовок: запрос + счётчик результатов вторым тоном. */}
+        <div className="flex flex-wrap items-center gap-3">
+          <SectionHeading
+            as="h1"
+            size="xl"
+            lead={`«${query}».`}
+            ghost={
+              results.data
+                ? formatPlural(results.data.count, { one: 'товар', few: 'товара', many: 'товаров' })
+                : undefined
+            }
+          />
+          <Badge>{MODE_LABEL[mode]}</Badge>
         </div>
 
         {results.data && results.data.vehicle ? (

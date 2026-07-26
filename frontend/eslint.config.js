@@ -24,22 +24,18 @@ export default tseslint.config(
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
-      // Three.js разрешён только в чанке гараж-сцены (§12).
+      // 3D ОТМЕНЁН (§4): Three.js/r3f запрещены во всём проекте. Графика — SVG и фото.
       'no-restricted-imports': [
         'error',
         {
           patterns: [
             {
               group: ['three', '@react-three/*'],
-              message: 'Three.js импортируется только внутри features/garage-scene (§12).',
+              message: 'Three.js запрещён (§4): вся графика — SVG и фотографии.',
             },
           ],
         },
       ],
     },
-  },
-  {
-    files: ['src/features/garage-scene/**/*.{ts,tsx}'],
-    rules: { 'no-restricted-imports': 'off' },
   },
 )

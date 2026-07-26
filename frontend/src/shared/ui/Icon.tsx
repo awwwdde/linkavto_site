@@ -1,161 +1,91 @@
-import type { SVGProps } from 'react'
+import type { ReactElement } from 'react'
+import {
+  ArrowRight,
+  Bike,
+  Car,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  CircleCheck,
+  CircleDot,
+  Copy,
+  Heart,
+  History,
+  Home,
+  Image as ImageIcon,
+  Mail,
+  MailCheck,
+  MapPin,
+  Menu,
+  Minus,
+  Plus,
+  Search,
+  Share2,
+  ShoppingCart,
+  SlidersHorizontal,
+  Star,
+  Tractor,
+  Trash2,
+  Truck,
+  User,
+  Warehouse,
+  Wrench,
+  X,
+  type LucideIcon,
+  type LucideProps,
+} from 'lucide-react'
 
-/** §10.4: иконки только из бандла, никаких CDN-шрифтов и хотлинков. */
-type IconProps = SVGProps<SVGSVGElement>
+/**
+ * §2, §4а: единый набор иконок — lucide-react, stroke-width 1.75 по всему проекту.
+ * §10.4: иконки только из бандла (lucide бандлится), без CDN и хотлинков.
+ *
+ * Обёртка задаёт дефолты (размер 20, stroke 1.75, декоративность) и сохраняет
+ * прежние имена `Icon*`, чтобы существующий код не переписывался поштучно.
+ * Роли иконок — по карте §4а.
+ */
+export type IconComponent = (props: LucideProps) => ReactElement
 
-function base(props: IconProps) {
-  return {
-    width: 20,
-    height: 20,
-    viewBox: '0 0 24 24',
-    fill: 'none',
-    stroke: 'currentColor',
-    strokeWidth: 1.6,
-    strokeLinecap: 'round' as const,
-    strokeLinejoin: 'round' as const,
-    'aria-hidden': true,
-    focusable: false,
-    ...props,
+function make(Icon: LucideIcon): IconComponent {
+  return function WrappedIcon({ size = 20, strokeWidth = 1.75, ...rest }: LucideProps) {
+    return <Icon size={size} strokeWidth={strokeWidth} aria-hidden focusable={false} {...rest} />
   }
 }
 
-export const IconSearch = (p: IconProps) => (
-  <svg {...base(p)}>
-    <circle cx="11" cy="11" r="7" />
-    <path d="m20 20-3.5-3.5" />
-  </svg>
-)
+/* --- Хром и навигация (§4а) --- */
+export const IconSearch = make(Search)
+export const IconHome = make(Home)
+export const IconCatalog = make(Menu) // «Меню каталога» → Menu (§4а)
+export const IconGarage = make(Warehouse) // «Гараж» → Warehouse (§4а)
+export const IconCart = make(ShoppingCart)
+export const IconUser = make(User)
+export const IconHeart = make(Heart)
+export const IconAddress = make(MapPin) // «Адрес» → MapPin (§4а)
+export const IconMail = make(Mail)
+export const IconMailCheck = make(MailCheck)
+export const IconHistory = make(History) // «Недавний запрос» → History (§4а)
+export const IconClose = make(X)
 
-export const IconHome = (p: IconProps) => (
-  <svg {...base(p)}>
-    <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1v-9.5Z" />
-  </svg>
-)
+/* --- Управление --- */
+export const IconChevronRight = make(ChevronRight)
+export const IconChevronLeft = make(ChevronLeft)
+export const IconChevronDown = make(ChevronDown)
+export const IconPlus = make(Plus)
+export const IconMinus = make(Minus)
+export const IconCheck = make(Check)
+export const IconCompatOk = make(CircleCheck) // «Совместимость ок» → CircleCheck (§4а)
+export const IconCopy = make(Copy) // «Копировать артикул» → Copy (§4а)
+export const IconFilter = make(SlidersHorizontal)
+export const IconStar = make(Star)
+export const IconTrash = make(Trash2)
+export const IconPhoto = make(ImageIcon) // плейсхолдер «нет фото» (§6)
+export const IconShare = make(Share2)
+export const IconArrowRight = make(ArrowRight) // «весь раздел» → ArrowRight (§4а)
 
-export const IconCatalog = (p: IconProps) => (
-  <svg {...base(p)}>
-    <rect x="3.5" y="3.5" width="7" height="7" rx="2" />
-    <rect x="13.5" y="3.5" width="7" height="7" rx="2" />
-    <rect x="3.5" y="13.5" width="7" height="7" rx="2" />
-    <rect x="13.5" y="13.5" width="7" height="7" rx="2" />
-  </svg>
-)
-
-export const IconGarage = (p: IconProps) => (
-  <svg {...base(p)}>
-    <path d="M3 10.5 12 5l9 5.5V20H3v-9.5Z" />
-    <path d="M7 20v-5h10v5" />
-    <path d="M7 17h10" />
-  </svg>
-)
-
-export const IconCart = (p: IconProps) => (
-  <svg {...base(p)}>
-    <path d="M3 4h2.2l1.9 10.2a1.6 1.6 0 0 0 1.6 1.3h7.8a1.6 1.6 0 0 0 1.6-1.2L20 7.5H6.3" />
-    <circle cx="9.5" cy="19" r="1.4" />
-    <circle cx="16.5" cy="19" r="1.4" />
-  </svg>
-)
-
-export const IconUser = (p: IconProps) => (
-  <svg {...base(p)}>
-    <circle cx="12" cy="8.5" r="3.8" />
-    <path d="M4.5 20c.9-3.6 3.9-5.6 7.5-5.6s6.6 2 7.5 5.6" />
-  </svg>
-)
-
-export const IconHeart = (p: IconProps) => (
-  <svg {...base(p)}>
-    <path d="M12 20s-7.5-4.4-7.5-9.4A4.1 4.1 0 0 1 12 8.2a4.1 4.1 0 0 1 7.5 2.4c0 5-7.5 9.4-7.5 9.4Z" />
-  </svg>
-)
-
-export const IconClose = (p: IconProps) => (
-  <svg {...base(p)}>
-    <path d="m6 6 12 12M18 6 6 18" />
-  </svg>
-)
-
-export const IconChevronRight = (p: IconProps) => (
-  <svg {...base(p)}>
-    <path d="m9 5 7 7-7 7" />
-  </svg>
-)
-
-export const IconChevronLeft = (p: IconProps) => (
-  <svg {...base(p)}>
-    <path d="m15 5-7 7 7 7" />
-  </svg>
-)
-
-export const IconChevronDown = (p: IconProps) => (
-  <svg {...base(p)}>
-    <path d="m5 9 7 7 7-7" />
-  </svg>
-)
-
-export const IconPlus = (p: IconProps) => (
-  <svg {...base(p)}>
-    <path d="M12 5v14M5 12h14" />
-  </svg>
-)
-
-export const IconMinus = (p: IconProps) => (
-  <svg {...base(p)}>
-    <path d="M5 12h14" />
-  </svg>
-)
-
-export const IconCheck = (p: IconProps) => (
-  <svg {...base(p)}>
-    <path d="m5 12.5 4.5 4.5L19 7" />
-  </svg>
-)
-
-export const IconCopy = (p: IconProps) => (
-  <svg {...base(p)}>
-    <rect x="9" y="9" width="11" height="11" rx="2.5" />
-    <path d="M15 6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15" />
-  </svg>
-)
-
-export const IconFilter = (p: IconProps) => (
-  <svg {...base(p)}>
-    <path d="M4 6h16M7 12h10M10 18h4" />
-  </svg>
-)
-
-export const IconStar = (p: IconProps) => (
-  <svg {...base(p)}>
-    <path d="m12 4 2.4 5 5.6.8-4 3.9 1 5.5-5-2.7-5 2.7 1-5.5-4-3.9 5.6-.8L12 4Z" />
-  </svg>
-)
-
-export const IconTrash = (p: IconProps) => (
-  <svg {...base(p)}>
-    <path d="M5 7h14M10 7V5h4v2M8 7l.8 12h6.4L16 7" />
-  </svg>
-)
-
-export const IconPhoto = (p: IconProps) => (
-  <svg {...base(p)}>
-    <rect x="3.5" y="5" width="17" height="14" rx="3" />
-    <circle cx="9" cy="10" r="1.6" />
-    <path d="m5 17 4.5-4.5L13 16l2.5-2.5L19 17" />
-  </svg>
-)
-
-export const IconShare = (p: IconProps) => (
-  <svg {...base(p)}>
-    <circle cx="17.5" cy="6" r="2.5" />
-    <circle cx="6.5" cy="12" r="2.5" />
-    <circle cx="17.5" cy="18" r="2.5" />
-    <path d="m8.8 10.8 6.4-3.6M8.8 13.2l6.4 3.6" />
-  </svg>
-)
-
-export const IconArrowRight = (p: IconProps) => (
-  <svg {...base(p)}>
-    <path d="M4 12h15M13 6l6 6-6 6" />
-  </svg>
-)
+/* --- Типы техники (§4а) --- */
+export const IconTypeCar = make(Car)
+export const IconTypeTruck = make(Truck)
+export const IconTypeMoto = make(Bike)
+export const IconTypeSpecial = make(Tractor)
+export const IconTypeTires = make(CircleDot)
+export const IconTypeService = make(Wrench)

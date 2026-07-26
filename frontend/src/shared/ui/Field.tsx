@@ -94,7 +94,7 @@ export function Checkbox({ label, className, ...rest }: CheckboxProps) {
       <input
         id={id}
         type="checkbox"
-        className={cn('h-5 w-5 shrink-0 accent-[--color-cta]', className)}
+        className={cn('h-5 w-5 shrink-0 accent-[--color-accent]', className)}
         {...rest}
       />
       <label htmlFor={id} className="cursor-pointer text-base text-ink">
@@ -116,7 +116,7 @@ export function Radio({ label, description, className, ...rest }: RadioProps) {
       <input
         id={id}
         type="radio"
-        className={cn('mt-1 h-5 w-5 shrink-0 accent-[--color-cta]', className)}
+        className={cn('mt-1 h-5 w-5 shrink-0 accent-[--color-accent]', className)}
         {...rest}
       />
       <label htmlFor={id} className="cursor-pointer text-base text-ink">

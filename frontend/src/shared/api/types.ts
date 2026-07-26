@@ -190,6 +190,17 @@ export interface FacetOption {
   count: number
 }
 
+/**
+ * Атрибутный фасет категории (§5, аналог динамических фильтров старого каталога:
+ * «Вязкость», «Объём», «Материал», «Напряжение», «Сезонность» и т.п.).
+ * `code` — имя GET-параметра фильтра (напр. `attr_country`), значения мультивыбором CSV.
+ */
+export interface AttributeFacet {
+  code: string
+  label: string
+  options: FacetOption[]
+}
+
 export interface ProductListResponse extends Paginated<ProductListItem> {
   /** 20 бакетов min–max по текущей выборке (§5). */
   price_histogram: PriceHistogramBucket[]
@@ -202,6 +213,8 @@ export interface ProductListResponse extends Paginated<ProductListItem> {
     price_max: number
     /** Профильные фасеты приходят только в категориях шин и дисков. */
     tire_wheel: TireWheelFacets | null
+    /** Динамические атрибутные фильтры категории (§5). */
+    attributes: AttributeFacet[]
   }
 }
 

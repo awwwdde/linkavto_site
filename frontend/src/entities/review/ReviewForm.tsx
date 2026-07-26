@@ -53,7 +53,7 @@ export function ReviewForm({ productSlug }: { productSlug: string }) {
             onClick={() => setRating(star)}
             aria-label={`${star} из 5`}
             aria-pressed={rating === star}
-            className="flex h-10 w-10 items-center justify-center rounded-control text-t-special"
+            className="flex h-10 w-10 items-center justify-center rounded-control text-ink"
           >
             <IconStar className={cn(star <= rating ? 'fill-current' : 'opacity-30')} />
           </button>

@@ -16,6 +16,16 @@ const MODE_LABEL = {
   text: t('search.modeText'),
 } as const
 
+/** Популярные запросы для пустого состояния (§7). TODO(api): отдать бэком `search/popular/`. */
+const POPULAR = [
+  'Масляный фильтр',
+  'Тормозные колодки',
+  'Аккумулятор',
+  'Свечи зажигания',
+  'Щётки стеклоочистителя',
+  'Моторное масло',
+]
+
 function useDebounced(value: string, ms: number) {
   const [debounced, setDebounced] = useState(value)
   useEffect(() => {
@@ -85,7 +95,7 @@ export function SmartSearch({
     navigate(url)
   }
 
-  const showPanel = open && (debounced.length >= 2 || history.length > 0)
+  const showPanel = open
   const items = suggestions.data ?? []
 
   return (
@@ -165,18 +175,34 @@ export function SmartSearch({
             </div>
           ) : (
             <div className="flex flex-col py-2">
-              <div className="flex items-center justify-between px-4 py-2">
-                <p className="text-xs text-ink-muted">{t('search.history')}</p>
-                <button type="button" onClick={clearHistory} className="text-xs text-ink-muted hover:text-ink">
-                  {t('search.historyClear')}
-                </button>
-              </div>
-              {history.map((item) => (
+              {history.length > 0 ? (
+                <>
+                  <div className="flex items-center justify-between px-4 py-2">
+                    <p className="text-xs text-ink-muted">{t('search.history')}</p>
+                    <button type="button" onClick={clearHistory} className="text-xs text-ink-muted hover:text-ink">
+                      {t('search.historyClear')}
+                    </button>
+                  </div>
+                  {history.map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => goTo(`/search?q=${encodeURIComponent(item)}`, item)}
+                      className="flex min-h-10 items-center px-4 py-2 text-left text-base hover:bg-paper"
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </>
+              ) : null}
+
+              <p className="px-4 py-2 text-xs text-ink-muted">{t('search.popular')}</p>
+              {POPULAR.map((item) => (
                 <button
                   key={item}
                   type="button"
                   onClick={() => goTo(`/search?q=${encodeURIComponent(item)}`, item)}
-                  className="flex min-h-10 items-center px-4 py-2 text-left text-base hover:bg-paper"
+                  className="flex min-h-10 items-center px-4 py-2 text-left text-base text-ink-muted hover:bg-paper hover:text-ink"
                 >
                   {item}
                 </button>

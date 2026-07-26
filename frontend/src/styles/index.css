@@ -2,94 +2,91 @@
 
 /* ============================================================
    Дизайн-токены LINKAVTO (§3 ТЗ).
+   Направление: светлая тема, монохром + ОДИН синий акцент.
+   Цветового кодирования категорий НЕТ (§3, §3.4 правило одного акцента).
    Ни одного hex-значения и px-размера вне этого файла.
    ============================================================ */
 
 @theme {
-  /* --- База --- */
-  --color-ink: #171b20;
-  --color-ink-muted: #5c6670;
-  --color-paper: #f5f6f8;
-  --color-surface: #ffffff;
-  --color-line: #e1e5e9;
+  /* --- База (§3.1) --- */
+  --color-ink: #17191c; /* основной текст, тёмные блоки */
+  --color-ink-muted: #5c6670; /* вторичный текст */
+  --color-ink-ghost: #a0a7af; /* второй тон двухтонового заголовка */
+  --color-ink-ghost-dark: #7e868f; /* второй тон на тёмных блоках (§3.4) */
+  --color-paper: #f2f3f5; /* фон страницы (среда) */
+  --color-surface: #ffffff; /* карточки */
+  --color-line: #dde0e4; /* границы, hairline */
 
-  /* --- Действие ---
-     На #89BEE8 белый текст даёт контраст 1.97:1 и не проходит §13 (≥4.5:1),
-     поэтому текст на CTA — --color-cta-ink (8.8:1). */
-  --color-cta: #89bee8;
-  --color-cta-hover: #6ba7d6;
-  --color-cta-ink: #12293b;
+  /* --- Единственный акцент (§3.1) ---
+     #2F6BE5 на белом: контраст текста 4.83:1 → белый текст на кнопке проходит §13. */
+  --color-accent: #2f6be5; /* кнопки, ссылки, активные состояния */
+  --color-accent-hover: #2559c4;
 
-  /* --- Семантика --- */
-  --color-ok: #1e6b3a;
+  /* --- Семантика — только там, где смысл нельзя выразить иначе (§3.1) --- */
+  --color-ok: #1e6b3a; /* «подходит вашему авто», «в наличии» */
   --color-ok-bg: #e5f4ea;
-  --color-danger: #c42b3a;
+  --color-danger: #c42b3a; /* ТОЛЬКО ошибки форм */
   --color-danger-bg: #fbeaec;
-  --color-discount: #c42b3a;
 
-  /* --- Транспорт --- */
-  --color-t-car: #2757ff;
-  --color-t-truck: #b36000;
-  --color-t-moto: #a21622;
-  --color-t-special: #8a6d00;
-  --color-t-tires: #0e8c7f;
-  --color-t-service: #6c3fc4;
+  /* Иконки категорий — нейтральный тон, без цветных подложек (§3.1). */
+  --color-icon: #3b4450;
 
-  /* --- Среда --- */
-  --color-env: #edf1f6;
-  --color-env-car: #ebf0f8;
-  --color-env-truck: #f4f0ea;
-  --color-env-moto: #f6eeef;
-  --color-env-special: #f4f2e9;
-  --color-env-tires: #eaf3f1;
-  --color-env-service: #f1edf8;
-  --color-env-shadow: #dce6f0;
-
-  /* --- Типографика --- */
+  /* --- Типографика (§3.2) --- */
   --font-sans: 'Golos Text', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
-  --font-display: 'Unbounded', 'Golos Text', sans-serif;
+  --font-display: 'Unbounded', 'Golos Text', sans-serif; /* ТОЛЬКО логотип */
 
+  /* Шкала §3.2: 11 / 12 / 13 / 14 (базовый) / 18 / 24 / 44 / 80. */
+  --text-2xs: 0.6875rem; /* 11 */
+  --text-2xs--line-height: 1.5;
   --text-xs: 0.75rem; /* 12 */
   --text-xs--line-height: 1.5;
   --text-sm: 0.8125rem; /* 13 */
   --text-sm--line-height: 1.5;
   --text-base: 0.875rem; /* 14 — базовый */
   --text-base--line-height: 1.5;
-  --text-md: 1rem; /* 16 */
+  --text-md: 1rem; /* 16 — вспомогательный */
   --text-md--line-height: 1.5;
-  --text-lg: 1.25rem; /* 20 */
-  --text-lg--line-height: 1.2;
+  --text-lg: 1.125rem; /* 18 */
+  --text-lg--line-height: 1.4;
   --text-xl: 1.5rem; /* 24 */
-  --text-xl--line-height: 1.2;
-  --text-2xl: 2rem; /* 32 */
-  --text-2xl--line-height: 1.2;
+  --text-xl--line-height: 1.15;
+  --text-xl--letter-spacing: -0.02em;
+  --text-2xl: 2.75rem; /* 44 */
+  --text-2xl--line-height: 1.05;
+  --text-2xl--letter-spacing: -0.035em;
+  --text-3xl: 5rem; /* 80 — h1 главной на десктопе (LCP) */
+  --text-3xl--line-height: 1.02;
+  --text-3xl--letter-spacing: -0.035em;
 
-  /* --- Геометрия --- */
+  /* --- Геометрия (§3.3) --- */
   --radius-control: 10px;
   --radius-card: 16px;
+  --radius-seam: 150px; /* §4б: шов зоны 2 наезжает на баннер крупным скруглением */
   --radius-pill: 999px;
 
   --spacing: 4px; /* шкала 4/8/12/16/24/32/48 */
 
+  /* Тени вместо жёстких границ на «плавающих» элементах (§3.3). */
   --shadow-float: 0 1px 2px rgb(0 0 0 / 0.05), 0 4px 12px rgb(0 0 0 / 0.04);
   --shadow-lift: 0 2px 6px rgb(0 0 0 / 0.06), 0 12px 32px rgb(0 0 0 / 0.08);
 
-  --container-page: 1360px;
+  --container-page: 1360px; /* §8: ≥1440 контейнер max-w 1360px */
 
-  /* --- Моушен --- */
+  /* --- Моушен (§11) --- */
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
   --duration-fast: 120ms;
   --duration-base: 200ms;
 }
 
-/* Минимальная зона нажатия и прочие базовые правила (§3.3, §13). */
+/* Базовые правила среды, зоны нажатия, фокус (§3.3, §3.4, §13). */
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
   }
 
   body {
+    /* Правило среды (§3.4): фон страницы — --color-paper, без градиентов. */
     background-color: var(--color-paper);
     color: var(--color-ink);
     font-family: var(--font-sans);
@@ -104,8 +101,9 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* Focus-visible кольцо — единственный акцент (§13). */
   :focus-visible {
-    outline: 2px solid var(--color-t-car);
+    outline: 2px solid var(--color-accent);
     outline-offset: 2px;
     border-radius: var(--radius-control);
   }
@@ -114,8 +112,8 @@
   h2,
   h3,
   h4 {
-    line-height: 1.2;
     font-weight: 600;
+    text-wrap: balance;
   }
 
   /* Скрываем скроллбар у горизонтальных лент, оставляя скролл. */
@@ -128,14 +126,37 @@
 }
 
 @layer components {
-  /* Стекло — РОВНО два места: шапка-пилюля и мобильный таб-бар (§3.1). */
+  /* Полосатый плейсхолдер для контента без изображения (баннер/фото товара).
+     Не фон интерфейса, а заглушка «нет картинки» — на нейтральных токенах. */
+  .placeholder-stripe {
+    background-image: repeating-linear-gradient(
+      135deg,
+      var(--color-line) 0,
+      var(--color-line) 8px,
+      var(--color-paper) 8px,
+      var(--color-paper) 16px
+    );
+  }
+  .placeholder-stripe-dark {
+    background-image: repeating-linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-ink) 88%, white) 0,
+      color-mix(in srgb, var(--color-ink) 88%, white) 8px,
+      color-mix(in srgb, var(--color-ink) 80%, white) 8px,
+      color-mix(in srgb, var(--color-ink) 80%, white) 16px
+    );
+  }
+
+  /* Стекло — РОВНО два места: шапка-пилюля и мобильный таб-бар (§3.1).
+     Фолбэк без backdrop-filter → сплошной --color-surface с той же границей. */
   .glass-chrome {
     background-color: var(--color-surface);
+    will-change: transform;
   }
 
   @supports (backdrop-filter: blur(12px)) {
     .glass-chrome {
-      background-color: color-mix(in srgb, var(--color-surface) 70%, transparent);
+      background-color: color-mix(in srgb, var(--color-surface) 72%, transparent);
       backdrop-filter: blur(12px);
     }
   }

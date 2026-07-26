@@ -1,7 +1,8 @@
 import type { Review } from '@/shared/api/types'
-import { formatDate } from '@/shared/lib/format'
+import { formatDate, formatPlural } from '@/shared/lib/format'
 import { t } from '@/shared/i18n'
 import { RatingStars } from '@/shared/ui'
+import { SectionHeading } from '@/app/layouts/SectionHeading'
 
 /** §10.1: блок не рендерится вовсе, если отзывов нет. */
 export function ReviewList({ reviews }: { reviews: Review[] }) {
@@ -9,7 +10,10 @@ export function ReviewList({ reviews }: { reviews: Review[] }) {
 
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold">{t('product.reviews')}</h2>
+      <SectionHeading
+        lead={t('product.reviews')}
+        ghost={formatPlural(reviews.length, { one: 'отзыв', few: 'отзыва', many: 'отзывов' })}
+      />
       <ul className="flex flex-col gap-3">
         {reviews.map((review) => (
           <li key={review.id} className="flex flex-col gap-2 rounded-card bg-surface p-4 shadow-float">

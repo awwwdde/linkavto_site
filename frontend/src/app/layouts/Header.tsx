@@ -1,22 +1,31 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
+import { AnimatePresence, motion } from 'motion/react'
 import { t } from '@/shared/i18n'
-import { cn } from '@/shared/lib/cn'
 import { Container } from '@/shared/ui/Layout'
-import { IconCart, IconCatalog, IconHeart, IconSearch, IconUser } from '@/shared/ui/Icon'
+import { IconCart, IconCatalog, IconGarage, IconHeart, IconSearch, IconUser } from '@/shared/ui/Icon'
 import { SmartSearch } from '@/features/search/SmartSearch'
 import { useCartCount } from '@/features/cart/store'
 import { useAuthStore } from '@/features/auth/store'
 import { useUiStore } from '@/app/ui-store'
+import { AddressPill } from './AddressPill'
+
+/** §11: разворот поиска — spring без баунса, ~0.25с; reduced-motion → мгновенно. */
+const SPRING = { type: 'spring', duration: 0.25, bounce: 0 } as const
 
 function Logo() {
   return (
-    <Link to="/" className="shrink-0 font-display text-lg tracking-tight text-ink" aria-label={t('brand.name')}>
+    <Link
+      to="/"
+      className="shrink-0 font-display text-lg tracking-tight text-ink"
+      aria-label={t('brand.name')}
+    >
       LINKAVTO
     </Link>
   )
 }
 
-function CartLink({ compact = false }: { compact?: boolean }) {
+function CartLink() {
   const count = useCartCount()
   return (
     <Link
@@ -26,10 +35,7 @@ function CartLink({ compact = false }: { compact?: boolean }) {
     >
       <IconCart />
       {count > 0 ? (
-        <span
-          className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-pill bg-cta px-1 text-xs font-medium text-cta-ink tabular-nums"
-          aria-hidden={compact}
-        >
+        <span className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-pill bg-accent px-1 text-xs font-medium text-white tabular-nums">
           {count}
         </span>
       ) : null}
@@ -37,81 +43,181 @@ function CartLink({ compact = false }: { compact?: boolean }) {
   )
 }
 
-/** Desktop-шапка: плавающая пилюля со стеклом (одно из двух разрешённых мест, §3.1). */
-export function Header() {
+/** §4а: тёмная пилюля «Войти» — вне основной пилюли, справа. После входа — профиль. */
+function LoginPill() {
   const openAuth = useUiStore((state) => state.openAuth)
-  const openCatalog = useUiStore((state) => state.openCatalogMenu)
-  const openSearch = useUiStore((state) => state.openSearchOverlay)
   const user = useAuthStore((state) => state.user)
 
+  if (user) {
+    return (
+      <Link
+        to="/profile"
+        aria-label={t('nav.profile')}
+        className="flex h-14 shrink-0 items-center gap-2 rounded-pill bg-ink px-4 text-base font-medium text-white shadow-float transition-colors duration-[--duration-fast] hover:bg-ink/90"
+      >
+        <IconUser width={18} height={18} />
+        <span className="max-w-[12ch] truncate">{user.name ?? user.email}</span>
+      </Link>
+    )
+  }
+
   return (
-    <header className="sticky top-0 z-40 pt-0 lg:top-4 lg:pt-4">
-      <Container>
-        <div
-          className={cn(
-            'glass-chrome flex h-16 items-center gap-3 border-b border-line px-4',
-            'lg:h-16 lg:gap-4 lg:rounded-pill lg:border-0 lg:px-4 lg:shadow-float',
-          )}
-        >
-          <Logo />
+    <button
+      type="button"
+      onClick={() => openAuth()}
+      className="flex h-14 shrink-0 items-center gap-2 rounded-pill bg-ink px-5 text-base font-medium text-white shadow-float transition-colors duration-[--duration-fast] hover:bg-ink/90"
+    >
+      <IconUser width={18} height={18} />
+      {t('nav.login')}
+    </button>
+  )
+}
 
-          <button
+/** Свёрнутая капсула поиска — компактная, справа внутри основной пилюли (§4а). */
+function CollapsedSearch({ onOpen }: { onOpen: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={t('nav.openSearch')}
+      className="flex h-10 w-44 items-center gap-2 rounded-pill bg-ink/5 px-3.5 text-sm text-ink-muted transition-colors duration-[--duration-fast] hover:bg-ink/[0.08]"
+    >
+      <IconSearch width={16} height={16} className="shrink-0" />
+      <span className="truncate">{t('search.short')}</span>
+    </button>
+  )
+}
+
+/** §4а, десктоп: широкая плавающая шапка поверх баннера. */
+function DesktopHeader() {
+  const [searchOpen, setSearchOpen] = useState(false)
+  const openCatalog = useUiStore((state) => state.openCatalogMenu)
+
+  useEffect(() => {
+    if (!searchOpen) return
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSearchOpen(false)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [searchOpen])
+
+  return (
+    <div className="hidden lg:block">
+      {/* Затемнение фона при раскрытом поиске (§4а). */}
+      <AnimatePresence>
+        {searchOpen ? (
+          <motion.button
             type="button"
-            onClick={openCatalog}
-            className="hidden h-10 items-center gap-2 rounded-control px-3 text-base font-medium text-ink transition-colors duration-[--duration-fast] hover:bg-ink/5 lg:flex"
-          >
-            <IconCatalog width={18} height={18} />
-            {t('nav.catalog')}
-          </button>
+            aria-label={t('nav.close')}
+            onClick={() => setSearchOpen(false)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-30 cursor-default bg-ink/45 backdrop-blur-[2px]"
+          />
+        ) : null}
+      </AnimatePresence>
 
-          {/* Полноценный поиск — только desktop; на mobile строка открывает оверлей. */}
-          <div className="hidden min-w-0 flex-1 lg:block">
-            <SmartSearch />
+      <Container>
+        <div className="flex items-center gap-3 py-4">
+          {/* 1. Пилюля адреса — отдельно слева (§4а). */}
+          <AddressPill />
+
+          {/* 2. Основная пилюля — компактная, по центру; при поиске превращается
+              в отдельное поле + панель подсказок (§4а, два прямоугольника). */}
+          <div className="flex flex-1 justify-center">
+            {searchOpen ? (
+              <motion.div
+                key="search"
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={SPRING}
+                className="relative z-40 w-full [&_form]:shadow-lift"
+              >
+                <SmartSearch
+                  autoFocus
+                  variant="inline"
+                  showGarageChip={false}
+                  onNavigate={() => setSearchOpen(false)}
+                />
+              </motion.div>
+            ) : (
+              <div className="glass-chrome relative z-40 flex h-14 w-auto items-center gap-4 rounded-pill border border-line px-5 shadow-float">
+                <Logo />
+                <button
+                  type="button"
+                  onClick={openCatalog}
+                  aria-label={t('nav.catalog')}
+                  className="flex h-10 w-10 items-center justify-center rounded-control text-ink transition-colors duration-[--duration-fast] hover:bg-ink/5"
+                >
+                  <IconCatalog />
+                </button>
+                <CollapsedSearch onOpen={() => setSearchOpen(true)} />
+                <Link
+                  to="/garage"
+                  aria-label={t('nav.garage')}
+                  className="flex h-10 w-10 items-center justify-center rounded-control text-ink transition-colors duration-[--duration-fast] hover:bg-ink/5"
+                >
+                  <IconGarage />
+                </Link>
+              </div>
+            )}
           </div>
 
-          <button
-            type="button"
-            onClick={openSearch}
-            className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-pill border border-line bg-surface px-4 text-base text-ink-muted lg:hidden"
-          >
-            <IconSearch width={18} height={18} />
-            <span className="truncate">{t('search.placeholderShort')}</span>
-          </button>
-
-          <div className="flex shrink-0 items-center gap-1">
+          {/* 3. Пилюля избранное + корзина — отдельно (§4а). */}
+          <div className="glass-chrome flex h-14 items-center gap-1 rounded-pill border border-line px-3 shadow-float">
             <Link
               to="/favorites"
               aria-label={t('nav.favorites')}
-              className="hidden h-10 w-10 items-center justify-center rounded-control text-ink transition-colors duration-[--duration-fast] hover:bg-ink/5 lg:flex"
+              className="flex h-10 w-10 items-center justify-center rounded-control text-ink transition-colors duration-[--duration-fast] hover:bg-ink/5"
             >
               <IconHeart />
             </Link>
-
-            <div className="hidden lg:block">
-              <CartLink />
-            </div>
-
-            {user ? (
-              <Link
-                to="/profile"
-                aria-label={t('nav.profile')}
-                className="hidden h-10 w-10 items-center justify-center rounded-control text-ink transition-colors duration-[--duration-fast] hover:bg-ink/5 lg:flex"
-              >
-                <IconUser />
-              </Link>
-            ) : (
-              <button
-                type="button"
-                onClick={() => openAuth()}
-                className="hidden h-10 items-center gap-2 rounded-control px-3 text-base font-medium text-ink transition-colors duration-[--duration-fast] hover:bg-ink/5 lg:flex"
-              >
-                <IconUser width={18} height={18} />
-                {t('nav.login')}
-              </button>
-            )}
+            <CartLink />
           </div>
+
+          {/* 4. Тёмная пилюля «Войти» (§4а). */}
+          <LoginPill />
         </div>
       </Container>
+    </div>
+  )
+}
+
+/** Mobile: компактная шапка; навигация — в таб-баре, поиск — полноэкранный оверлей. */
+function MobileHeader() {
+  const openSearch = useUiStore((state) => state.openSearchOverlay)
+
+  return (
+    <div className="lg:hidden">
+      <div className="glass-chrome flex h-14 items-center gap-3 border-b border-line px-4">
+        <Logo />
+        <button
+          type="button"
+          onClick={openSearch}
+          aria-label={t('nav.openSearch')}
+          className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-pill bg-ink/5 px-4 text-base text-ink-muted"
+        >
+          <IconSearch width={18} height={18} className="shrink-0" />
+          <span className="truncate">{t('search.placeholderShort')}</span>
+        </button>
+        <CartLink />
+      </div>
+    </div>
+  )
+}
+
+/**
+ * §4а: шапка плавает поверх контента (fixed), баннер главной продолжается под ней.
+ * Отступ под шапку задаёт RootLayout (main), кроме главной, где баннер уходит под неё.
+ */
+export function Header() {
+  return (
+    <header className="fixed inset-x-0 top-0 z-40">
+      <DesktopHeader />
+      <MobileHeader />
     </header>
   )
 }

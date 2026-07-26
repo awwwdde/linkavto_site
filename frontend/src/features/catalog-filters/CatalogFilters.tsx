@@ -167,6 +167,20 @@ export function CatalogFilters({ data, onApplied }: CatalogFiltersProps) {
         }}
       />
 
+      {/* §5: динамические атрибутные фильтры категории (как в старом каталоге). */}
+      {(data?.facets.attributes ?? []).map((facet) => (
+        <FacetGroup
+          key={facet.code}
+          title={facet.label}
+          options={facet.options}
+          selected={params.attributes[facet.code] ?? []}
+          onToggle={(value) => {
+            toggleInList(facet.code, value)
+            onApplied?.()
+          }}
+        />
+      ))}
+
       <fieldset className="flex flex-col gap-1">
         <legend className="mb-2 text-base font-semibold">{t('catalog.filters')}</legend>
         <Checkbox

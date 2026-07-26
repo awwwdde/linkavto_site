@@ -2,6 +2,7 @@ import type { Offer, ProductListItem } from '@/shared/api/types'
 import { formatDeliveryDays } from '@/shared/lib/format'
 import { t } from '@/shared/i18n'
 import { Badge, Price, Skeleton } from '@/shared/ui'
+import { SectionHeading } from '@/app/layouts/SectionHeading'
 import { SellerBadge } from '@/entities/seller/SellerBadge'
 import { AddToCart } from '@/features/cart/AddToCart'
 
@@ -11,7 +12,7 @@ export function OffersTable({ offers, product }: { offers: Offer[]; product: Pro
 
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold">{t('product.offers')}</h2>
+      <SectionHeading lead={t('product.offers')} ghost={t('product.offersGhost')} />
 
       {/* Mobile */}
       <ul className="flex flex-col gap-3 lg:hidden">

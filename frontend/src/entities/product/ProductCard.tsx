@@ -2,20 +2,17 @@ import { Link } from 'react-router'
 import type { ProductListItem } from '@/shared/api/types'
 import { cn } from '@/shared/lib/cn'
 import { t } from '@/shared/i18n'
-import { Badge, Img, Price, Rating, Skeleton } from '@/shared/ui'
+import { Badge, Img, PricePill, Rating, Skeleton } from '@/shared/ui'
 import { AddToCart } from '@/features/cart/AddToCart'
 
 /**
  * §3.4: карточка в списке несёт максимум фото, название, артикул, цену,
- * рейтинг и кнопку. Не более одного бейджа — остальное в detail.
+ * рейтинг и кнопку. Не более одного бейджа (§3.4) — только «подходит авто»;
+ * скидка — зачёркнутой ценой, не бейджем (§3.1).
  */
 export function ProductCard({ product, className }: { product: ProductListItem; className?: string }) {
   const badge =
-    product.fits_vehicle === true ? (
-      <Badge tone="ok">{t('garage.fits')}</Badge>
-    ) : product.discount_percent ? (
-      <Badge tone="discount">−{product.discount_percent}%</Badge>
-    ) : null
+    product.fits_vehicle === true ? <Badge tone="ok">{t('garage.fits')}</Badge> : null
 
   return (
     <article
@@ -50,7 +47,7 @@ export function ProductCard({ product, className }: { product: ProductListItem; 
       ) : null}
 
       <div className="mt-auto flex flex-col gap-3">
-        <Price value={product.price} oldValue={product.old_price} size="md" />
+        <PricePill value={product.price} oldValue={product.old_price} />
         <AddToCart product={product} />
       </div>
     </article>

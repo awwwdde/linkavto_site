@@ -1,11 +1,9 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { t } from '@/shared/i18n'
-import { cn } from '@/shared/lib/cn'
-import { vehicleMeta } from '@/shared/lib/vehicle-types'
 import { Badge, Button, Container, EmptyState, Modal, PageMeta, toast } from '@/shared/ui'
 import { IconPlus, IconTrash } from '@/shared/ui/Icon'
-import { GarageScene } from '@/features/garage-scene/GarageScene'
+import { GarageZonesMap } from '@/features/garage/GarageZonesMap'
 import { GarageVehicleForm } from '@/features/garage/GarageVehicleForm'
 import { deleteGarageVehicle } from '@/features/garage/api'
 import { useActiveVehicle, useGarageStore } from '@/features/garage/store'
@@ -17,7 +15,6 @@ export function Component() {
   const setActive = useGarageStore((state) => state.setActive)
   const removeVehicle = useGarageStore((state) => state.removeVehicle)
   const active = useActiveVehicle()
-  const meta = vehicleMeta(active?.vehicle_type)
 
   const remove = useMutation({
     mutationFn: deleteGarageVehicle,
@@ -54,10 +51,10 @@ export function Component() {
           />
         ) : (
           <>
-            {/* §3.4, правило одной оси: доминанта гаража — сцена. */}
+            {/* §3.4, правило одной оси: доминанта гаража — схема зон. */}
             <div className="flex flex-col items-center gap-2">
-              <p className={cn('text-md font-medium', meta?.text)}>{active?.title}</p>
-              <GarageScene vehicle={active} />
+              <p className="text-md font-medium">{active?.title}</p>
+              <GarageZonesMap vehicle={active} />
             </div>
 
             <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

@@ -9,7 +9,6 @@ import { queryKeys } from '@/shared/api/query-keys'
 import { PAGE_SIZE } from '@/shared/config'
 import { t } from '@/shared/i18n'
 import { formatPlural } from '@/shared/lib/format'
-import { vehicleMetaBySlug } from '@/shared/lib/vehicle-types'
 import {
   BottomSheet,
   Breadcrumbs,
@@ -25,6 +24,7 @@ import {
   Skeleton,
 } from '@/shared/ui'
 import { IconFilter } from '@/shared/ui/Icon'
+import { SectionHeading } from '@/app/layouts/SectionHeading'
 import { CatalogFilters } from '@/features/catalog-filters/CatalogFilters'
 import { SelectedFilters } from '@/features/catalog-filters/SelectedFilters'
 import { SORT_OPTIONS, useCatalogParams } from '@/features/catalog-filters/useCatalogParams'
@@ -41,7 +41,6 @@ export function Component() {
 
   const { params: filters, setParam, setPage, activeCount, queryParams } = useCatalogParams()
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const meta = vehicleMetaBySlug(path)
 
   const category = useQuery({
     queryKey: queryKeys.categories.detail(slug),
@@ -74,7 +73,6 @@ export function Component() {
       <Container className="flex flex-col gap-6 py-4 lg:py-8">
         {category.data ? (
           <Breadcrumbs
-            accentClassName={meta?.bg}
             items={[
               { label: t('nav.home'), to: '/' },
               ...category.data.breadcrumbs.map((crumb, index, all) => ({
@@ -87,16 +85,17 @@ export function Component() {
           <Skeleton className="h-4 w-64" />
         )}
 
-        <div className="flex flex-col gap-2">
-          <h1 className="text-xl font-semibold lg:text-2xl">{title}</h1>
-          {products.data ? (
-            <p className="text-base text-ink-muted tabular-nums">
-              {formatPlural(products.data.count, { one: 'товар', few: 'товара', many: 'товаров' })}
-            </p>
-          ) : (
-            <Skeleton className="h-4 w-32" />
-          )}
-        </div>
+        {/* §3.2 двухтоновый заголовок: категория + счётчик товаров вторым тоном. */}
+        <SectionHeading
+          as="h1"
+          size="xl"
+          lead={`${title}.`}
+          ghost={
+            products.data
+              ? formatPlural(products.data.count, { one: 'товар', few: 'товара', many: 'товаров' })
+              : undefined
+          }
+        />
 
         {/* Подуровни текущей категории — лента чипов, работает на любой глубине.
             Активный чип подсвечен, «Все» возвращает на текущий уровень. */}

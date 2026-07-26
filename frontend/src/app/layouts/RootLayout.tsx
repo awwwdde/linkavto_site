@@ -1,8 +1,5 @@
-import { Outlet, useLocation } from 'react-router'
-import { cn } from '@/shared/lib/cn'
+import { Outlet } from 'react-router'
 import { ToastViewport } from '@/shared/ui'
-import { vehicleMeta, vehicleMetaBySlug } from '@/shared/lib/vehicle-types'
-import { useActiveVehicle } from '@/features/garage/store'
 import { AuthModal } from '@/features/auth/AuthModal'
 import { ScrollToTop } from '@/app/providers/ScrollToTop'
 import { SmoothScrollProvider } from '@/app/providers/SmoothScrollProvider'
@@ -13,34 +10,19 @@ import { TabBar } from './TabBar'
 import { Footer } from './Footer'
 
 /**
- * §3.4, правило среды: фон экрана — тонированная среда,
- * контент — белые карточки, парящие в ней.
+ * §3.4, правило среды: фон экрана — --color-paper (единая среда, без тонирования
+ * по категории и без градиентов), контент — белые карточки, парящие в ней.
+ * §3.4, правило слоёв: ровно три уровня — среда → карточки → активный слой.
  */
-function useEnvironmentClass(): string {
-  const { pathname } = useLocation()
-  const activeVehicle = useActiveVehicle()
-
-  const categoryMatch = pathname.startsWith('/category/') ? pathname.replace('/category/', '') : null
-  const byCategory = vehicleMetaBySlug(categoryMatch)
-  if (byCategory) return byCategory.env
-
-  if (pathname.startsWith('/garage')) {
-    return vehicleMeta(activeVehicle?.vehicle_type)?.env ?? 'bg-env'
-  }
-
-  return 'bg-env'
-}
-
 export function RootLayout() {
-  const envClass = useEnvironmentClass()
-
   return (
-    <div className={cn('flex min-h-dvh flex-col transition-colors duration-[--duration-base]', envClass)}>
+    <div className="flex min-h-dvh flex-col bg-paper">
       <ScrollToTop />
       <SmoothScrollProvider />
       <Header />
 
-      <main className="flex-1 pb-24 lg:pb-0">
+      {/* Отступ под fixed-шапку (§4а). Главная переопределяет его, уводя баннер под шапку. */}
+      <main className="flex-1 pt-14 pb-24 lg:pt-20 lg:pb-0">
         <Outlet />
       </main>
 

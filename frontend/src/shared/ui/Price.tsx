@@ -26,3 +26,39 @@ export function Price({ value, oldValue, currency, size = 'md', className }: Pri
     </span>
   )
 }
+
+/**
+ * §6: сигнатурный элемент карточки — цена в аутлайн-пилюле, моноширинная,
+ * tabular-nums; зачёркнутая старая цена рядом мелким (§3.1).
+ * На тёмной карточке (`tone="dark"`) — светлая обводка.
+ */
+export function PricePill({
+  value,
+  oldValue,
+  currency,
+  tone = 'light',
+  className,
+}: Omit<PriceProps, 'size'> & { tone?: 'light' | 'dark' }) {
+  return (
+    <span className={cn('inline-flex items-baseline gap-2', className)}>
+      <span
+        className={cn(
+          'inline-flex items-center rounded-pill border px-3.5 py-1.5 font-mono text-base font-medium tabular-nums',
+          tone === 'dark' ? 'border-white/25 text-white' : 'border-line text-ink',
+        )}
+      >
+        {formatPrice(value, currency)}
+      </span>
+      {oldValue && oldValue > value ? (
+        <s
+          className={cn(
+            'font-mono text-xs tabular-nums',
+            tone === 'dark' ? 'text-ink-ghost-dark' : 'text-ink-ghost',
+          )}
+        >
+          {formatPrice(oldValue, currency)}
+        </s>
+      ) : null}
+    </span>
+  )
+}

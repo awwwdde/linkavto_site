@@ -1,4 +1,5 @@
 import type {
+  AttributeFacet,
   Banner,
   CategoryNode,
   GarageVehicle,
@@ -411,7 +412,13 @@ const KIND_BY_VEHICLE_TYPE: Record<VehicleType, VehicleKind | 'universal'> = {
           { name: 'Производитель', value: manufacturer },
           { name: 'Бренд товара', value: productBrand },
           { name: 'Вес, кг', value: (0.4 + random() * 6).toFixed(2) },
-          { name: 'Страна производства', value: 'Германия' },
+          { name: 'Тип товара', value: (['Оригинал', 'Аналог', 'Восстановленный'] as const)[id % 3]! },
+          { name: 'Сторона установки', value: (['Левая', 'Правая', 'Не применимо'] as const)[id % 3]! },
+          { name: 'Гарантия', value: (['6 месяцев', '12 месяцев', '24 месяца'] as const)[id % 3]! },
+          {
+            name: 'Страна производства',
+            value: (['Германия', 'Япония', 'Китай', 'Россия', 'Корея'] as const)[id % 5]!,
+          },
         ],
         category: {
           id: leaf.id,
@@ -442,6 +449,37 @@ const KIND_BY_VEHICLE_TYPE: Record<VehicleType, VehicleKind | 'universal'> = {
 /** Бренд товара берём из атрибутов — отдельного поля в типе списка нет. */
 export function productBrandOf(product: ProductDetail): string {
   return product.attributes.find((attribute) => attribute.name === 'Бренд товара')?.value ?? PRODUCT_BRANDS[0]!
+}
+
+/**
+ * Динамические атрибутные фильтры категории (§5): имя атрибута → GET-параметр.
+ * TODO(api): согласовать имена параметров с бэком (сейчас у него `viscosity`,
+ * `volume`, `material` и т.п. по категориям — см. API_REQUESTS.md).
+ */
+export const ATTRIBUTE_FACET_DEFS: { name: string; code: string }[] = [
+  { name: 'Тип товара', code: 'attr_grade' },
+  { name: 'Сторона установки', code: 'attr_side' },
+  { name: 'Гарантия', code: 'attr_warranty' },
+  { name: 'Страна производства', code: 'attr_country' },
+]
+
+/** Собирает атрибутные фасеты по товарам текущей выборки (пустые группы отбрасывает). */
+export function attributeFacetsFrom(items: ProductDetail[]): AttributeFacet[] {
+  return ATTRIBUTE_FACET_DEFS.map(({ name, code }) => {
+    const counts = new Map<string, number>()
+    for (const item of items) {
+      const value = item.attributes.find((attribute) => attribute.name === name)?.value
+      if (!value) continue
+      counts.set(value, (counts.get(value) ?? 0) + 1)
+    }
+    return {
+      code,
+      label: name,
+      options: [...counts.entries()]
+        .map(([value, count]) => ({ value, label: value, count }))
+        .sort((a, b) => b.count - a.count),
+    }
+  }).filter((facet) => facet.options.length > 1)
 }
 
 export function toListItem(product: ProductDetail): ProductListItem {
@@ -492,9 +530,14 @@ export function reviewsFor(product: ProductDetail): Review[] {
 export const banners: Banner[] = [
   {
     id: 1,
-    title: 'Подбор по VIN за один шаг',
-    subtitle: 'Введите VIN — покажем только подходящие детали',
-    image: null,
+    title: 'Качественные автозапчасти',
+    subtitle: 'Для любых авто и любых задач',
+    image: {
+      thumb: '/banners/hero-1.png',
+      card: '/banners/hero-1.png',
+      full: '/banners/hero-1.png',
+      alt: 'Качественные автозапчасти для любых авто',
+    },
     url: '/garage',
   },
 ]

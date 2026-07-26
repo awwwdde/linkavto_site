@@ -6,8 +6,8 @@ export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
 export type ButtonSize = 'md' | 'lg' | 'icon'
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  // primary = --color-cta, только покупательские CTA (§3.1)
-  primary: 'bg-cta text-cta-ink hover:bg-cta-hover',
+  // primary = --color-accent, единственный цвет действия (§3.1)
+  primary: 'bg-accent text-white hover:bg-accent-hover',
   secondary: 'bg-surface text-ink border border-line hover:border-ink-muted',
   ghost: 'text-ink hover:bg-ink/5',
   danger: 'bg-danger-bg text-danger hover:bg-danger/15',

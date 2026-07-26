@@ -1,12 +1,13 @@
 import type { ProductAttribute } from '@/shared/api/types'
 import { t } from '@/shared/i18n'
+import { SectionHeading } from '@/app/layouts/SectionHeading'
 
 export function AttributesTable({ attributes }: { attributes: ProductAttribute[] }) {
   if (attributes.length === 0) return null
 
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold">{t('product.attributes')}</h2>
+      <SectionHeading lead={t('product.attributes')} ghost={t('product.attributesGhost')} />
       <dl className="overflow-hidden rounded-card bg-surface shadow-float">
         {attributes.map((attribute, index) => (
           <div

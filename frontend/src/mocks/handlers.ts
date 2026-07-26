@@ -17,6 +17,8 @@ import type {
 import { detectSearchMode } from '@/features/search/detect'
 import { CLASS_PARAM } from '@/features/catalog-filters/useCatalogParams'
 import {
+  ATTRIBUTE_FACET_DEFS,
+  attributeFacetsFrom,
   banners,
   categoryTree,
   flatten,
@@ -216,6 +218,17 @@ function listResponse(source: ProductDetail[], url: URL, categorySlug: string | 
   if (url.searchParams.get('on_order') === 'true') items = items.filter((item) => !item.in_stock)
   if (url.searchParams.get('is_original') === 'true') items = items.filter((item) => item.id % 3 === 0)
 
+  // Динамические атрибутные фильтры (attr_*), мультивыбор CSV.
+  for (const { name, code } of ATTRIBUTE_FACET_DEFS) {
+    const raw = url.searchParams.get(code)
+    if (!raw) continue
+    const set = new Set(raw.split(','))
+    items = items.filter((item) => {
+      const value = item.attributes.find((attribute) => attribute.name === name)?.value
+      return value ? set.has(value) : false
+    })
+  }
+
   // Гараж: подставляем совместимость вместо ручного каскада.
   if (vehicleId) items = items.filter((item) => item.id % 4 !== 0)
 
@@ -241,6 +254,7 @@ function listResponse(source: ProductDetail[], url: URL, categorySlug: string | 
       price_min: prices.length ? Math.min(...prices) : 0,
       price_max: prices.length ? Math.max(...prices) : 0,
       tire_wheel: categorySlug ? tireWheelFacetsFor(categorySlug) : null,
+      attributes: attributeFacetsFrom(source),
     },
   }
 }

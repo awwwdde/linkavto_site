@@ -5,6 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { t } from '@/shared/i18n'
 import { Button, Input, Modal, toast } from '@/shared/ui'
+import { SectionHeading } from '@/app/layouts/SectionHeading'
+import { IconMail, IconMailCheck } from '@/shared/ui/Icon'
 import { ApiError } from '@/shared/api/client'
 import { useUiStore } from '@/app/ui-store'
 import { oauthUrl, requestEmailCode, verifyEmailCode } from './api'
@@ -82,7 +84,19 @@ export function AuthModal() {
   }
 
   return (
-    <Modal open={open} onClose={close} title={t('auth.title')}>
+    <Modal open={open} onClose={close} title={t('auth.title')} hideTitle>
+      {/* Шапка модалки: иконка-бейдж + двухтоновый заголовок (§3.2). */}
+      <div className="mb-6 flex flex-col gap-4">
+        <span className="flex h-11 w-11 items-center justify-center rounded-control bg-ink/5 text-ink">
+          {step === 'email' ? <IconMail /> : <IconMailCheck />}
+        </span>
+        <SectionHeading
+          size="lg"
+          lead={step === 'email' ? t('auth.heading') : t('auth.codeHeading')}
+          ghost={step === 'email' ? t('auth.headingGhost') : `${t('auth.codeHint')} ${email}`}
+        />
+      </div>
+
       {step === 'email' ? (
         <form className="flex flex-col gap-4" onSubmit={form.handleSubmit(({ email: value }) => sendCode(value))}>
           <Input
@@ -98,18 +112,21 @@ export function AuthModal() {
             {t('auth.sendCode')}
           </Button>
 
-          <div className="flex flex-col gap-2">
-            <Button size="lg" block onClick={() => (window.location.href = oauthUrl('yandex'))}>
-              {t('auth.oauthYandex')}
-            </Button>
-            <Button size="lg" block onClick={() => (window.location.href = oauthUrl('vk'))}>
-              {t('auth.oauthVk')}
-            </Button>
+          {/* Разделитель «или» между входом по коду и соцсетями. */}
+          <div className="flex items-center gap-3 py-1" aria-hidden="true">
+            <span className="h-px flex-1 bg-line" />
+            <span className="text-xs text-ink-muted">{t('auth.or')}</span>
+            <span className="h-px flex-1 bg-line" />
           </div>
 
-          <p className="text-sm text-ink-muted">
+          <div className="flex flex-col gap-2">
+            <OAuthButton badge="Я" label={t('auth.oauthYandex')} onClick={() => (window.location.href = oauthUrl('yandex'))} />
+            <OAuthButton badge="VK" label={t('auth.oauthVk')} onClick={() => (window.location.href = oauthUrl('vk'))} />
+          </div>
+
+          <p className="text-xs leading-relaxed text-ink-muted">
             {t('auth.legal')}{' '}
-            <a href="/terms" className="underline hover:text-ink">
+            <a href="/terms" className="text-ink underline decoration-line underline-offset-2 hover:decoration-ink">
               {t('auth.legalTerms')}
             </a>
           </p>
@@ -122,16 +139,20 @@ export function AuthModal() {
             void confirm()
           }}
         >
-          <Input
-            label={t('auth.codeLabel')}
-            hint={`${t('auth.codeHint')} ${email}`}
-            value={code}
-            onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            error={codeError}
-            className="font-mono tracking-[0.3em]"
-          />
+          <div className="flex flex-col gap-2">
+            <input
+              value={code}
+              onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              aria-label={t('auth.codeLabel')}
+              aria-invalid={codeError ? true : undefined}
+              placeholder="••••••"
+              className="h-14 w-full rounded-control border border-line bg-surface text-center font-mono text-xl tracking-[0.4em] text-ink outline-none transition-[border-color] duration-[--duration-fast] placeholder:text-ink-ghost focus:border-ink-muted aria-[invalid=true]:border-danger"
+            />
+            {codeError ? <p className="text-sm text-danger">{codeError}</p> : null}
+          </div>
+
           <Button type="submit" variant="primary" size="lg" block loading={pending} disabled={code.length < 4}>
             {t('auth.confirm')}
           </Button>
@@ -145,7 +166,7 @@ export function AuthModal() {
                 {t('auth.resendIn')} {secondsLeft}
               </span>
             ) : (
-              <button type="button" className="hover:text-ink" onClick={() => void sendCode(email)}>
+              <button type="button" className="font-medium text-ink hover:text-ink-muted" onClick={() => void sendCode(email)}>
                 {t('auth.resend')}
               </button>
             )}
@@ -153,5 +174,17 @@ export function AuthModal() {
         </form>
       )}
     </Modal>
+  )
+}
+
+/** OAuth-кнопка: монохром (§3, без брендовых цветов), с буквенным бейджем провайдера. */
+function OAuthButton({ badge, label, onClick }: { badge: string; label: string; onClick: () => void }) {
+  return (
+    <Button size="lg" block onClick={onClick} className="justify-start gap-3 px-4">
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-ink/5 text-2xs font-semibold text-ink">
+        {badge}
+      </span>
+      {label}
+    </Button>
   )
 }

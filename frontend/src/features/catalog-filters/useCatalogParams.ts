@@ -95,6 +95,8 @@ export interface CatalogParams {
   /** Одношаговый подбор «как в гараже» — бэк сам разворачивает его в цепочку. */
   garageVehicleId: number | null
   tireWheel: Partial<Record<TireWheelKey, string>>
+  /** Динамические атрибутные фильтры категории: `attr_<code>` → выбранные значения. */
+  attributes: Record<string, string[]>
 }
 
 function parseList(value: string | null): string[] {
@@ -112,6 +114,12 @@ export function useCatalogParams() {
     for (const key of TIRE_WHEEL_KEYS) {
       const value = searchParams.get(key)
       if (value) tireWheel[key] = value
+    }
+
+    // Атрибутные фильтры — любой параметр вида `attr_*` (§5, динамические фасеты).
+    const attributes: Record<string, string[]> = {}
+    for (const [key, value] of searchParams.entries()) {
+      if (key.startsWith('attr_') && value) attributes[key] = parseList(value)
     }
 
     return {
@@ -134,6 +142,7 @@ export function useCatalogParams() {
         ? Number(searchParams.get('garage_vehicle_id'))
         : null,
       tireWheel,
+      attributes,
     }
   }, [searchParams])
 
@@ -245,6 +254,7 @@ export function useCatalogParams() {
     (params.onOrder ? 1 : 0) +
     (params.isOriginal ? 1 : 0) +
     Object.keys(params.tireWheel).length +
+    Object.values(params.attributes).reduce((sum, values) => sum + values.length, 0) +
     (params.garageVehicleId ? 1 : 0) +
     vehicleDepth
 
@@ -271,6 +281,9 @@ export function useCatalogParams() {
     if (params.garageVehicleId) out['garage_vehicle_id'] = params.garageVehicleId
     for (const [key, value] of Object.entries(params.tireWheel)) {
       if (value) out[key] = value
+    }
+    for (const [code, values] of Object.entries(params.attributes)) {
+      if (values.length) out[code] = values.join(',')
     }
     return out
   }, [params])
