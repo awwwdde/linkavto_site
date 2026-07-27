@@ -25,6 +25,7 @@ import {
 } from '@/shared/ui'
 import { IconFilter } from '@/shared/ui/Icon'
 import { SectionHeading } from '@/app/layouts/SectionHeading'
+import { GarageContextBar } from '@/features/garage/GarageContextBar'
 import { CatalogFilters } from '@/features/catalog-filters/CatalogFilters'
 import { SelectedFilters } from '@/features/catalog-filters/SelectedFilters'
 import { SORT_OPTIONS, useCatalogParams } from '@/features/catalog-filters/useCatalogParams'
@@ -97,6 +98,9 @@ export function Component() {
           }
         />
 
+        {/* Гараж-контекст: сквозная липкая полоса подбора под конкретное авто. */}
+        <GarageContextBar className="sticky top-14 z-20 lg:top-20" />
+
         {/* Подуровни текущей категории — лента чипов, работает на любой глубине.
             Активный чип подсвечен, «Все» возвращает на текущий уровень. */}
         {category.data && (children.length > 0 || category.data.siblings.length > 1) ? (
@@ -157,8 +161,8 @@ export function Component() {
 
         <div className="flex gap-8">
           <aside className="hidden w-72 shrink-0 lg:block">
-            <div className="sticky top-28 max-h-[calc(100dvh-8rem)] overflow-y-auto rounded-card bg-surface p-4 shadow-float">
-              <CatalogFilters data={products.data} />
+            <div className="sticky top-36 max-h-[calc(100dvh-10rem)] overflow-y-auto rounded-card bg-surface p-4 shadow-float">
+              <CatalogFilters data={products.data} category={category.data} />
             </div>
           </aside>
 
@@ -221,7 +225,7 @@ export function Component() {
       </Container>
 
       <BottomSheet open={filtersOpen} onClose={() => setFiltersOpen(false)} title={t('catalog.filters')}>
-        <CatalogFilters data={products.data} />
+        <CatalogFilters data={products.data} category={category.data} />
         <Button variant="primary" size="lg" block className="mt-6" onClick={() => setFiltersOpen(false)}>
           {t('catalog.filtersApply')}
         </Button>

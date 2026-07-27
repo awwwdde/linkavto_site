@@ -7,6 +7,8 @@ export interface PriceProps {
   oldValue?: number | null
   currency?: string
   size?: 'sm' | 'md' | 'lg'
+  /** На тёмной карточке — светлый тон зачёркнутой цены (§3.4, контраст §13). */
+  tone?: 'light' | 'dark'
   className?: string
 }
 
@@ -16,12 +18,14 @@ const SIZES = {
   lg: 'text-xl',
 } as const
 
-export function Price({ value, oldValue, currency, size = 'md', className }: PriceProps) {
+export function Price({ value, oldValue, currency, size = 'md', tone = 'light', className }: PriceProps) {
   return (
     <span className={cn('inline-flex items-baseline gap-2 tabular-nums', className)}>
       <span className={cn('font-semibold', SIZES[size])}>{formatPrice(value, currency)}</span>
       {oldValue && oldValue > value ? (
-        <s className="text-sm text-ink-muted">{formatPrice(oldValue, currency)}</s>
+        <s className={cn('text-sm', tone === 'dark' ? 'text-ink-ghost-dark' : 'text-ink-muted')}>
+          {formatPrice(oldValue, currency)}
+        </s>
       ) : null}
     </span>
   )

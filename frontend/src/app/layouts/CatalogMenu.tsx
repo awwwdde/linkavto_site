@@ -72,7 +72,6 @@ function DesktopMenu({ tree, onNavigate }: { tree: CategoryNode[]; onNavigate: (
       {/* Колонка 1 — разделы */}
       <ul className="no-scrollbar overflow-y-auto border-r border-line pr-2">
         {tree.map((node) => {
-          const meta = vehicleMeta(node.vehicle_type)
           const active = node.slug === root.slug
           return (
             <li key={node.id}>
@@ -84,13 +83,8 @@ function DesktopMenu({ tree, onNavigate }: { tree: CategoryNode[]; onNavigate: (
                 aria-current={active ? 'true' : undefined}
                 className={cn(rowBase, active ? 'bg-paper font-medium text-ink' : 'text-ink-muted hover:text-ink')}
               >
-                <span
-                  className={cn(
-                    'flex h-7 w-7 shrink-0 items-center justify-center rounded-control',
-                    meta?.tile ?? 'bg-paper',
-                  )}
-                >
-                  <IconGarage width={16} height={16} className={meta?.text ?? 'text-ink-muted'} />
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-control bg-paper">
+                  <IconGarage width={16} height={16} className="text-ink-muted" />
                 </span>
                 <span className="min-w-0 flex-1 truncate">{node.name}</span>
                 <Count value={node.products_count} />
@@ -224,8 +218,8 @@ function MobileMenu({ tree, onNavigate }: { tree: CategoryNode[]; onNavigate: ()
                 className="flex min-h-12 min-w-0 flex-1 items-center gap-3 text-base"
               >
                 {meta ? (
-                  <span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-control', meta.tile)}>
-                    <IconGarage width={18} height={18} className={meta.text} />
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-control bg-paper">
+                    <IconGarage width={18} height={18} className="text-ink-muted" />
                   </span>
                 ) : null}
                 <span className="min-w-0 flex-1 truncate">{node.name}</span>

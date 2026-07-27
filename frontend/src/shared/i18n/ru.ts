@@ -61,6 +61,11 @@ export const ru = {
   'garage.vinHint': '17 символов, без пробелов',
   'garage.vinInvalid': 'VIN состоит из 17 символов и не содержит букв I, O, Q.',
   'garage.zonesMap': 'Схема узлов автомобиля',
+  'garageContext.addPrompt': 'Добавьте авто — покажем только подходящие детали',
+  'garageContext.lookingAt': 'Смотрим для',
+  'garageContext.showingFor': 'Показываем только для',
+  'garageContext.onlyFits': 'Только подходящие',
+  'garageContext.showAll': 'Показать все',
 
   'catalog.title': 'Каталог',
   'catalog.filters': 'Фильтры',
@@ -88,6 +93,7 @@ export const ru = {
   'catalog.nothingFound': 'Ничего не нашлось',
 
   'vehicleFilter.title': 'Подбор по автомобилю',
+  'vehicleFilter.pickByVehicle': 'Подобрать по автомобилю',
   'vehicleFilter.hint': 'Выберите технику — останутся только подходящие детали.',
   'vehicleFilter.type': 'Тип техники',
   'vehicleFilter.class': 'Класс',

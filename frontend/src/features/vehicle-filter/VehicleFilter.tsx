@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { VehicleKind } from '@/shared/api/types'
 import { t } from '@/shared/i18n'
 import { cn } from '@/shared/lib/cn'
 import { Button, Select } from '@/shared/ui'
-import { IconClose } from '@/shared/ui/Icon'
+import { IconChevronDown, IconClose } from '@/shared/ui/Icon'
+import type { VehicleFilterMode } from '@/features/catalog-filters/filter-profile'
 import { useCatalogParams, type VehicleLevel } from '@/features/catalog-filters/useCatalogParams'
 import { useActiveVehicle } from '@/features/garage/store'
 import {
@@ -80,10 +82,27 @@ function Step({ label, value, options, loading, onChange }: StepProps) {
  * поколение → модификация. Порядок повторяет модели Django, но выбирать
  * шаги можно в любой последовательности — предки достраиваются сами.
  */
-export function VehicleFilter({ className }: { className?: string }) {
+export interface VehicleFilterProps {
+  className?: string
+  /** Режим каскада в текущем разделе (см. filterProfile). По умолчанию — полный. */
+  mode?: VehicleFilterMode
+  /** Тип техники, к которому привязан раздел (для mode='locked'). */
+  lockedKind?: VehicleKind | null
+}
+
+export function VehicleFilter({ className, mode = 'full', lockedKind = null }: VehicleFilterProps) {
   const { params, applyVehicle, resetVehicle, setParam, vehicleDepth } = useCatalogParams()
   const garageVehicle = useActiveVehicle()
-  const kind = params.vehicleType
+  // В залоченном разделе тип техники задаётся категорией и в URL не пишется,
+  // пока пользователь сам не выберет уровень — так подбор не «протекает» в
+  // соседние разделы через vehicleQuery.
+  const kind = lockedKind ?? params.vehicleType
+  const garageApplied = Boolean(params.garageVehicleId)
+  // optional: каскад свёрнут, пока в нём нет активного выбора.
+  const [expanded, setExpanded] = useState(vehicleDepth > 0)
+  const collapsible = mode === 'optional' && !garageApplied
+  // Тип техники скрыт только там, где его задаёт сам раздел (locked).
+  const showTypeChips = mode !== 'locked'
 
   const classes = useQuery({
     queryKey: ['vehicle', 'classes', kind],
@@ -109,8 +128,6 @@ export function VehicleFilter({ className }: { className?: string }) {
     queryKey: ['vehicle', 'modifications', kind, params.generation],
     queryFn: () => fetchVehicleModifications(kind, params.generation),
   })
-
-  const garageApplied = Boolean(params.garageVehicleId)
 
   /** Выбор любого уровня подтягивает всех его предков. */
   const select = (level: VehicleLevel, slug: string | null) => {
@@ -170,11 +187,29 @@ export function VehicleFilter({ className }: { className?: string }) {
     }
   }
 
+  const showReset = vehicleDepth > 0 || garageApplied
+
   return (
     <section className={cn('flex flex-col gap-4', className)}>
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-base font-semibold">{t('vehicleFilter.title')}</h2>
-        {vehicleDepth > 0 || garageApplied ? (
+        {collapsible ? (
+          <button
+            type="button"
+            onClick={() => setExpanded((value) => !value)}
+            aria-expanded={expanded}
+            className="flex items-center gap-1.5 text-base font-semibold"
+          >
+            {t('vehicleFilter.pickByVehicle')}
+            <IconChevronDown
+              width={16}
+              height={16}
+              className={cn('text-ink-muted transition-transform duration-[--duration-fast]', expanded && 'rotate-180')}
+            />
+          </button>
+        ) : (
+          <h2 className="text-base font-semibold">{t('vehicleFilter.title')}</h2>
+        )}
+        {showReset ? (
           <button
             type="button"
             onClick={() => {
@@ -202,7 +237,7 @@ export function VehicleFilter({ className }: { className?: string }) {
             <IconClose width={16} height={16} />
           </button>
         </div>
-      ) : (
+      ) : collapsible && !expanded ? null : (
         <>
           <p className="text-sm text-ink-muted">{t('vehicleFilter.hint')}</p>
 
@@ -212,27 +247,29 @@ export function VehicleFilter({ className }: { className?: string }) {
             </Button>
           ) : null}
 
-          <div className="flex flex-wrap gap-2">
-            {VEHICLE_KINDS.map((item) => {
-              const active = kind === item.value
-              return (
-                <button
-                  key={item.value}
-                  type="button"
-                  onClick={() => select('vehicleType', active ? null : item.value)}
-                  aria-pressed={active}
-                  className={cn(
-                    'inline-flex min-h-10 items-center rounded-pill border px-3 text-sm transition-colors duration-[--duration-fast]',
-                    active
-                      ? 'border-ink bg-ink text-white'
-                      : 'border-line bg-surface text-ink hover:border-ink-muted',
-                  )}
-                >
-                  {item.label}
-                </button>
-              )
-            })}
-          </div>
+          {showTypeChips ? (
+            <div className="flex flex-wrap gap-2">
+              {VEHICLE_KINDS.map((item) => {
+                const active = kind === item.value
+                return (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => select('vehicleType', active ? null : item.value)}
+                    aria-pressed={active}
+                    className={cn(
+                      'inline-flex min-h-10 items-center rounded-pill border px-3 text-sm transition-colors duration-[--duration-fast]',
+                      active
+                        ? 'border-ink bg-ink text-white'
+                        : 'border-line bg-surface text-ink hover:border-ink-muted',
+                    )}
+                  >
+                    {item.label}
+                  </button>
+                )
+              })}
+            </div>
+          ) : null}
 
           <div className="flex flex-col gap-3">
             <Step

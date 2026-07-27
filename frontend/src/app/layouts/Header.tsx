@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { AnimatePresence, motion } from 'motion/react'
 import { t } from '@/shared/i18n'
+import { usePrefersReducedMotion } from '@/shared/lib/media'
 import { Container } from '@/shared/ui/Layout'
 import { IconCart, IconCatalog, IconGarage, IconHeart, IconSearch, IconUser } from '@/shared/ui/Icon'
 import { SmartSearch } from '@/features/search/SmartSearch'
@@ -25,8 +26,10 @@ function Logo() {
   )
 }
 
+/** Иконка корзины со счётчиком; счётчик пружинит при изменении (§11). */
 function CartLink() {
   const count = useCartCount()
+  const reduced = usePrefersReducedMotion()
   return (
     <Link
       to="/cart"
@@ -35,9 +38,15 @@ function CartLink() {
     >
       <IconCart />
       {count > 0 ? (
-        <span className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-pill bg-accent px-1 text-xs font-medium text-white tabular-nums">
+        <motion.span
+          key={reduced ? undefined : count}
+          initial={reduced ? false : { scale: 0.5 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 600, damping: 18 }}
+          className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-pill bg-accent px-1 text-xs font-medium text-white tabular-nums"
+        >
           {count}
-        </span>
+        </motion.span>
       ) : null}
     </Link>
   )

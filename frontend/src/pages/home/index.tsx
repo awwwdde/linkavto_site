@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { motion, useScroll, useTransform } from 'motion/react'
 import { useQuery } from '@tanstack/react-query'
 import type { CategoryNode, VehicleType } from '@/shared/api/types'
 import { fetchCategoryTree } from '@/entities/category/api'
@@ -6,7 +7,7 @@ import { CategoryTile } from '@/entities/category/CategoryTile'
 import { fetchHomeSections } from '@/shared/api/misc'
 import { queryKeys } from '@/shared/api/query-keys'
 import { t } from '@/shared/i18n'
-import { Button, Chip, Container, ErrorState, Modal, PageMeta, Skeleton } from '@/shared/ui'
+import { Button, Chip, Container, ErrorState, Modal, PageMeta, Reveal, Skeleton } from '@/shared/ui'
 import {
   IconGarage,
   IconPlus,
@@ -23,6 +24,7 @@ import { SectionHeading } from '@/app/layouts/SectionHeading'
 import { ProductRow } from '@/app/layouts/ProductRow'
 import { GarageVehicleForm } from '@/features/garage/GarageVehicleForm'
 import { useActiveVehicle } from '@/features/garage/store'
+import { useIsDesktop, usePrefersReducedMotion } from '@/shared/lib/media'
 
 /** vehicle_type → нейтральная lucide-иконка типа техники (§4а). */
 const TYPE_ICON: Record<VehicleType, IconComponent> = {
@@ -141,13 +143,14 @@ function HomeLanes() {
       {lanes.map((section, i) => {
         const personalized = i === 0 && active !== null
         return (
-          <ProductRow
-            key={section.id}
-            products={section.products.slice(0, 5)}
-            featured={i === 0}
-            chips={chipRow(LANE_CHIPS[i % LANE_CHIPS.length] ?? [])}
-            label={personalized ? `${t('home.forYour')} ${active.title}` : undefined}
-          />
+          <Reveal key={section.id}>
+            <ProductRow
+              products={section.products.slice(0, 5)}
+              featured={i === 0}
+              chips={chipRow(LANE_CHIPS[i % LANE_CHIPS.length] ?? [])}
+              label={personalized ? `${t('home.forYour')} ${active.title}` : undefined}
+            />
+          </Reveal>
         )
       })}
     </div>
@@ -155,6 +158,17 @@ function HomeLanes() {
 }
 
 export function Component() {
+  const reduced = usePrefersReducedMotion()
+  const isDesktop = useIsDesktop()
+  const { scrollY } = useScroll()
+  // При скролле вниз верхние углы блока схлопываются к 0 — паперный слой
+  // «заливает» экран под шапкой. Стартовый радиус ≤ нахлёста, иначе зазор.
+  const startRadius = isDesktop ? 120 : 20
+  const radius = useTransform(scrollY, [0, 360], [startRadius, 0])
+  const seamStyle = reduced
+    ? { borderTopLeftRadius: startRadius, borderTopRightRadius: startRadius }
+    : { borderTopLeftRadius: radius, borderTopRightRadius: radius }
+
   return (
     <>
       <PageMeta
@@ -167,27 +181,31 @@ export function Component() {
       <div className="-mt-14 lg:-mt-20">
         <PromoCarousel />
 
-        {/* Шов: контент наезжает на баннер. Нахлёст ≥ радиуса, иначе скруглённые
-            углы уходят ниже баннера и открывают зазор. Мобайл — меньшее скругление (§4б). */}
-        <div className="relative -mt-6 rounded-t-card bg-paper lg:-mt-40 lg:rounded-t-seam">
+        {/* Блок после рекламы: при скролле его верхние углы схлопываются, и он
+            заливает экран под fixed-шапкой. Нахлёст ≥ стартового радиуса. */}
+        <motion.div className="relative -mt-6 bg-paper lg:-mt-40" style={seamStyle}>
           <Container className="flex flex-col gap-10 pt-8 pb-4 lg:gap-14 lg:pt-12">
             {/* Зона 2 */}
-            <section className="flex flex-col gap-6">
-              <SectionHeading
-                size="xl"
-                lead={t('home.chooseTechLead')}
-                ghost={t('home.chooseTechGhost')}
-              />
-              <TechBento />
-            </section>
+            <Reveal>
+              <section className="flex flex-col gap-6">
+                <SectionHeading
+                  size="xl"
+                  lead={t('home.chooseTechLead')}
+                  ghost={t('home.chooseTechGhost')}
+                />
+                <TechBento />
+              </section>
+            </Reveal>
 
             {/* Зона 3 */}
-            <GarageBand />
+            <Reveal>
+              <GarageBand />
+            </Reveal>
 
             {/* Зоны 4+ */}
             <HomeLanes />
           </Container>
-        </div>
+        </motion.div>
       </div>
     </>
   )

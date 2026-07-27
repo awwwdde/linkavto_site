@@ -8,7 +8,7 @@ import { Badge, ButtonLink, ChipLink, Container, EmptyState, ErrorState, PageMet
 import { SectionHeading } from '@/app/layouts/SectionHeading'
 import { fetchSearch } from '@/features/search/api'
 import { detectSearchMode } from '@/features/search/detect'
-import { useActiveVehicle } from '@/features/garage/store'
+import { GarageContextBar } from '@/features/garage/GarageContextBar'
 import { PAGE_SIZE } from '@/shared/config'
 
 const MODE_LABEL = {
@@ -21,14 +21,16 @@ export function Component() {
   const [searchParams, setSearchParams] = useSearchParams()
   const query = searchParams.get('q') ?? ''
   const page = Math.max(1, Number(searchParams.get('page') ?? 1))
-  const vehicle = useActiveVehicle()
+  // Как и в каталоге: подбор под авто управляется URL-параметром (тумблером
+  // в GarageContextBar), а не жёстко активным авто из гаража.
+  const garageVehicleId = searchParams.get('garage_vehicle_id')
   const mode = detectSearchMode(query)
 
   const params = {
     q: query,
     type: 'auto' as const,
     page,
-    ...(vehicle ? { garage_vehicle_id: vehicle.id } : {}),
+    ...(garageVehicleId ? { garage_vehicle_id: Number(garageVehicleId) } : {}),
   }
 
   const results = useQuery({
@@ -71,6 +73,9 @@ export function Component() {
           />
           <Badge>{MODE_LABEL[mode]}</Badge>
         </div>
+
+        {/* Гараж-контекст: тот же тумблер «только подходящие», что и в каталоге. */}
+        <GarageContextBar className="sticky top-14 z-20 lg:top-20" />
 
         {results.data && results.data.vehicle ? (
           <p className="rounded-card bg-surface p-4 text-base shadow-float">

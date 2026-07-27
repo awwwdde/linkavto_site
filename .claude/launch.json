@@ -11,7 +11,7 @@
       "name": "frontend",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
-      "cwd": "C:\\Users\\Inv\\source\\vscode\\linkavto\\frontend",
+      "cwd": "C:\\Users\\vlad\\Documents\\542\\linkavto\\frontend",
       "port": 5173
     }
   ]

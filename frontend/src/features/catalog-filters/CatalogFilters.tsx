@@ -1,7 +1,8 @@
-import type { FacetOption, ProductListResponse, TireWheelFacets } from '@/shared/api/types'
+import type { CategoryDetail, FacetOption, ProductListResponse, TireWheelFacets } from '@/shared/api/types'
 import { t, type TranslationKey } from '@/shared/i18n'
 import { Button, Checkbox, Select } from '@/shared/ui'
 import { VehicleFilter } from '@/features/vehicle-filter/VehicleFilter'
+import { filterProfile } from './filter-profile'
 import { PriceHistogramSlider } from './PriceHistogramSlider'
 import { useCatalogParams, type TireWheelKey } from './useCatalogParams'
 
@@ -107,19 +108,22 @@ function TireWheelFilters({ facets }: { facets: TireWheelFacets }) {
 
 export interface CatalogFiltersProps {
   data: ProductListResponse | undefined
+  /** Текущая категория — задаёт профиль фильтров (§ умные фильтры по разделу). */
+  category?: CategoryDetail | null
   onApplied?: () => void
 }
 
-export function CatalogFilters({ data, onApplied }: CatalogFiltersProps) {
+export function CatalogFilters({ data, category, onApplied }: CatalogFiltersProps) {
   const { params, setParam, toggleInList, reset, activeCount } = useCatalogParams()
 
   const min = data?.facets.price_min ?? 0
   const max = data?.facets.price_max ?? 0
   const tireWheelFacets = data?.facets.tire_wheel ?? null
+  const profile = filterProfile(category?.vehicle_type)
 
   return (
     <div className="flex flex-col gap-6">
-      <VehicleFilter />
+      <VehicleFilter mode={profile.vehicleMode} lockedKind={profile.lockedKind} />
 
       <hr className="border-line" />
 

@@ -15,6 +15,12 @@ export interface ImgProps {
   sizes?: string
   className?: string
   wrapperClassName?: string
+  /**
+   * Заполнять контейнер с обрезкой (object-cover), для карточек, где фото
+   * флешит к краям. По умолчанию object-contain (§3.3 — показать деталь целиком
+   * на белом с тонкой обводкой, чтобы не сливалась с карточкой).
+   */
+  cover?: boolean
 }
 
 export function Img({
@@ -27,6 +33,7 @@ export function Img({
   sizes,
   className,
   wrapperClassName,
+  cover = false,
 }: ImgProps) {
   const [failed, setFailed] = useState(false)
 
@@ -59,8 +66,12 @@ export function Img({
       decoding={priority ? 'sync' : 'async'}
       fetchPriority={priority ? 'high' : 'auto'}
       onError={() => setFailed(true)}
-      // Белое фото не должно сливаться с карточкой (§3.3).
-      className={cn('object-contain outline outline-1 -outline-offset-1 outline-ink/8', className)}
+      // Белое фото не должно сливаться с карточкой (§3.3) — тонкая обводка в
+      // режиме contain; в режиме cover фото само доходит до краёв, обводка не нужна.
+      className={cn(
+        cover ? 'object-cover' : 'object-contain outline outline-1 -outline-offset-1 outline-ink/8',
+        className,
+      )}
     />
   )
 }
