@@ -338,5 +338,11 @@ export interface StaticPage {
 export interface AuthUser {
   id: number
   email: string
-  name: string | null
+  first_name: string | null
+  last_name: string | null
+  phone: string | null
+  /** URL или data:-строка (мок). */
+  avatar: string | null
+  /** false для только что созданного аккаунта — фронт показывает шаг регистрации. */
+  profile_completed: boolean
 }

@@ -13,9 +13,9 @@
   --color-ink-muted: #5c6670; /* вторичный текст */
   --color-ink-ghost: #a0a7af; /* второй тон двухтонового заголовка */
   --color-ink-ghost-dark: #7e868f; /* второй тон на тёмных блоках (§3.4) */
-  --color-paper: #f2f3f5; /* фон страницы (среда) */
+  --color-paper: #eef1f7; /* фон страницы (среда) — прохладный голубой подтон в тон акценту */
   --color-surface: #ffffff; /* карточки */
-  --color-line: #dde0e4; /* границы, hairline */
+  --color-line: #e1e6ee; /* границы, hairline */
 
   /* --- Единственный акцент (§3.1) ---
      #2F6BE5 на белом: контраст текста 4.83:1 → белый текст на кнопке проходит §13. */
@@ -160,6 +160,26 @@
       backdrop-filter: blur(12px);
     }
   }
+}
+
+/* §4а: пульс светящейся точки-зоны в гараже (reduced-motion гасится ниже). */
+@keyframes la-hotspot-pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.55;
+  }
+  70% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.hotspot-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: la-hotspot-pulse 2.4s var(--ease-out-soft) infinite;
 }
 
 /* §11: prefers-reduced-motion глобально гасит всё. */

@@ -4,10 +4,11 @@ import { AnimatePresence, motion } from 'motion/react'
 import { t } from '@/shared/i18n'
 import { usePrefersReducedMotion } from '@/shared/lib/media'
 import { Container } from '@/shared/ui/Layout'
+import { Avatar } from '@/shared/ui/Avatar'
 import { IconCart, IconCatalog, IconGarage, IconHeart, IconSearch, IconUser } from '@/shared/ui/Icon'
 import { SmartSearch } from '@/features/search/SmartSearch'
 import { useCartCount } from '@/features/cart/store'
-import { useAuthStore } from '@/features/auth/store'
+import { useAuthStore, userDisplayName } from '@/features/auth/store'
 import { useUiStore } from '@/app/ui-store'
 import { AddressPill } from './AddressPill'
 
@@ -64,8 +65,12 @@ function LoginPill() {
         aria-label={t('nav.profile')}
         className="flex h-14 shrink-0 items-center gap-2 rounded-pill bg-ink px-4 text-base font-medium text-white shadow-float transition-colors duration-[--duration-fast] hover:bg-ink/90"
       >
-        <IconUser width={18} height={18} />
-        <span className="max-w-[12ch] truncate">{user.name ?? user.email}</span>
+        {user.avatar ? (
+          <Avatar src={user.avatar} name={userDisplayName(user)} size={24} />
+        ) : (
+          <IconUser width={18} height={18} />
+        )}
+        <span className="max-w-[12ch] truncate">{userDisplayName(user)}</span>
       </Link>
     )
   }

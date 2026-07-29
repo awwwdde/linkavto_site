@@ -1,5 +1,6 @@
 import { HttpResponse, http, delay } from 'msw'
 import type {
+  AuthUser,
   CategoryBrief,
   CategoryDetail,
   CategoryNode,
@@ -262,6 +263,27 @@ function listResponse(source: ProductDetail[], url: URL, categorySlug: string | 
 let vehicleSeq = 100
 const vehicles: GarageVehicle[] = [...garageVehicles]
 
+/* --- Покупатели (мок): аккаунт создаётся при первом входе по коду. --- */
+let userSeq = 1
+const usersByEmail = new Map<string, AuthUser>()
+let currentEmail: string | null = null
+
+function getOrCreateUser(email: string): AuthUser {
+  const existing = usersByEmail.get(email)
+  if (existing) return existing
+  const user: AuthUser = {
+    id: ++userSeq,
+    email,
+    first_name: null,
+    last_name: null,
+    phone: null,
+    avatar: null,
+    profile_completed: false,
+  }
+  usersByEmail.set(email, user)
+  return user
+}
+
 export const handlers = [
   http.get(`${BASE}/categories/tree/`, async () => {
     await delay(120)
@@ -451,10 +473,28 @@ export const handlers = [
     if (body.code !== '1234') {
       return HttpResponse.json({ detail: 'Код неверный. Проверьте письмо и введите последний код.' }, { status: 400 })
     }
-    return HttpResponse.json({
-      token: 'mock-token',
-      user: { id: 1, email: body.email ?? 'user@linkavto.ru', name: null },
-    })
+    const email = body.email ?? 'user@linkavto.ru'
+    currentEmail = email
+    return HttpResponse.json({ token: 'mock-token', user: getOrCreateUser(email) })
+  }),
+
+  /* --- Профиль покупателя --- */
+
+  http.get(`${BASE}/account/`, async () => {
+    await delay(120)
+    if (!currentEmail) return new HttpResponse(null, { status: 401 })
+    return HttpResponse.json(getOrCreateUser(currentEmail))
+  }),
+
+  http.patch(`${BASE}/account/`, async ({ request }) => {
+    await delay(300)
+    if (!currentEmail) return new HttpResponse(null, { status: 401 })
+    const patch = (await request.json()) as Partial<AuthUser>
+    const user = getOrCreateUser(currentEmail)
+    Object.assign(user, patch)
+    // Профиль считается заполненным, как только указано имя.
+    user.profile_completed = Boolean((user.first_name ?? '').trim() || (user.last_name ?? '').trim())
+    return HttpResponse.json(user)
   }),
 
   http.post(`${BASE}/cart/merge/`, async () => {
@@ -549,9 +589,14 @@ export const handlers = [
     return HttpResponse.json({
       seller: {
         ...seller,
-        description: 'Продаём оригинальные и аналоговые запчасти с 2014 года. Отгрузка в день заказа.',
+        description:
+          'Продаём оригинальные и проверенные аналоговые запчасти с 2014 года. Свой склад в Москве, отгрузка в день заказа, гарантия на всю продукцию.',
         city: 'Москва',
         since: '2014',
+        company_name: `ООО «${seller.name}»`,
+        // TODO(api): логотип и баннер витрины — из CRM. Пока фолбэки на фронте.
+        avatar_url: null,
+        banner_url: null,
       },
       products: products
         .filter((item) => item.id % sellers.length === seller.id % sellers.length)

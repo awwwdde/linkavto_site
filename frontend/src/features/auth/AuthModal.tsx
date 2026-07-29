@@ -1,15 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { t } from '@/shared/i18n'
-import { Button, Input, Modal, toast } from '@/shared/ui'
+import { Avatar, Button, Input, Modal, toast } from '@/shared/ui'
 import { SectionHeading } from '@/app/layouts/SectionHeading'
-import { IconMail, IconMailCheck } from '@/shared/ui/Icon'
+import { IconMail, IconMailCheck, IconUser } from '@/shared/ui/Icon'
 import { ApiError } from '@/shared/api/client'
+import { MAX_AVATAR_BYTES, readImageAsDataUrl } from '@/shared/lib/file'
 import { useUiStore } from '@/app/ui-store'
-import { oauthUrl, requestEmailCode, verifyEmailCode } from './api'
+import { oauthUrl, requestEmailCode, updateAccount, verifyEmailCode } from './api'
 import { mergeGuestState } from './merge-guest-state'
 import { useAuthStore } from './store'
 
@@ -20,20 +21,25 @@ const emailSchema = z.object({
 })
 type EmailForm = z.infer<typeof emailSchema>
 
+type Step = 'email' | 'code' | 'register'
+
 /** §4: авторизация — одна модалка на всё приложение, живёт в RootLayout. */
 export function AuthModal() {
   const open = useUiStore((state) => state.authModalOpen)
   const close = useUiStore((state) => state.closeAuth)
   const redirectTo = useUiStore((state) => state.authRedirectTo)
   const signIn = useAuthStore((state) => state.signIn)
+  const updateUser = useAuthStore((state) => state.updateUser)
   const navigate = useNavigate()
 
-  const [step, setStep] = useState<'email' | 'code'>('email')
+  const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
   const [codeError, setCodeError] = useState<string | undefined>(undefined)
   const [pending, setPending] = useState(false)
   const [secondsLeft, setSecondsLeft] = useState(0)
+  const [reg, setReg] = useState({ first_name: '', last_name: '', phone: '', avatar: null as string | null })
+  const fileRef = useRef<HTMLInputElement>(null)
 
   const form = useForm<EmailForm>({ resolver: zodResolver(emailSchema), defaultValues: { email: '' } })
 
@@ -43,6 +49,7 @@ export function AuthModal() {
       setCode('')
       setCodeError(undefined)
       setSecondsLeft(0)
+      setReg({ first_name: '', last_name: '', phone: '', avatar: null })
       form.reset()
     }
   }, [open, form])
@@ -52,6 +59,11 @@ export function AuthModal() {
     const timer = window.setTimeout(() => setSecondsLeft((value) => value - 1), 1000)
     return () => window.clearTimeout(timer)
   }, [secondsLeft])
+
+  const finish = () => {
+    close()
+    if (redirectTo) navigate(redirectTo)
+  }
 
   const sendCode = async (target: string) => {
     setPending(true)
@@ -74,8 +86,9 @@ export function AuthModal() {
       const result = await verifyEmailCode(email, code)
       signIn(result.user, result.token)
       await mergeGuestState()
-      close()
-      if (redirectTo) navigate(redirectTo)
+      // Новый аккаунт — предлагаем заполнить профиль (регистрация); иначе входим.
+      if (result.user.profile_completed) finish()
+      else setStep('register')
     } catch (error) {
       setCodeError(error instanceof ApiError ? error.message : t('auth.codeInvalid'))
     } finally {
@@ -83,18 +96,51 @@ export function AuthModal() {
     }
   }
 
+  const pickAvatar = async (file: File | undefined) => {
+    if (!file) return
+    if (file.size > MAX_AVATAR_BYTES) {
+      toast.error(t('profile.photoTooBig'))
+      return
+    }
+    const dataUrl = await readImageAsDataUrl(file)
+    setReg((state) => ({ ...state, avatar: dataUrl }))
+  }
+
+  const submitRegister = async () => {
+    setPending(true)
+    try {
+      const updated = await updateAccount({
+        first_name: reg.first_name.trim() || null,
+        last_name: reg.last_name.trim() || null,
+        phone: reg.phone.trim() || null,
+        avatar: reg.avatar,
+      })
+      updateUser(updated)
+      finish()
+    } catch (error) {
+      toast.error(error instanceof ApiError ? error.message : t('common.errorText'))
+    } finally {
+      setPending(false)
+    }
+  }
+
+  const headBadge = step === 'email' ? <IconMail /> : step === 'code' ? <IconMailCheck /> : <IconUser />
+  const headLead =
+    step === 'email' ? t('auth.heading') : step === 'code' ? t('auth.codeHeading') : t('auth.registerHeading')
+  const headGhost =
+    step === 'email'
+      ? t('auth.headingGhost')
+      : step === 'code'
+        ? `${t('auth.codeHint')} ${email}`
+        : t('auth.registerGhost')
+
   return (
     <Modal open={open} onClose={close} title={t('auth.title')} hideTitle>
-      {/* Шапка модалки: иконка-бейдж + двухтоновый заголовок (§3.2). */}
       <div className="mb-6 flex flex-col gap-4">
         <span className="flex h-11 w-11 items-center justify-center rounded-control bg-ink/5 text-ink">
-          {step === 'email' ? <IconMail /> : <IconMailCheck />}
+          {headBadge}
         </span>
-        <SectionHeading
-          size="lg"
-          lead={step === 'email' ? t('auth.heading') : t('auth.codeHeading')}
-          ghost={step === 'email' ? t('auth.headingGhost') : `${t('auth.codeHint')} ${email}`}
-        />
+        <SectionHeading size="lg" lead={headLead} ghost={headGhost} />
       </div>
 
       {step === 'email' ? (
@@ -112,7 +158,6 @@ export function AuthModal() {
             {t('auth.sendCode')}
           </Button>
 
-          {/* Разделитель «или» между входом по коду и соцсетями. */}
           <div className="flex items-center gap-3 py-1" aria-hidden="true">
             <span className="h-px flex-1 bg-line" />
             <span className="text-xs text-ink-muted">{t('auth.or')}</span>
@@ -131,7 +176,7 @@ export function AuthModal() {
             </a>
           </p>
         </form>
-      ) : (
+      ) : step === 'code' ? (
         <form
           className="flex flex-col gap-4"
           onSubmit={(event) => {
@@ -171,6 +216,62 @@ export function AuthModal() {
               </button>
             )}
           </div>
+        </form>
+      ) : (
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(event) => {
+            event.preventDefault()
+            void submitRegister()
+          }}
+        >
+          <div className="flex items-center gap-4">
+            <Avatar src={reg.avatar} name={`${reg.first_name} ${reg.last_name}`} size={64} />
+            <div className="flex flex-col gap-1">
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event) => void pickAvatar(event.target.files?.[0])}
+              />
+              <Button type="button" variant="secondary" onClick={() => fileRef.current?.click()}>
+                {t('auth.photoUpload')}
+              </Button>
+              <span className="text-xs text-ink-muted">{t('auth.photo')} · до 5 МБ</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label={t('profile.firstName')}
+              autoComplete="given-name"
+              value={reg.first_name}
+              onChange={(event) => setReg((s) => ({ ...s, first_name: event.target.value }))}
+            />
+            <Input
+              label={t('profile.lastName')}
+              autoComplete="family-name"
+              value={reg.last_name}
+              onChange={(event) => setReg((s) => ({ ...s, last_name: event.target.value }))}
+            />
+          </div>
+          <Input
+            label={t('profile.phone')}
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="+7 (999) 999-99-99"
+            value={reg.phone}
+            onChange={(event) => setReg((s) => ({ ...s, phone: event.target.value }))}
+          />
+
+          <Button type="submit" variant="primary" size="lg" block loading={pending} disabled={!reg.first_name.trim()}>
+            {t('auth.finish')}
+          </Button>
+          <button type="button" className="text-sm text-ink-muted hover:text-ink" onClick={finish}>
+            {t('auth.skip')}
+          </button>
         </form>
       )}
     </Modal>

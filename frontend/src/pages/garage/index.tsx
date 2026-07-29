@@ -51,11 +51,14 @@ export function Component() {
           />
         ) : (
           <>
-            {/* §3.4, правило одной оси: доминанта гаража — схема зон. */}
-            <div className="flex flex-col items-center gap-2">
-              <p className="text-md font-medium">{active?.title}</p>
-              <GarageZonesMap vehicle={active} />
-            </div>
+            {/* §3.4, правило одной оси: доминанта гаража — интерактивная схема зон. */}
+            <section className="flex flex-col gap-5 rounded-card bg-surface p-6 shadow-float lg:p-10">
+              <div className="flex flex-col gap-1 text-center">
+                <p className="text-md font-semibold">{active?.title}</p>
+                <p className="text-sm text-ink-muted">{t('garage.zonesHint')}</p>
+              </div>
+              <GarageZonesMap vehicle={active} className="py-2" />
+            </section>
 
             <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {vehicles.map((vehicle) => (
