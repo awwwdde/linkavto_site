@@ -10,11 +10,15 @@
 # парный postgres-контейнер от панели просто игнорируется.
 
 # ─── Stage 1: сборка SPA ───────────────────────────────────────────────────
-FROM node:20-alpine AS web
+# node:20-slim (glibc), а НЕ alpine (musl): у Tailwind v4 (@tailwindcss/oxide)
+# и lightningcss нативные бинарники — под glibc prebuilt-сборки надёжнее, иначе
+# `vite build` падает в контейнере.
+FROM node:20-slim AS web
 WORKDIR /build
 
 RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
 
+# node_modules НЕ копируется (см. .dockerignore) — ставим свежие бинарники под linux.
 COPY frontend ./frontend
 WORKDIR /build/frontend
 
