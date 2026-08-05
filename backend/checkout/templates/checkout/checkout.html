@@ -1,6 +1,0 @@
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <h4>Итого: {{ cart.get_total_price }} ₽</h4>
-    <button type="submit" class="btn btn-primary">Подтвердить заказ</button>
-</form>

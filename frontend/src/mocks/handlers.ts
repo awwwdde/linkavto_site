@@ -1,10 +1,13 @@
 import { HttpResponse, http, delay } from 'msw'
 import type {
   AuthUser,
+  CartItem,
   CategoryBrief,
   CategoryDetail,
   CategoryNode,
   FacetOption,
+  Order,
+  OrderStatus,
   GarageVehicle,
   PriceHistogramBucket,
   ProductDetail,
@@ -282,6 +285,85 @@ function getOrCreateUser(email: string): AuthUser {
   }
   usersByEmail.set(email, user)
   return user
+}
+
+/* --- Заказы (мок): сохраняются per-email в localStorage, чтобы тестовый заказ
+   отображался в профиле и пережил перезагрузку. --- */
+const ORDERS_KEY = 'linkavto:mock-orders'
+
+function loadOrders(): Record<string, Order[]> {
+  try {
+    return JSON.parse(localStorage.getItem(ORDERS_KEY) ?? '{}') as Record<string, Order[]>
+  } catch {
+    return {}
+  }
+}
+
+function saveOrders(map: Record<string, Order[]>): void {
+  try {
+    localStorage.setItem(ORDERS_KEY, JSON.stringify(map))
+  } catch {
+    /* приватный режим — заказ живёт только в этой сессии */
+  }
+}
+
+let orderSeq = Math.max(
+  5000,
+  ...Object.values(loadOrders())
+    .flat()
+    .map((order) => order.id),
+)
+
+const STATUS_DISPLAY: Record<OrderStatus, string> = {
+  new: 'Новый',
+  paid: 'Оплачен',
+  shipping: 'В доставке',
+  done: 'Выполнен',
+  canceled: 'Отменён',
+}
+
+interface OrderBody {
+  delivery_method: Order['delivery_method']
+  payment_method: Order['payment_method']
+  items: { product_id: number; offer_id: number | null; quantity: number }[]
+  city?: string
+  address?: string
+}
+
+function buildOrder(body: OrderBody): Order {
+  const id = ++orderSeq
+  const items: CartItem[] = (body.items ?? []).map((line, index) => {
+    const product = products.find((p) => p.id === line.product_id)
+    const listItem = product ? toListItem(product) : null
+    const price = product?.price ?? 0
+    return {
+      id: index + 1,
+      // Фолбэк на случай, если товар не нашёлся (демо).
+      product: listItem ?? ({ id: line.product_id, name: 'Товар', slug: '', sku: '', price, old_price: null, discount_percent: null, image: null, rating: null, reviews_count: 0, in_stock: true, offers_count: 0, manufacturer: null, fits_vehicle: null } as ProductListItem),
+      offer: null,
+      quantity: line.quantity,
+      price,
+      total: price * line.quantity,
+    }
+  })
+
+  const subtotal = items.reduce((sum, item) => sum + item.total, 0)
+  const delivery = body.delivery_method === 'pickup' ? 0 : 39000
+  const status: OrderStatus = body.payment_method === 'cash' ? 'new' : 'paid'
+
+  return {
+    id,
+    number: `LA-${id}`,
+    status,
+    status_display: STATUS_DISPLAY[status],
+    created_at: new Date().toISOString(),
+    total: subtotal + delivery,
+    items,
+    delivery_address:
+      body.delivery_method === 'pickup' ? 'Самовывоз / пункт выдачи' : [body.city, body.address].filter(Boolean).join(', ') || null,
+    delivery_method: body.delivery_method,
+    payment_method: body.payment_method,
+  }
 }
 
 export const handlers = [
@@ -605,13 +687,28 @@ export const handlers = [
     })
   }),
 
-  http.post(`${BASE}/orders/`, async () => {
+  http.post(`${BASE}/orders/`, async ({ request }) => {
     await delay(600)
-    return HttpResponse.json({ id: 5001, number: 'LA-5001' }, { status: 201 })
+    const body = (await request.json()) as OrderBody
+    const order = buildOrder(body)
+    const email = currentEmail ?? 'guest'
+    const map = loadOrders()
+    map[email] = [order, ...(map[email] ?? [])]
+    saveOrders(map)
+    return HttpResponse.json({ id: order.id, number: order.number }, { status: 201 })
   }),
 
   http.get(`${BASE}/orders/`, async () => {
     await delay(200)
-    return HttpResponse.json({ count: 0, next: null, previous: null, results: [] })
+    const list = loadOrders()[currentEmail ?? 'guest'] ?? []
+    return HttpResponse.json({ count: list.length, next: null, previous: null, results: list })
+  }),
+
+  http.get(`${BASE}/orders/:id/`, async ({ params }) => {
+    await delay(150)
+    const list = loadOrders()[currentEmail ?? 'guest'] ?? []
+    const order = list.find((item) => String(item.id) === String(params['id']))
+    if (!order) return new HttpResponse(null, { status: 404 })
+    return HttpResponse.json(order)
   }),
 ]

@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { AuthUser } from '@/shared/api/types'
+import { useGarageStore } from '@/features/garage/store'
+import { useAddressStore } from '@/features/address/store'
 
 interface AuthState {
   user: AuthUser | null
@@ -25,6 +27,10 @@ export const useAuthStore = create<AuthState>()(
       signOut: () => {
         localStorage.removeItem('linkavto:token')
         set({ user: null, token: null })
+        // Гараж и адреса привязаны к аккаунту — очищаем при выходе,
+        // иначе авто и его каталог-контекст остаются у гостя.
+        useGarageStore.getState().reset()
+        useAddressStore.getState().reset()
       },
     }),
     { name: 'linkavto:auth', version: 2 },

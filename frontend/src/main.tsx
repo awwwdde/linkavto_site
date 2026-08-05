@@ -7,8 +7,11 @@ import { MOCKS_ENABLED } from '@/shared/config'
 import '@/styles/index.css'
 
 async function bootstrap() {
-  // import.meta.env.DEV даёт Vite вырезать MSW из прод-бандла целиком (§12).
-  if (import.meta.env.DEV && MOCKS_ENABLED) {
+  // MSW включается флагом VITE_ENABLE_MOCKS (§2). В dev — всегда; для демо-стенда
+  // (linkavto.awwwdde.art) флаг ставится и в прод-сборке, чтобы витрина работала
+  // без бэкенда. Динамический импорт → в бандл попадает отдельным чанком и грузится
+  // только когда флаг включён.
+  if (MOCKS_ENABLED) {
     const { startMocks } = await import('@/mocks/browser')
     await startMocks()
   }

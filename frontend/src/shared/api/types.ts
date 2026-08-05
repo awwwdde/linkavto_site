@@ -302,7 +302,7 @@ export interface Order {
   items: CartItem[]
   delivery_address: string | null
   delivery_method: 'cdek' | 'post' | 'pickup'
-  payment_method: 'card' | 'cash'
+  payment_method: 'card' | 'sbp' | 'cash'
 }
 
 export interface Review {
@@ -333,6 +333,25 @@ export interface StaticPage {
   title: string
   html: string
   updated_at: string
+}
+
+export type DeliveryType = 'courier' | 'pickup'
+export type PickupProvider = 'cdek' | 'boxberry' | 'post' | 'yandex'
+
+/** Адрес доставки покупателя (accounts.Address). */
+export interface Address {
+  id: number
+  /** Ярлык: «Дом», «Работа». */
+  title: string
+  delivery_type: DeliveryType
+  /** Полный адрес для курьера. */
+  full_address: string
+  postal_code: string
+  comment: string
+  /** Для ПВЗ. */
+  pickup_provider: PickupProvider | null
+  pickup_point_name: string | null
+  is_default: boolean
 }
 
 export interface AuthUser {

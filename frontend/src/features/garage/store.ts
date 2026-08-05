@@ -12,6 +12,8 @@ interface GarageState {
   removeVehicle: (id: number) => void
   setActive: (id: number | null) => void
   markSynced: () => void
+  /** Полный сброс — при выходе из аккаунта (гараж привязан к аккаунту). */
+  reset: () => void
 }
 
 /**
@@ -54,6 +56,7 @@ export const useGarageStore = create<GarageState>()(
 
       setActive: (id) => set({ activeVehicleId: id }),
       markSynced: () => set({ dirty: false }),
+      reset: () => set({ vehicles: [], activeVehicleId: null, dirty: false }),
     }),
     { name: 'linkavto:garage', version: 1 },
   ),

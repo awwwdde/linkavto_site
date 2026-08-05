@@ -8,6 +8,7 @@ import { ApiError } from '@/shared/api/client'
 import { t } from '@/shared/i18n'
 import { Button, ButtonLink, Container, EmptyState, Input, PageMeta, Price, Radio, Tabs, toast } from '@/shared/ui'
 import { useCartStore } from '@/features/cart/store'
+import { PaymentModal } from '@/features/checkout/PaymentModal'
 
 const DELIVERY_PER_SELLER = 39000
 
@@ -22,7 +23,7 @@ type CheckoutForm = z.infer<typeof schema>
 
 type Step = 'address' | 'payment' | 'confirm'
 type Delivery = 'cdek' | 'post' | 'pickup'
-type Payment = 'card' | 'cash'
+type Payment = 'card' | 'sbp' | 'cash'
 
 export function Component() {
   const navigate = useNavigate()
@@ -33,6 +34,8 @@ export function Component() {
   const [delivery, setDelivery] = useState<Delivery>('cdek')
   const [payment, setPayment] = useState<Payment>('card')
   const [pending, setPending] = useState(false)
+  const [payOpen, setPayOpen] = useState(false)
+  const [placedOrder, setPlacedOrder] = useState<{ id: number } | null>(null)
 
   const form = useForm<CheckoutForm>({
     resolver: zodResolver(schema),
@@ -70,8 +73,14 @@ export function Component() {
         })),
         ...values,
       })
-      clear()
-      navigate(`/checkout/success/${order.id}`)
+      // Онлайн-оплата — через мок-эквайер; наличными — сразу успех.
+      if (payment === 'cash') {
+        clear()
+        navigate(`/checkout/success/${order.id}`)
+      } else {
+        setPlacedOrder(order)
+        setPayOpen(true)
+      }
     } catch (error) {
       toast.error(error instanceof ApiError ? error.message : t('common.errorText'))
     } finally {
@@ -159,6 +168,13 @@ export function Component() {
                   />
                   <Radio
                     name="payment"
+                    checked={payment === 'sbp'}
+                    onChange={() => setPayment('sbp')}
+                    label={t('checkout.paySbp')}
+                    description="По QR-коду через приложение банка"
+                  />
+                  <Radio
+                    name="payment"
                     checked={payment === 'cash'}
                     onChange={() => setPayment('cash')}
                     label={t('checkout.payCash')}
@@ -191,7 +207,13 @@ export function Component() {
                   </div>
                   <div className="flex justify-between gap-4">
                     <dt className="text-ink-muted">{t('checkout.stepPayment')}</dt>
-                    <dd>{payment === 'card' ? t('checkout.payCard') : t('checkout.payCash')}</dd>
+                    <dd>
+                      {payment === 'card'
+                        ? t('checkout.payCard')
+                        : payment === 'sbp'
+                          ? t('checkout.paySbp')
+                          : t('checkout.payCash')}
+                    </dd>
                   </div>
                 </dl>
                 <Button variant="primary" size="lg" block loading={pending} onClick={() => void submit()}>
@@ -219,6 +241,21 @@ export function Component() {
           </aside>
         </div>
       </Container>
+
+      <PaymentModal
+        open={payOpen}
+        method={payment === 'sbp' ? 'sbp' : 'card'}
+        amount={subtotal + deliveryCost}
+        onSuccess={() => {
+          clear()
+          if (placedOrder) navigate(`/checkout/success/${placedOrder.id}`)
+        }}
+        onFail={() => {
+          setPayOpen(false)
+          if (placedOrder) navigate(`/checkout/fail/${placedOrder.id}`)
+        }}
+        onClose={() => setPayOpen(false)}
+      />
     </>
   )
 }

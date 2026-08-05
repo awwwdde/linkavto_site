@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { AnimatePresence, motion } from 'motion/react'
 import { t } from '@/shared/i18n'
 import { usePrefersReducedMotion } from '@/shared/lib/media'
@@ -50,6 +50,23 @@ function CartLink() {
         </motion.span>
       ) : null}
     </Link>
+  )
+}
+
+/** §4а/§7: гараж — только для авторизованного; гость видит модалку входа. */
+function GarageButton({ className }: { className?: string }) {
+  const user = useAuthStore((state) => state.user)
+  const openAuth = useUiStore((state) => state.openAuth)
+  const navigate = useNavigate()
+  return (
+    <button
+      type="button"
+      aria-label={t('nav.garage')}
+      onClick={() => (user ? navigate('/garage') : openAuth('/garage'))}
+      className={className}
+    >
+      <IconGarage />
+    </button>
   )
 }
 
@@ -169,13 +186,7 @@ function DesktopHeader() {
                   <IconCatalog />
                 </button>
                 <CollapsedSearch onOpen={() => setSearchOpen(true)} />
-                <Link
-                  to="/garage"
-                  aria-label={t('nav.garage')}
-                  className="flex h-10 w-10 items-center justify-center rounded-control text-ink transition-colors duration-[--duration-fast] hover:bg-ink/5"
-                >
-                  <IconGarage />
-                </Link>
+                <GarageButton className="flex h-10 w-10 items-center justify-center rounded-control text-ink transition-colors duration-[--duration-fast] hover:bg-ink/5" />
               </div>
             )}
           </div>

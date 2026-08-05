@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { t } from '@/shared/i18n'
 import { Badge, Button, Container, EmptyState, Modal, PageMeta, toast } from '@/shared/ui'
@@ -7,8 +7,12 @@ import { GarageZonesMap } from '@/features/garage/GarageZonesMap'
 import { GarageVehicleForm } from '@/features/garage/GarageVehicleForm'
 import { deleteGarageVehicle } from '@/features/garage/api'
 import { useActiveVehicle, useGarageStore } from '@/features/garage/store'
+import { useAuthStore } from '@/features/auth/store'
+import { useUiStore } from '@/app/ui-store'
 
 export function Component() {
+  const user = useAuthStore((state) => state.user)
+  const openAuth = useUiStore((state) => state.openAuth)
   const [formOpen, setFormOpen] = useState(false)
   const vehicles = useGarageStore((state) => state.vehicles)
   const activeId = useGarageStore((state) => state.activeVehicleId)
@@ -21,6 +25,28 @@ export function Component() {
     onSuccess: (_data, id) => removeVehicle(id),
     onError: () => toast.error('Удалить не вышло. Повторите через минуту.'),
   })
+
+  // §7: гараж привязан к аккаунту — весь маршрут закрыт для гостя.
+  useEffect(() => {
+    if (!user) openAuth('/garage')
+  }, [user, openAuth])
+
+  if (!user) {
+    return (
+      <Container className="py-12">
+        <PageMeta title="Гараж — LINKAVTO" canonicalPath="/garage" noIndex />
+        <EmptyState
+          title={t('auth.title')}
+          text="Войдите, чтобы добавить авто и подобрать детали под него."
+          action={
+            <Button variant="primary" onClick={() => openAuth('/garage')}>
+              {t('nav.login')}
+            </Button>
+          }
+        />
+      </Container>
+    )
+  }
 
   return (
     <>
