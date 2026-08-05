@@ -1,0 +1,850 @@
+<!-- ДЛя ТО поколения -->
+
+{% extends 'shop/base.html' %}
+
+{% block content %}
+<style>
+    .generation-selection {
+        padding: 1rem 0;
+    }
+
+    .generation-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 15px;
+        margin: 2rem 0;
+    }
+
+    .generation-card img{
+        width: 100%;
+        height: 100%;
+        object-fit: fill;
+        border-radius: 15px;
+        transition: transform 0.3s ease;
+    }
+    
+    .generation-overlay{
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 10px;
+        border-bottom-left-radius: 15px;
+        border-bottom-right-radius: 15px;
+    }
+
+    .generation-card {
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 15px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        text-decoration: none;
+        color: white;
+        min-height: 200px;
+    }
+
+    .generation-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        text-decoration: none;
+        border-radius: 0;
+        border-color: #89BEE8;
+        box-shadow: 0 5px 15px #89BEE8(0, 123, 255, 0.2);
+    }
+
+    .generation-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+        text-align: center;
+        color: white;
+    }
+
+    /* .generation-years {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .generation-description {
+        color: #888;
+        font-size: 0.8rem;
+    } */
+
+    /* Стили для сортировки */
+    .sorting-options {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 1rem;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .sort-btn {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+
+    .sort-btn.active {
+        background: #89BEE8;
+        color: white;
+        border-color: #89BEE8;
+    }
+
+    /* Мобильная адаптация */
+    @media (max-width: 768px) {
+        .generation-grid {
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .generation-card {
+            padding: 1.2rem;
+        }
+
+        .generation-name {
+            font-size: 1rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .generation-years {
+            font-size: 0.85rem;
+        }
+
+        .generation-description {
+            font-size: 0.75rem;
+        }
+
+        .sorting-options {
+            justify-content: center;
+        }
+
+        .sort-btn {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .generation-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .generation-card {
+            padding: 0 !important;
+        }
+
+        .sorting-options {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .sort-btn {
+            width: 100%;
+            max-width: 250px;
+            margin-bottom: 5px;
+        }
+    }
+</style>
+
+<div class="container generation-selection">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'shop:index' %}" style="color: #89BEE8;">Главная</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'shop:category_list' %}" style="color: #89BEE8;">Категории</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'shop:maintenance_selection' %}" style="color: #89BEE8;">Для ТО</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'shop:maintenance_select_brand' vehicle_type %}" style="color: #89BEE8;">{{ vehicle_type_name }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'shop:maintenance_select_model' vehicle_type brand.slug %}" style="color: #89BEE8;">{{ brand.name }}</a></li>
+            <li class="breadcrumb-item active">{{ model.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+        <h1 class="page-title mb-3 mb-md-0">Выберите поколение {{ brand.name }} {{ model.name }}</h1>
+
+        {% if generations %}
+        <div class="search-container" style="max-width: 400px; min-width: 250px;">
+            <div class="input-group">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="generation-search" class="form-control search-input"
+                       placeholder="Поиск поколения ...">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="button" id="clear-search">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="search-hint">
+                <i class="fas fa-info-circle"></i>
+                Поиск по названию и годам
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if generations %}
+    <!-- Блок сортировки -->
+    <div class="sorting-options">
+        <button class="sort-btn active" data-sort="year">По году (новые)</button>
+        <button class="sort-btn" data-sort="year-desc">По году (старые)</button>
+        <button class="sort-btn" data-sort="name">По названию (А-Я)</button>
+        <button class="sort-btn" data-sort="name-desc">По названию (Я-А)</button>
+    </div>
+
+    <div class="generation-grid" id="generations-container">
+        {% for generation in generations %}
+        <a href="{% url 'shop:select_modification' vehicle_type brand.slug model.slug generation.slug %}" class="generation-card"
+           data-name="{{ generation.name|lower }}"
+           data-year="{% if generation.year_start %}{{ generation.year_start }}{% else %}0{% endif %}">
+
+            {% if generation.image %}
+            <img src="{{ generation.image.url }}" alt="{{ generation.name }}" loading="lazy" >
+            {% else %}
+            <div class="no-image" style="display: flex; position: relative; z-index: 6; justify-content: center; align-items: center;">
+                <i class="fas fa-car" style="color: black ; font-size: 20px;"></i>
+            </div>
+            {% endif %}
+
+          <div class="generation-overlay">
+            <div class="generation-name">{{ generation.name }}</div>
+          </div>  
+        </a>
+        {% endfor %}
+
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <p>Для этой модели нет специфичных поколений. Используются универсальные комплекты.</p>
+        <a href="{% url 'shop:for_vehicle' vehicle_type brand.slug model.slug 'all' %}" class="btn btn-dark mt-3">
+            Перейти к товарам
+        </a>
+    </div>
+    {% endif %}
+</div>
+</div>
+<style>
+
+/* Адаптация высоты для мобильных */
+@media (max-width: 768px) {
+    .generation-card {
+        min-height: 320px;
+    }
+}
+
+@media (max-width: 480px) {
+    .generation-card {
+        min-height: 250px;
+    }
+}
+</style>
+<style>
+    /* Стили для контейнера поиска поколений */
+.search-container {
+    position: relative;
+    max-width: 400px;
+    min-width: 250px;
+}
+
+/* Стили для поля поиска поколений */
+#generation-search {
+    height: 50px;
+    border-radius: 12px;
+    border: 2px solid #3498db;
+    padding-left: 45px;
+    padding-right: 50px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    background-color: white;
+    width: 100%;
+}
+
+#generation-search:focus {
+    border-color: #2980b9;
+    box-shadow: 0 4px 15px rgba(39, 174, 96, 0.25);
+    background-color: white;
+    outline: none;
+}
+
+#generation-search::placeholder {
+    color: #95a5a6;
+    font-weight: 400;
+}
+
+/* Стили для кнопки очистки поколений */
+#clear-search {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #95a5a6;
+    font-size: 1.1rem;
+    padding: 5px 10px;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s ease;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#clear-search:hover {
+    color: #e74c3c;
+    background-color: rgba(231, 76, 60, 0.1);
+}
+#clearGenerationSearchBtn{
+    position: absolute !important;
+    right: 15px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    background: transparent !important;
+    border: none !important;
+    color: #95a5a6 !important;
+    font-size: 1.1rem !important;
+    padding: 5px 10px !important;
+    cursor: pointer !important;
+    z-index: 10 !important;
+    transition: all 0.3s ease !important;
+    border-radius: 50% !important;
+    width: 36px !important;
+    height: 36px !important;
+    display: none; /* по умолчанию скрыта, показывать через JS при вводе текста */
+    align-items: center !important;
+    justify-content: center !important;
+}
+/* Подсказка под поиском поколений */
+.search-hint {
+    position: absolute;
+    bottom: -25px;
+    left: 0;
+    font-size: 0.75rem;
+    color: #27ae60;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    opacity: 0;
+    transform: translateY(5px);
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+#generation-search:focus ~ .search-hint {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Иконка поиска для поколений */
+.search-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #2980b9;
+    font-size: 1.1rem;
+    opacity: 0.6;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    z-index: 5;
+}
+
+#generation-search:focus ~ .search-icon {
+    opacity: 1;
+    color: #2980b9;
+}
+
+/* Счетчик найденных поколений */
+#search-counter {
+    position: absolute;
+    right: 0;
+    font-size: 0.75rem;
+    background: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    border: 1px solid #e0e0e0;
+    display: none;
+}
+
+/* Эффект при вводе для поколений */
+.search-active {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(39, 174, 96, 0.1) !important;
+}
+
+/* Подсветка найденного текста в поколениях */
+.generation-name .text-primary {
+    background-color: rgba(39, 174, 96, 0.1);
+    padding: 0 2px;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+.generation-name .text-primary:hover {
+    background-color: rgba(39, 174, 96, 0.2);
+}
+
+.generation-years .text-primary {
+    background-color: rgba(243, 156, 18, 0.1);
+    padding: 0 2px;
+    border-radius: 3px;
+}
+
+/* Адаптация для мобильных - поколения */
+@media (max-width: 768px) {
+    .search-container {
+        max-width: 100% !important;
+        min-width: 100% !important;
+    }
+
+    #generation-search {
+        height: 48px;
+        font-size: 1rem;
+    }
+
+    .search-hint {
+        font-size: 0.7rem;
+        bottom: -22px;
+    }
+}
+
+@media (max-width: 576px) {
+    #generation-search {
+        height: 44px;
+        font-size: 0.95rem;
+        padding-left: 45px;
+    }
+
+    .search-icon {
+        left: 15px;
+        font-size: 1rem;
+    }
+
+    #clear-search {
+         position: absolute !important;
+    right: 15px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    background: transparent !important;
+    border: none !important;
+    color: #95a5a6 !important;
+    font-size: 1.1rem !important;
+    padding: 5px 10px !important;
+    cursor: pointer !important;
+    z-index: 10 !important;
+    transition: all 0.3s ease !important;
+    border-radius: 50% !important;
+    width: 36px !important;
+    height: 36px !important;
+    display: none; /* по умолчанию скрыта, показывать через JS при вводе текста */
+    align-items: center !important;
+    justify-content: center !important;
+    }
+}
+
+/* Тема темного режима (опционально) */
+@media (prefers-color-scheme: dark) {
+    #generation-search {
+        background-color: white;
+        border-color: #2980b9;
+       
+    }
+
+    #generation-search:focus {
+        background-color: white;
+        border-color: #2980b9;
+    }
+
+    #generation-search::placeholder {
+        color: #7f8c8d;
+    }
+
+    .search-hint {
+        color: #2980b9;
+    }
+}
+</style>
+<script>
+    // Функция для транслитерации (русский ↔ английский)
+function transliterate(text) {
+    const ru = {
+        'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd',
+        'е': 'e', 'ё': 'e', 'ж': 'zh', 'з': 'z', 'и': 'i',
+        'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n',
+        'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't',
+        'у': 'u', 'ф': 'f', 'х': 'h', 'ц': 'c', 'ч': 'ch',
+        'ш': 'sh', 'щ': 'sch', 'ь': '', 'ы': 'y', 'ъ': '',
+        'э': 'e', 'ю': 'yu', 'я': 'ya',
+        'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D',
+        'Е': 'E', 'Ё': 'E', 'Ж': 'Zh', 'З': 'Z', 'И': 'I',
+        'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M', 'Н': 'N',
+        'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T',
+        'У': 'U', 'Ф': 'F', 'Х': 'H', 'Ц': 'C', 'Ч': 'Ch',
+        'Ш': 'Sh', 'Щ': 'Sch', 'Ь': '', 'Ы': 'Y', 'Ъ': '',
+        'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya'
+    };
+
+    const en = {
+        'a': 'а', 'b': 'б', 'c': 'ц', 'd': 'д', 'e': 'е',
+        'f': 'ф', 'g': 'г', 'h': 'х', 'i': 'и', 'j': 'дж',
+        'k': 'к', 'l': 'л', 'm': 'м', 'n': 'н', 'o': 'о',
+        'p': 'п', 'q': 'к', 'r': 'р', 's': 'с', 't': 'т',
+        'u': 'у', 'v': 'в', 'w': 'в', 'x': 'кс', 'y': 'й',
+        'z': 'з',
+        'A': 'А', 'B': 'Б', 'C': 'Ц', 'D': 'Д', 'E': 'Е',
+        'F': 'Ф', 'G': 'Г', 'H': 'Х', 'I': 'И', 'J': 'Дж',
+        'K': 'К', 'L': 'Л', 'M': 'М', 'N': 'Н', 'O': 'О',
+        'P': 'П', 'Q': 'К', 'R': 'Р', 'S': 'С', 'T': 'Т',
+        'U': 'У', 'V': 'В', 'W': 'В', 'X': 'Кс', 'Y': 'Й',
+        'Z': 'З'
+    };
+
+    let result = text;
+
+    // Русский → Английский
+    for (let key in ru) {
+        result = result.replace(new RegExp(key, 'g'), ru[key]);
+    }
+
+    // Английский → Русский
+    for (let key in en) {
+        result = result.replace(new RegExp(key, 'g'), en[key]);
+    }
+
+    return result;
+}
+
+// Функция поиска поколений
+function searchGenerations(query) {
+    const generationCards = document.querySelectorAll('.generation-card');
+    let hasResults = false;
+    let totalFound = 0;
+
+    generationCards.forEach(card => {
+        const generationName = card.querySelector('.generation-name').textContent;
+        const generationYears = card.querySelector('.generation-years').textContent;
+
+        const nameLower = generationName.toLowerCase();
+        const yearsLower = generationYears.toLowerCase();
+        const nameEn = transliterate(nameLower);
+        const yearsEn = transliterate(yearsLower);
+
+        const searchQuery = query.toLowerCase();
+        const searchQueryTranslit = transliterate(searchQuery);
+
+        // Ищем совпадения в разных вариантах (название и годы)
+        const matches =
+            nameLower.includes(searchQuery) ||
+            nameEn.includes(searchQuery) ||
+            nameLower.includes(searchQueryTranslit) ||
+            nameEn.includes(searchQueryTranslit) ||
+            yearsLower.includes(searchQuery) ||
+            yearsEn.includes(searchQuery) ||
+            yearsLower.includes(searchQueryTranslit) ||
+            yearsEn.includes(searchQueryTranslit);
+
+        if (matches) {
+            card.style.display = 'block';
+            hasResults = true;
+            totalFound++;
+
+            // Подсветка найденного текста
+            if (query.length >= 2) {
+                const nameElement = card.querySelector('.generation-name');
+                const yearsElement = card.querySelector('.generation-years');
+                const originalName = nameElement.textContent;
+                const originalYears = yearsElement.textContent;
+
+                const nameRegex = new RegExp(`(${query})`, 'gi');
+                const yearsRegex = new RegExp(`(${query})`, 'gi');
+
+                nameElement.innerHTML = originalName.replace(nameRegex, '<span class="text-primary">$1</span>');
+                yearsElement.innerHTML = originalYears.replace(yearsRegex, '<span class="text-primary">$1</span>');
+            }
+        } else {
+            card.style.display = 'none';
+            // Восстанавливаем оригинальный текст если был подсвечен
+            const nameElement = card.querySelector('.generation-name');
+            const yearsElement = card.querySelector('.generation-years');
+            if (nameElement.innerHTML !== nameElement.textContent) {
+                nameElement.innerHTML = nameElement.textContent;
+            }
+            if (yearsElement.innerHTML !== yearsElement.textContent) {
+                yearsElement.innerHTML = yearsElement.textContent;
+            }
+        }
+    });
+
+    // Обновляем счетчик найденных поколений
+    let counterElement = document.getElementById('search-counter');
+    if (!counterElement) {
+        counterElement = document.createElement('div');
+        counterElement.id = 'search-counter';
+        counterElement.className = 'alert alert-light border d-inline-block mt-2';
+        document.querySelector('.search-container').appendChild(counterElement);
+    }
+
+    if (query.trim() !== '') {
+        counterElement.innerHTML = `
+            <i class="fas fa-search"></i>
+            Найдено поколений: <strong>${totalFound}</strong> из ${generationCards.length}
+        `;
+        counterElement.style.display = 'block';
+    } else {
+        counterElement.style.display = 'none';
+    }
+
+    // Показываем/скрываем сообщение об отсутствии результатов
+    let noResultsMsg = document.getElementById('no-results-msg');
+    if (!noResultsMsg && !hasResults && query.trim() !== '') {
+        noResultsMsg = document.createElement('div');
+        noResultsMsg.id = 'no-results-msg';
+        noResultsMsg.className = 'alert alert-warning mt-3';
+        noResultsMsg.innerHTML = `
+            <i class="fas fa-exclamation-triangle"></i>
+            Поколения по запросу "<strong>${query}</strong>" не найдены.<br>
+            Попробуйте:
+            <ul class="mb-0 mt-2">
+                <li>Ввести другое название поколения</li>
+                <li>Поискать по годам (например, "2005" или "2010-2015")</li>
+                <li>Выбрать "Все поколения" для универсальных товаров</li>
+            </ul>
+        `;
+        document.querySelector('.generation-grid').after(noResultsMsg);
+    } else if (noResultsMsg && (hasResults || query.trim() === '')) {
+        noResultsMsg.remove();
+    }
+}
+
+// Инициализация поиска для поколений
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('generation-search');
+    const clearBtn = document.getElementById('clear-search');
+
+    if (!searchInput) return; // Если нет поколений, поиск не нужен
+
+    // Фокус на поле поиска при загрузке
+    setTimeout(() => {
+        searchInput.focus();
+    }, 300);
+
+    // Поиск при вводе
+    searchInput.addEventListener('input', function() {
+        searchGenerations(this.value);
+    });
+
+    // Очистка поиска
+    clearBtn.addEventListener('click', function() {
+        searchInput.value = '';
+        searchInput.focus();
+
+        // Показать все поколения
+        document.querySelectorAll('.generation-card').forEach(card => {
+            card.style.display = 'flex'; // Изменено с 'block' на 'flex' для правильного отображения
+            // Восстанавливаем оригинальный текст
+            const nameElement = card.querySelector('.generation-name');
+            const yearsElement = card.querySelector('.generation-years');
+            if (nameElement.innerHTML !== nameElement.textContent) {
+                nameElement.innerHTML = nameElement.textContent;
+            }
+            if (yearsElement.innerHTML !== yearsElement.textContent) {
+                yearsElement.innerHTML = yearsElement.textContent;
+            }
+        });
+
+        // Скрыть сообщения
+        const noResultsMsg = document.getElementById('no-results-msg');
+        if (noResultsMsg) noResultsMsg.remove();
+
+        const counterElement = document.getElementById('search-counter');
+        if (counterElement) counterElement.style.display = 'none';
+    });
+
+    document.addEventListener('click', function(e){
+        if(e.target.id === clearBtn.id || clearBtn.contains(e.target)){
+            searchInput.value = '';
+        searchInput.focus();
+
+        // Показать все поколения
+        document.querySelectorAll('.generation-card').forEach(card => {
+            card.style.display = 'flex'; // Изменено с 'block' на 'flex' для правильного отображения
+            // Восстанавливаем оригинальный текст
+            const nameElement = card.querySelector('.generation-name');
+            const yearsElement = card.querySelector('.generation-years');
+            if (nameElement.innerHTML !== nameElement.textContent) {
+                nameElement.innerHTML = nameElement.textContent;
+            }
+            if (yearsElement.innerHTML !== yearsElement.textContent) {
+                yearsElement.innerHTML = yearsElement.textContent;
+            }
+        });
+
+        // Скрыть сообщения
+        const noResultsMsg = document.getElementById('no-results-msg');
+        if (noResultsMsg) noResultsMsg.remove();
+
+        const counterElement = document.getElementById('search-counter');
+        if (counterElement) counterElement.style.display = 'none';
+        }
+    })
+
+    // Обработка клавиш
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            searchInput.value = '';
+            document.querySelectorAll('.generation-card').forEach(card => {
+                card.style.display = 'block';
+                const nameElement = card.querySelector('.generation-name');
+                const yearsElement = card.querySelector('.generation-years');
+                if (nameElement.innerHTML !== nameElement.textContent) {
+                    nameElement.innerHTML = nameElement.textContent;
+                }
+                if (yearsElement.innerHTML !== yearsElement.textContent) {
+                    yearsElement.innerHTML = yearsElement.textContent;
+                }
+            });
+
+            const noResultsMsg = document.getElementById('no-results-msg');
+            if (noResultsMsg) noResultsMsg.remove();
+
+            const counterElement = document.getElementById('search-counter');
+            if (counterElement) counterElement.style.display = 'none';
+        }
+
+        // Сочетание Ctrl+F для фокуса на поиске
+        if (e.ctrlKey && e.key === 'f') {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+        }
+    });
+
+    // Эффекты при фокусе
+    searchInput.addEventListener('focus', function() {
+        this.classList.add('search-active');
+        const searchIcon = document.querySelector('.search-icon');
+        searchIcon.style.opacity = '1';
+        searchIcon.style.color = '#2980b9';
+    });
+
+    searchInput.addEventListener('blur', function() {
+        this.classList.remove('search-active');
+        if (this.value.trim() === '') {
+            const searchIcon = document.querySelector('.search-icon');
+            searchIcon.style.opacity = '0.6';
+            searchIcon.style.color = '#27ae60';
+        }
+    });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Если есть поколения для сортировки
+    {% if generations %}
+    const sortButtons = document.querySelectorAll('.sort-btn');
+    const generationsContainer = document.getElementById('generations-container');
+    const generationCards = Array.from(generationsContainer.querySelectorAll('.generation-card'));
+
+    // Функция сортировки
+    function sortGenerations(criteria) {
+        let sortedGenerations;
+
+        switch(criteria) {
+            case 'name':
+                sortedGenerations = generationCards.sort((a, b) => {
+                    return a.dataset.name.localeCompare(b.dataset.name);
+                });
+                break;
+
+            case 'name-desc':
+                sortedGenerations = generationCards.sort((a, b) => {
+                    return b.dataset.name.localeCompare(a.dataset.name);
+                });
+                break;
+
+            case 'year':
+                sortedGenerations = generationCards.sort((a, b) => {
+                    return parseInt(b.dataset.year) - parseInt(a.dataset.year);
+                });
+                break;
+
+            case 'year-desc':
+                sortedGenerations = generationCards.sort((a, b) => {
+                    return parseInt(a.dataset.year) - parseInt(b.dataset.year);
+                });
+                break;
+
+            default:
+                sortedGenerations = generationCards;
+        }
+
+        // Очищаем контейнер и добавляем отсортированные элементы
+        generationsContainer.innerHTML = '';
+        sortedGenerations.forEach(card => {
+            generationsContainer.appendChild(card);
+        });
+    }
+
+    // Обработчики событий для кнопок сортировки
+    sortButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Убираем активный класс у всех кнопок
+            sortButtons.forEach(btn => btn.classList.remove('active'));
+
+            // Добавляем активный класс к текущей кнопке
+            this.classList.add('active');
+
+            // Сортируем поколения
+            sortGenerations(this.dataset.sort);
+        });
+    });
+    {% endif %}
+});
+</script>
+<script>
+    //Скрипт на очистку поиска и показ кнопки
+    const searchInput = document.getElementById('search-input');
+    const clearButton = document.getElementById('clear-search');
+
+   
+    function toggleClearButton() {
+        if (searchInput.value.length > 0) {
+            clearButton.style.display = 'inline-block'; 
+        } else {
+            clearButton.style.display = 'none'; 
+        }
+    }
+
+    // Слушаем ввод текста в поле поиска
+    searchInput.addEventListener('input', toggleClearButton);
+
+    // Слушаем клик по кнопке очистки
+    clearButton.addEventListener('click', function() {
+        searchInput.value = '';       
+        toggleClearButton();          
+        searchInput.focus();         
+        
+    });
+
+   
+    toggleClearButton();
+</script>
+{% endblock %}

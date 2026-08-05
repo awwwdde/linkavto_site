@@ -1,0 +1,198 @@
+.hero-section {
+    background: url('/media/hero-bg.jpg') no-repeat center center;
+    background-size: cover;
+    padding: 100px 0;
+    color: white;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.card {
+    transition: transform 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Мобильное меню */
+@media (max-width: 992px) {
+    .navbar-collapse {
+        padding-top: 20px;
+    }
+
+    .navbar-nav {
+        margin-bottom: 15px;
+    }
+
+    .d-flex.gap-3 {
+        flex-direction: column;
+        gap: 10px !important;
+    }
+
+    .navbar-toggler {
+        order: -1;
+    }
+}
+/* Стили для меню категорий */
+.dropdown-menu {
+    max-height: 70vh;
+    overflow-y: auto;
+    width: thin;
+}
+
+.dropdown:hover .dropdown-menu {
+    display: block;
+}
+
+/* Для мобильных устройств */
+@media (max-width: 768px) {
+    .dropdown-menu {
+        position: static;
+        float: none;
+    }
+}
+/* Стилизация скроллбара для Chrome */
+.dropdown-menu::-webkit-scrollbar {
+    width: 6px;
+}
+.dropdown-menu::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+/* Стили для карточек брендов и моделей */
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.card-img-top {
+    background-color: #f8f9fa;
+}
+
+/* Хлебные крошки */
+.breadcrumb {
+    background-color: transparent;
+    padding: 0.75rem 0;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: ">";
+}
+
+/* Стили для многоуровневого выпадающего меню */
+.dropdown-submenu {
+    position: relative;
+}
+
+.dropdown-submenu .dropdown-menu {
+    top: 0;
+    left: 100%;
+    margin-top: -1px;
+    display: none;
+}
+
+.dropdown-submenu:hover .dropdown-menu {
+    display: block;
+}
+
+/* Стили для страницы легковых авто */
+.hover-brand:hover {
+    background-color: #f8f9fa;
+    transform: translateX(5px);
+    transition: all 0.3s ease;
+}
+
+.hover-category:hover {
+    background-color: #f8f9fa;
+    transform: translateX(5px);
+    transition: all 0.3s ease;
+}
+
+.brands-section, .categories-section {
+    border: 1px solid #dee2e6;
+}
+
+/* Разделительная линия */
+hr.divider {
+    margin: 2rem 0;
+    border-top: 2px solid #dee2e6;
+}
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1) !important;
+}
+/* Стили для карточек брендов и моделей */
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.card-img-top {
+    background-color: #f8f9fa;
+}
+
+/* Хлебные крошки */
+.breadcrumb {
+    background-color: transparent;
+    padding: 0.75rem 0;
+}
+
+@media (max-width: 576px) {
+    .col-6 {
+        padding: 0 5px;
+    }
+
+    .card-body {
+        padding: 1rem 0.5rem;
+    }
+
+    h5.card-title {
+        font-size: 1rem;
+    }
+}
+/* Стили для фильтров */
+#filter-form {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+#filter-form select,
+#filter-form input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+#filter-form label {
+    font-weight: 500;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.card-img-top {
+    height: 180px;
+    object-fit: contain;
+    padding: 10px;
+}

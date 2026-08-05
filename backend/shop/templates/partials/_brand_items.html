@@ -1,0 +1,10 @@
+{% for brand in brands %}
+    <a href="{% url 'shop:brand_products' brand.slug %}" class="brand-item">
+        {% if brand.logo %}
+            <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" class="brand-logo" loading="lazy">
+        {% else %}
+            <div class="brand-placeholder">{{ brand.name|slice:":1" }}</div>
+        {% endif %}
+        <span class="brand-name">{{ brand.name }}</span>
+    </a>
+{% endfor %}

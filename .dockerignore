@@ -1,26 +1,17 @@
 # Держим build-контекст маленьким: панели нужен только frontend/.
 .git
+.claude
 **/node_modules
 **/dist
 **/.venv
+**/__pycache__
 
-# Старый Django-бэкенд и референс-клон — к витрине-демо отношения не имеют.
+# Старый Django-бэкенд к витрине-демо отношения не имеет (см. README.md).
 backend
-linkavto-docker
-docs
-email
-run
-anim
 
 # Дампы БД и бэкапы.
 *.sql
 *.sqlite3
 *.json.gz
-backups
+*.bak
 *.bak.*
-
-# Прочее из корня.
-*.py
-*.sh
-*.html
-*.txt

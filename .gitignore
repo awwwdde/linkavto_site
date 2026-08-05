@@ -166,3 +166,32 @@ Thumbs.db
 *.tmp
 *.temp
 *.tar.gz
+
+# ─── Мусор, который раньше лежал в корне ───────────────────────────────────
+# Дампы и бэкапы БД (держим вне репозитория).
+*.sql
+*.sqlite3
+*_backup_*.json
+backups/
+*.bak
+*.bak.*
+
+# collectstatic — генерируется, в репозитории не нужен.
+backend/staticfiles/
+
+# Логи/pid/сессионные файлы рантайма.
+run/
+*.pid
+cookies.txt
+
+# История шелла и прочие следы домашней директории сервера.
+.bash_history
+.python_history
+.sqlite_history
+.lesshst
+.selected_editor
+.ssh/
+
+# Локальные каталоги, которые не относятся к коду.
+anim/
+email/

@@ -1,0 +1,58 @@
+{% extends 'shop/base.html' %}
+
+{% block content %}
+<div class="container">
+    <!-- Хлебные крошки -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/"style="color: #89BEE8;">Главная</a></li>
+            <li class="breadcrumb-item active">Легковые авто</li>
+        </ol>
+    </nav>
+
+    <h1 class="mb-4">Запчасти для легковых авто</h1>
+    
+    <!-- Бренды автомобилей -->
+    <section class="mb-5">
+        <h2 class="mb-3">Бренды</h2>
+        <div class="brands-section bg-light p-4 rounded">
+            {% for letter, brands in brand_groups.items %}
+            <div class="mb-4">
+                <h3 class="mb-3">{{ letter }}</h3>
+                <div class="row">
+                    {% for brand in brands %}
+                    <div class="col-6 col-md-3 mb-3">
+                        <a href="{% url 'shop:car_brand_products' brand.slug %}"
+                           class="text-decoration-none text-dark">
+                            <div class="p-2 border rounded hover-brand">
+                                <strong>{{ brand.name }}</strong>
+                            </div>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Категории запчастей -->
+    <section class="mb-5">
+        <h2 class="mb-3">Категории запчастей</h2>
+        <div class="categories-section bg-light p-4 rounded">
+            <div class="row">
+                {% for category in categories %}
+                <div class="col-6 col-md-3 mb-3">
+                    <a href="{% url 'shop:brand_category' 'all' category.slug %}"
+                       class="text-decoration-none text-dark">
+                        <div class="p-2 border rounded hover-category">
+                            <strong>{{ category.name }}</strong>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
