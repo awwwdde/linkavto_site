@@ -7,21 +7,27 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+#
+# Пути якорим слешем в начале — иначе паттерны бьют по исходникам где угодно
+# в дереве. Так уже было: `lib/` съедал frontend/src/shared/lib/, и весь
+# каталог (cn.ts, file.ts, format.ts, media.ts, vehicle-types.ts) не попадал
+# в репозиторий — сборка падала на неразрешимом импорте.
+# `dist/` намеренно без якоря: он нужен и для frontend/dist.
 .Python
-build/
-develop-eggs/
+/build/
+/develop-eggs/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-pip-wheel-metadata/
-share/python-wheels/
+/downloads/
+/eggs/
+/.eggs/
+/lib/
+/lib64/
+/parts/
+/sdist/
+/var/
+/wheels/
+/pip-wheel-metadata/
+/share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
