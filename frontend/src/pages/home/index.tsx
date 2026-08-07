@@ -208,11 +208,6 @@ export function Component() {
             {/* Зона 2 */}
             <Reveal>
               <section className="flex flex-col gap-6">
-                <SectionHeading
-                  size="xl"
-                  lead={t('home.chooseTechLead')}
-                  ghost={t('home.chooseTechGhost')}
-                />
                 <TechBento />
               </section>
             </Reveal>

@@ -69,9 +69,18 @@ export interface OverlayProps {
   className?: string
 }
 
+export interface ModalProps extends OverlayProps {
+  /**
+   * Максимальная ширина окна в пикселях. Задана числом, а не классом, потому
+   * что меняется по ходу сценария и анимируется (список → карта).
+   */
+  maxWidth?: number
+}
+
 /** §7: портал, Esc, клик по фону, блокировка скролла, возврат фокуса. */
-export function Modal({ open, onClose, title, hideTitle, children, className }: OverlayProps) {
+export function Modal({ open, onClose, title, hideTitle, children, className, maxWidth }: ModalProps) {
   const ref = useModalBehaviour(open, onClose)
+  const width = maxWidth ? { maxWidth } : null
 
   return createPortal(
     <AnimatePresence initial={false}>
@@ -91,12 +100,13 @@ export function Modal({ open, onClose, title, hideTitle, children, className }: 
             aria-modal="true"
             aria-label={title}
             data-lenis-prevent
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 12, ...width }}
+            animate={{ opacity: 1, y: 0, ...width }}
             exit={{ opacity: 0, y: 8 }}
-            transition={{ type: 'spring', duration: 0.3, bounce: 0 }}
+            transition={{ type: 'spring', duration: 0.35, bounce: 0 }}
             className={cn(
-              'relative w-full max-w-[480px] overflow-y-auto rounded-t-card bg-surface p-6 shadow-lift',
+              'relative w-full overflow-y-auto rounded-t-card bg-surface p-6 shadow-lift',
+              !maxWidth && 'max-w-[480px]',
               'max-h-[90dvh] sm:rounded-card',
               className,
             )}

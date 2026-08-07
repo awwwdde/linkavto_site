@@ -19,6 +19,8 @@ import {
   MapPin,
   Menu,
   Minus,
+  MoreHorizontal,
+  Package,
   Plus,
   Search,
   Share2,
@@ -78,6 +80,8 @@ export const IconCopy = make(Copy) // «Копировать артикул» �
 export const IconFilter = make(SlidersHorizontal)
 export const IconStar = make(Star)
 export const IconTrash = make(Trash2)
+export const IconMore = make(MoreHorizontal) // «ещё действия» — меню-троеточие
+export const IconPackage = make(Package) // пункт выдачи на карте
 export const IconPhoto = make(ImageIcon) // плейсхолдер «нет фото» (§6)
 export const IconShare = make(Share2)
 export const IconArrowRight = make(ArrowRight) // «весь раздел» → ArrowRight (§4а)

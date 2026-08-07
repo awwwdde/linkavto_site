@@ -217,17 +217,19 @@ function MobileHeader() {
 
   return (
     <div className="lg:hidden">
-      <div className="glass-chrome flex h-14 items-center gap-3 border-b border-line px-4">
+      {/* Поиск ужат до короткой подписи — рядом помещается иконка адреса. */}
+      <div className="glass-chrome flex h-14 items-center gap-2 border-b border-line px-3">
         <Logo />
         <button
           type="button"
           onClick={openSearch}
           aria-label={t('nav.openSearch')}
-          className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-pill bg-ink/5 px-4 text-base text-ink-muted"
+          className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-pill bg-ink/5 px-3 text-base text-ink-muted"
         >
           <IconSearch width={18} height={18} className="shrink-0" />
-          <span className="truncate">{t('search.placeholderShort')}</span>
+          <span className="truncate">{t('search.short')}</span>
         </button>
+        <AddressPill compact />
         <CartLink />
       </div>
     </div>

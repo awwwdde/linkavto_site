@@ -1,18 +1,17 @@
 import { useState } from 'react'
 import type { Address } from '@/shared/api/types'
 import { t } from '@/shared/i18n'
-import { Badge, Button, EmptyState, Modal, toast } from '@/shared/ui'
-import { IconPlus, IconTrash } from '@/shared/ui/Icon'
+import { Badge, Button, EmptyState } from '@/shared/ui'
+import { IconPlus } from '@/shared/ui/Icon'
 import { useAddressStore } from '@/features/address/store'
-import { AddressForm } from '@/features/address/AddressForm'
+import { AddressMenu } from '@/features/address/AddressMenu'
+import { AddressPicker } from '@/features/address/AddressPicker'
 import { PROVIDER_LABEL } from '@/features/address/pickup'
 
 type Editing = Address | 'new' | null
 
 export function Component() {
   const addresses = useAddressStore((s) => s.addresses)
-  const remove = useAddressStore((s) => s.remove)
-  const setDefault = useAddressStore((s) => s.setDefault)
   const [editing, setEditing] = useState<Editing>(null)
 
   const open = editing !== null
@@ -63,15 +62,6 @@ export function Component() {
                 {address.comment ? <span className="text-sm text-ink-muted">{address.comment}</span> : null}
 
                 <div className="flex flex-wrap gap-4 pt-1 text-sm">
-                  {!address.is_default ? (
-                    <button
-                      type="button"
-                      onClick={() => setDefault(address.id)}
-                      className="text-ink-muted underline hover:text-ink"
-                    >
-                      {t('address.makeDefault')}
-                    </button>
-                  ) : null}
                   <button
                     type="button"
                     onClick={() => setEditing(address)}
@@ -82,27 +72,16 @@ export function Component() {
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  remove(address.id)
-                  toast.ok(t('address.deleted'))
-                }}
-                aria-label={t('address.deleted')}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control text-ink-muted hover:text-danger"
-              >
-                <IconTrash />
-              </button>
+              {/* Удалить / сделать основным — под троеточием. */}
+              <AddressMenu address={address} />
             </li>
           ))}
         </ul>
       )}
 
-      <Modal open={open} onClose={() => setEditing(null)} title={initial ? t('address.edit') : t('address.add')}>
-        {open ? (
-          <AddressForm key={initial?.id ?? 'new'} initial={initial} onDone={() => setEditing(null)} />
-        ) : null}
-      </Modal>
+      {open ? (
+        <AddressPicker key={initial?.id ?? 'new'} open initial={initial} onClose={() => setEditing(null)} />
+      ) : null}
     </div>
   )
 }

@@ -7,7 +7,6 @@ import { categoryHref } from '@/entities/category/tree'
 import { queryKeys } from '@/shared/api/query-keys'
 import { vehicleMeta } from '@/shared/lib/vehicle-types'
 import { cn } from '@/shared/lib/cn'
-import { formatNumber } from '@/shared/lib/format'
 import { t } from '@/shared/i18n'
 import { BottomSheet, Modal, Skeleton } from '@/shared/ui'
 import { IconChevronLeft, IconChevronRight, IconGarage } from '@/shared/ui/Icon'
@@ -16,11 +15,6 @@ import { useUiStore } from '@/app/ui-store'
 
 /** Высота панели фиксирована — колонки скроллятся внутри, меню не «дышит». */
 const PANEL_HEIGHT = 'h-[min(64dvh,520px)]'
-
-function Count({ value }: { value: number }) {
-  if (value <= 0) return null
-  return <span className="shrink-0 text-xs text-ink-muted tabular-nums">{formatNumber(value)}</span>
-}
 
 function ColumnHeader({ title }: { title: string }) {
   return (
@@ -38,7 +32,6 @@ function ViewAllLink({ node, onNavigate }: { node: CategoryNode; onNavigate: () 
       className="mb-1 flex min-h-10 items-center justify-between gap-3 rounded-control px-2 text-base font-medium text-ink transition-colors duration-[--duration-fast] hover:bg-paper"
     >
       <span className="truncate">{t('catalog.allSubcategories')}</span>
-      <Count value={node.products_count} />
     </Link>
   )
 }
@@ -87,7 +80,6 @@ function DesktopMenu({ tree, onNavigate }: { tree: CategoryNode[]; onNavigate: (
                   <IconGarage width={16} height={16} className="text-ink-muted" />
                 </span>
                 <span className="min-w-0 flex-1 truncate">{node.name}</span>
-                <Count value={node.products_count} />
               </button>
             </li>
           )
@@ -112,7 +104,6 @@ function DesktopMenu({ tree, onNavigate }: { tree: CategoryNode[]; onNavigate: (
                   className={cn(rowBase, active ? 'bg-paper text-ink' : 'text-ink-muted hover:text-ink')}
                 >
                   <span className="min-w-0 flex-1 truncate">{child.name}</span>
-                  <Count value={child.products_count} />
                   {child.has_children ? (
                     <IconChevronRight width={14} height={14} className="shrink-0 text-ink-muted" />
                   ) : null}
@@ -142,7 +133,6 @@ function DesktopMenu({ tree, onNavigate }: { tree: CategoryNode[]; onNavigate: (
                       className="flex min-h-10 items-center justify-between gap-2 text-base font-medium text-ink hover:underline"
                     >
                       <span className="truncate">{grandChild.name}</span>
-                      <Count value={grandChild.products_count} />
                     </Link>
 
                     {grandChild.children.length > 0 ? (
@@ -155,7 +145,6 @@ function DesktopMenu({ tree, onNavigate }: { tree: CategoryNode[]; onNavigate: (
                               className="flex min-h-8 items-center justify-between gap-2 text-sm text-ink-muted transition-colors duration-[--duration-fast] hover:text-ink"
                             >
                               <span className="truncate">{leaf.name}</span>
-                              <Count value={leaf.products_count} />
                             </Link>
                           </li>
                         ))}
@@ -203,7 +192,6 @@ function MobileMenu({ tree, onNavigate }: { tree: CategoryNode[]; onNavigate: ()
               className="flex min-h-12 items-center justify-between gap-3 text-base font-medium"
             >
               {t('catalog.allSubcategories')}
-              <Count value={current.products_count} />
             </Link>
           </li>
         ) : null}
@@ -223,7 +211,6 @@ function MobileMenu({ tree, onNavigate }: { tree: CategoryNode[]; onNavigate: ()
                   </span>
                 ) : null}
                 <span className="min-w-0 flex-1 truncate">{node.name}</span>
-                <Count value={node.products_count} />
               </Link>
 
               {node.has_children ? (
